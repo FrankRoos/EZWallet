@@ -1,12 +1,12 @@
 
 ------FR1....	Manage users	------------- Frank+ Mikie
 FR11	register	create a new user       OK  
-FR12	login	authorize access for a given user
-FR13	logout	stop authorization for a given user
+FR12	login	authorize access for a given user  OK
+FR13	logout	stop authorization for a given user OK
 FR14	registerAdmin	create a new Admin OK
-FR15	getUsers	return all users
-FR16	getUser	return info about a specific user
-FR17	deleteUser	cancel a user
+FR15	getUsers	return all users       OK
+FR16	getUser	return info about a specific user OK
+FR17	deleteUser	cancel a user  da fare con filippo e angelo x gruppi
 
 
 -------FR2	Manage groups	------------- Filippo+Angelo

@@ -11,12 +11,21 @@ import { verifyAuth } from "./utils.js";
  */
 export const getUsers = async (req, res) => {
     try {
-        const users = await User.find();
+      const cookie = req.cookies
+      if (!cookie.refreshToken || !cookie.accessToken ) {
+          return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+      }
+      const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+      if (!admin) return res.status(400).json('admin not found')
+      if (admin.role != "Admin")   return res.status(401).json({ message: "You don't have permissions" })
+
+      
+      const users = await User.find();
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json(error.message);
     }
-}
+} 
 
 /**
  * Return information of a specific user
@@ -135,6 +144,16 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
     try {
+      const existingUser= await User.findOneAndDelete({ email: req.body.email });
+      if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
+ 
+      //Delete all transaction of existingUser and retrieve the number.
+
+      //delete the user from all existing group.... che partecapita
+
+
+      //delete users .....
+      res.status(200).json("ok")
     } catch (err) {
         res.status(500).json(err.message)
     }
