@@ -42,9 +42,14 @@ export const register = async (req, res) => {
  */
 export const registerAdmin = async (req, res) => {
     try {
-        const { username, email, password } = req.body
-        const existingUser = await User.findOne({ email: req.body.email });
-        if (existingUser) return res.status(400).json({ message: "you are already registered" });
+        const { username, email, password } = req.body;
+        const existingUser_email = await User.findOne({ email: req.body.email });
+        if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
+
+        const existingUser_username = await User.findOne({ username: req.body.username });
+        if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
+
+        if(req.body.password.length<8)  return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
