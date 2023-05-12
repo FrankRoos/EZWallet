@@ -1,6 +1,6 @@
 
 ------FR1....	Manage users	------------- Frank+ Mikie
-FR11	register	create a new user
+FR11	register	create a new user       OK  
 FR12	login	authorize access for a given user
 FR13	logout	stop authorization for a given user
 FR14	registerAdmin	create a new Admin
