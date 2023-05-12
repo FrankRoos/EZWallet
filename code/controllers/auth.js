@@ -10,17 +10,18 @@ import { verifyAuth } from './utils.js';
   - Optional behavior:
     - error 400 is returned if there is already a user with the same username and/or email
  */
+
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-
+        var myRegEx = /\w+@\w+\.\w/;
+        if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
 
         if(req.body.password.length<8)  return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
-        
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
@@ -45,7 +46,8 @@ export const registerAdmin = async (req, res) => {
         const { username, email, password } = req.body;
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-
+        var myRegEx = /\w+@\w+\.\w/;
+        if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
 
