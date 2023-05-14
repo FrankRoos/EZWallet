@@ -13,6 +13,7 @@ export const createCategory = (req, res) => {
         if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
+       
         const { type, color } = req.body;
         const new_categories = new categories({ type, color });
         new_categories.save()
