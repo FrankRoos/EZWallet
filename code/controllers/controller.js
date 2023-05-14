@@ -7,13 +7,19 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
   - Request Body Content: An object having attributes `type` and `color`
   - Response `data` Content: An object having attributes `type` and `color`
  */
-export const createCategory = (req, res) => {
+export const createCategory  = async (req, res) => {
     try {
         const cookie = req.cookies
         if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
+
         const { type, color } = req.body;
+
+        let data = await categories.find({type:type}); 
+        let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        console.log(filter);
+
         const new_categories = new categories({ type, color });
         new_categories.save()
             .then(data => res.json(data))
