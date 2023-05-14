@@ -13,7 +13,7 @@ export const createCategory  = async (req, res) => {
         if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
-
+        
         const { type, color } = req.body;
 
         let data = await categories.find({type:type}); 
