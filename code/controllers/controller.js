@@ -47,10 +47,54 @@ export const createCategory  = async (req, res) => {
  */
 export const updateCategory = async (req, res) => {
     try {
+       //{type:new color:new}
+       const cookie = req.cookies
+        if (!cookie.accessToken) {
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }
+        const { new_type, new_color } = req.body;
+        if (req.body.color==="") return res.status(401).json({ message: "Missing Color" })
+        if (req.body.type==="") return res.status(401).json({ message: "Missing Type" })
+        let old_type=req.params.type;
+      
+
+        let find_bycolor = await categories.find({color: req.body.color}); 
+        let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if(color_found[0] && old_type===req.body.type)  
+            return res.status(401).json({ message: "Color alredy used" })
+       
+       if(old_type != req.body.type ){ 
+          console.log("miao")
+         let find_bytype = await categories.find({type: req.body.type}); 
+            let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            if(category_found[0])
+             return res.status(401).json({ message: "Category type alredy exists" })
+              //check sul colore nuovo 
+              let find_bycolor = await categories.find({color: req.body.color}); 
+              let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+
+              let old_color_find= await categories.find({type: old_type}); 
+              let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
+                 let old_color=old_color_found[0].color;
+              if(color_found[0]   && old_color != req.body.color ) 
+                  return res.status(401).json({ message: "Color already used" })
+                
+
+             
+        }
+        //found by type 
+        let update = await categories.findOneAndUpdate({type: old_type},{type: req.body.type ,color: req.body.color}) 
+         
+           //da sistemare count-->> vedi descrizione funzione
+        res.json("1")
+
+       
+      
 
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
+
 }
 
 /**
