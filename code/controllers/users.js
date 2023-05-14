@@ -66,7 +66,7 @@ export const getUser = async (req, res) => {
 export const createGroup = async (req, res) => {
   try {
     const { name, memberEmails } = req.body;
-    console.log("Request received: ", name, memberEmails);
+    //console.log("Request received: ", name, memberEmails);
     const groupExists = await Group.findOne({ name });
     //Optional behavior
     if (groupExists) {
@@ -120,10 +120,16 @@ export const createGroup = async (req, res) => {
     - empty array is returned if there are no groups
  */
 export const getGroups = async (req, res) => {
-  try {//not implemented for ADMIN yet
-    const accessToken = req.cookies.accessToken;
-    console.log(accessToken);
-    const groups = await Group.find()
+  try {
+    const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
+    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
+    if (!admin) return res.status(400).json('admin not found');
+    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
+    //const accessToken = req.cookies.accessToken;
+    const groups = await Group.find();
     const responseData = groups.map(group => ({
       name: group.name,
       members: group.members
@@ -147,6 +153,10 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
   try {
+    const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
     const groupName = req.params.name;
     const group = await Group.findOne({ name: groupName });
     if (!group) {
@@ -174,11 +184,16 @@ export const getGroup = async (req, res) => {
     - error 401 is returned if the group does not exist
     - error 401 is returned if all the `memberEmails` either do not exist or are already in a group
  */
-
-//not implemented for admin yet
-//da finire
+//da finire bisogna fare la versione senza admin anche
 export const addToGroup = async (req, res) => {
   try {
+    const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
+    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
+    if (!admin) return res.status(400).json('admin not found');
+    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
     const groupName = req.params.name;
     const { memberEmails } = req.body;
     const group = await Group.findOne({ name: groupName });
@@ -250,10 +265,16 @@ export const addToGroup = async (req, res) => {
     - error 401 is returned if the group does not exist
     - error 401 is returned if all the `memberEmails` either do not exist or are not in the group
  */
-//not implemented for admin yet
-//da finire
+//da finire bisogna fare la versione senza admin anche
 export const removeFromGroup = async (req, res) => {
   try {
+    const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
+    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
+    if (!admin) return res.status(400).json('admin not found');
+    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
     const groupName = req.body.group.name;
     const { members } = req.body.group;
     const group = await Group.findOne({ name: groupName });
@@ -329,9 +350,15 @@ export const deleteUser = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
  */
-//not implemented for admin yet
 export const deleteGroup = async (req, res) => {
   try {
+    const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
+    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
+    if (!admin) return res.status(400).json('admin not found');
+    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
     const {name} = req.body;
     const group = await Group.findOne({ name });
     if (!group) {
