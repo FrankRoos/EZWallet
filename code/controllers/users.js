@@ -195,18 +195,19 @@ export const addToGroup = async (req, res) => {
       }
       i++;
     }
-    console.log("Membri totali nel body: ", i);
-    console.log("Non trovati: ", membersNotFound.length);
+    console.log("Membri totali nel body: ", i, memberEmails);
+    console.log("Non trovati: ", membersNotFound.length, membersNotFound);
     //same for the email already in a group
     const alreadyInGroup = [];
     for (const email of memberEmails) {
       const user = await User.findOne({ email, groups: group._id });
-      console.log(email, group._id);
+      //console.log(email, group._id);
       if (user) {
         alreadyInGroup.push(email);
+        console.log(email, group._id);
       }
     }
-    console.log("Gia in un gruppo: ", alreadyInGroup.length);
+    console.log("Gia in un gruppo: ", alreadyInGroup.length, alreadyInGroup);
 
     //now can add members to the group
     const newMembers = [];
@@ -217,7 +218,7 @@ export const addToGroup = async (req, res) => {
       }
     }
     group.members.push(...newMembers);
-    console.log("Da aggiungere: ", newMembers.length);
+    console.log("Da aggiungere: ", newMembers.length,newMembers);
     console.log("--------------------------- ");
     //Optional behavior
     const totalToAdd = membersNotFound.length + alreadyInGroup.length;
@@ -332,10 +333,13 @@ export const deleteUser = async (req, res) => {
 export const deleteGroup = async (req, res) => {
   try {
     const {name} = req.body;
-    const group = await Group.findOneAndDelete({ name });
+    const group = await Group.findOne({ name });
     if (!group) {
       return res.status(401).json({ message: `Group ${name} not found` });
     }
+    const groupToDelete = await Group.findOneAndDelete({ name });
+
+    
     return res.json({ message: `Group ${name} deleted successfully` });
   } catch (err) {
     res.status(500).json(err.message)
