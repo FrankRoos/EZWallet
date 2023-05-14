@@ -201,6 +201,7 @@ export const addToGroup = async (req, res) => {
     const alreadyInGroup = [];
     for (const email of memberEmails) {
       const user = await User.findOne({ email, groups: group._id });
+      console.log(email, group._id);
       if (user) {
         alreadyInGroup.push(email);
       }
@@ -223,6 +224,7 @@ export const addToGroup = async (req, res) => {
     if (totalToAdd === i && newMembers.length === 0) {
       return res.status(401).json({ message: "all the memberEmails either do not exist or are already in a group" });
     }
+    await group.save();
     // Return response
     return res.json({
       group: {
@@ -326,8 +328,15 @@ export const deleteUser = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
  */
+//not implemented for admin yet
 export const deleteGroup = async (req, res) => {
   try {
+    const {name} = req.body;
+    const group = await Group.findOneAndDelete({ name });
+    if (!group) {
+      return res.status(401).json({ message: `Group ${name} not found` });
+    }
+    return res.json({ message: `Group ${name} deleted successfully` });
   } catch (err) {
     res.status(500).json(err.message)
   }
