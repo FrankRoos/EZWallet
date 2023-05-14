@@ -16,7 +16,7 @@ export const register = async (req, res) => {
         const { username, email, password } = req.body;
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-        var myRegEx = /\w+@\w+\.\w/;
+        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/; 
         if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
@@ -46,7 +46,7 @@ export const registerAdmin = async (req, res) => {
         const { username, email, password } = req.body;
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-        var myRegEx = /\w+@\w+\.\w/;
+        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/; 
         if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
