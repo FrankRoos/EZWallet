@@ -15,10 +15,18 @@ export const createCategory  = async (req, res) => {
         }
         
         const { type, color } = req.body;
+        if (color==="") return res.status(401).json({ message: "Missing Color" })
+        if (type==="") return res.status(401).json({ message: "Missing Type" })
 
-        let data = await categories.find({type:type}); 
-        let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        console.log(filter);
+        let find_bytype = await categories.find({type: type}); 
+        let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if(category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
+
+        let find_bycolor = await categories.find({color: color}); 
+       let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if( color_found[0]) return res.status(401).json({ message: "Color alredy used" })
+
+       
 
         const new_categories = new categories({ type, color });
         new_categories.save()
