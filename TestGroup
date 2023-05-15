@@ -33,6 +33,6 @@ FR38	deleteTransactions	delete many transactions
 
 ---------FR4	Manage categories	-------------  Frank+Mikie   
 FR41	createCategory	create a new category  X
-FR42	updateCategory	modify existing category
+FR42	updateCategory	modify existing category 
 FR43	deleteCategory	delete a given category
 FR44	getCategories	list all categories

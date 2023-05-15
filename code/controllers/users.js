@@ -217,6 +217,7 @@ export const addToGroup = async (req, res) => {
     for (const email of memberEmails) {
       const user = await User.findOne({ email, groups: group._id });
       //console.log(email, group._id);
+      console.log(user)
       if (user) {
         alreadyInGroup.push(email);
         console.log(email, group._id);
