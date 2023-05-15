@@ -44,8 +44,10 @@ export const getUser = async (req, res) => {
     const username = req.params.username
     const user = await User.findOne({ refreshToken: cookie.refreshToken })
     if (!user) return res.status(401).json({ message: "User not found" })
-    if (user.username !== username) return res.status(401).json({ message: "Unauthorized" })
-    res.status(200).json(user)
+    if (user.username !== username && user.role!="Admin") return res.status(401).json({ message: "Unauthorized" })
+    const usersearch = await User.findOne({ username: username })
+    if (!usersearch) return res.status(401).json({ message: "User not found" })
+    res.status(200).json(usersearch)
   } catch (error) {
     res.status(500).json(error.message)
   }
