@@ -7,29 +7,29 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
   - Request Body Content: An object having attributes `type` and `color`
   - Response `data` Content: An object having attributes `type` and `color`
  */
-export const createCategory  = async (req, res) => {
+export const createCategory = async (req, res) => {
     try {
         const cookie = req.cookies
         if (!cookie.refreshToken || !cookie.accessToken) {
-              return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
-       const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-       if (!admin) return res.status(400).json('admin not found')
-       if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
+        const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+        if (!admin) return res.status(400).json('admin not found')
+        if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
 
         const { type, color } = req.body;
-        if (color==="") return res.status(401).json({ message: "Missing Color" })
-        if (type==="") return res.status(401).json({ message: "Missing Type" })
+        if (color === "") return res.status(401).json({ message: "Missing Color" })
+        if (type === "") return res.status(401).json({ message: "Missing Type" })
 
-        let find_bytype = await categories.find({type: type}); 
+        let find_bytype = await categories.find({ type: type });
         let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if(category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
+        if (category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
 
-        let find_bycolor = await categories.find({color: color}); 
-       let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if( color_found[0]) return res.status(401).json({ message: "Color alredy used" })
+        let find_bycolor = await categories.find({ color: color });
+        let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if (color_found[0]) return res.status(401).json({ message: "Color alredy used" })
 
-       
+
 
         const new_categories = new categories({ type, color });
         new_categories.save()
@@ -50,52 +50,52 @@ export const createCategory  = async (req, res) => {
  */
 export const updateCategory = async (req, res) => {
     try {
-       //{type:new color:new}
+        //{type:new color:new}
         const cookie = req.cookies
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-    if (!admin) return res.status(400).json('admin not found')
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
+        if (!cookie.refreshToken || !cookie.accessToken) {
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }
+        const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+        if (!admin) return res.status(400).json('admin not found')
+        if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
         const { new_type, new_color } = req.body;
-        if (req.body.color==="") return res.status(401).json({ message: "Missing Color" })
-        if (req.body.type==="") return res.status(401).json({ message: "Missing Type" })
-        let old_type=req.params.type;
-      
+        if (req.body.color === "") return res.status(401).json({ message: "Missing Color" })
+        if (req.body.type === "") return res.status(401).json({ message: "Missing Type" })
+        let old_type = req.params.type;
 
-        let find_bycolor = await categories.find({color: req.body.color}); 
+
+        let find_bycolor = await categories.find({ color: req.body.color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if(color_found[0] && old_type===req.body.type)  
+        if (color_found[0] && old_type === req.body.type)
             return res.status(401).json({ message: "Color alredy used" })
-       
-       if(old_type != req.body.type ){ 
-          console.log("miao")
-         let find_bytype = await categories.find({type: req.body.type}); 
+
+        if (old_type != req.body.type) {
+            console.log("miao")
+            let find_bytype = await categories.find({ type: req.body.type });
             let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-            if(category_found[0])
-             return res.status(401).json({ message: "Category type alredy exists" })
-              //check sul colore nuovo 
-              let find_bycolor = await categories.find({color: req.body.color}); 
-              let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            if (category_found[0])
+                return res.status(401).json({ message: "Category type alredy exists" })
+            //check sul colore nuovo 
+            let find_bycolor = await categories.find({ color: req.body.color });
+            let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
-              let old_color_find= await categories.find({type: old_type}); 
-              let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
-                 let old_color=old_color_found[0].color;
-              if(color_found[0]   && old_color != req.body.color ) 
-                  return res.status(401).json({ message: "Color already used" })
-                
+            let old_color_find = await categories.find({ type: old_type });
+            let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            let old_color = old_color_found[0].color;
+            if (color_found[0] && old_color != req.body.color)
+                return res.status(401).json({ message: "Color already used" })
 
-             
+
+
         }
         //found by type 
-        let update = await categories.findOneAndUpdate({type: old_type},{type: req.body.type ,color: req.body.color}) 
-         
-           //da sistemare count-->> vedi descrizione funzione
+        let update = await categories.findOneAndUpdate({ type: old_type }, { type: req.body.type, color: req.body.color })
+
+        //da sistemare count-->> vedi descrizione funzione
         res.json("1")
 
-       
-      
+
+
 
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -113,12 +113,12 @@ export const updateCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
     try {
         const cookie = req.cookies
-         if (!cookie.refreshToken || !cookie.accessToken) {
-        return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        if (!cookie.refreshToken || !cookie.accessToken) {
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-    if (!admin) return res.status(400).json('admin not found')
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
+        const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+        if (!admin) return res.status(400).json('admin not found')
+        if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
 
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -158,15 +158,37 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
+        /*if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }*/
+        if (verifyAuth(req, res, { authType: "User", username: req.body.username })) {
+
+            const { username, amount, type } = req.body;
+            const category = await categories.findOne({ type: type });
+            const user = await User.findOne({ username });
+
+            if (!category && !username)
+                throw new Error("Category and Username Not Found")
+            else if (!category)
+                throw new Error("Category Not Found")
+            else if (!user)
+                throw new Error("Username Not Found")
+
+            const newTransaction = new transactions({ username, amount, type: category.type });
+            const transactionSaved = await newTransaction
+                .save()
+                .catch((err) => { throw err; })
+            
+            res.json({
+                username: transactionSaved.username,
+                amount: transactionSaved.amount,
+                type: transactionSaved.type,
+                date: transactionSaved.date
+            })
+
         }
-        const { username, amount, type } = req.body;
-        const new_transactions = new transactions({ username, amount, type });
-        new_transactions.save()
-            .then(data => res.json(data))
-            .catch(err => { throw err })
-    } catch (error) {
+    }
+    catch (error) {
         res.status(400).json({ error: error.message })
     }
 }
@@ -221,6 +243,10 @@ export const getTransactionsByUser = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
         } else {
+            const info = { authType: "User", username: req.url.substring(7, req.url.length - 13) };
+            if (verifyAuth(req, res, info)) {
+                res.status(200).json({ message: "Okay" })
+            }
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
