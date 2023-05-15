@@ -10,10 +10,13 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
 export const createCategory  = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        if (!cookie.refreshToken || !cookie.accessToken) {
+              return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
-        
+       const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+       if (!admin) return res.status(400).json('admin not found')
+       if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
+
         const { type, color } = req.body;
         if (color==="") return res.status(401).json({ message: "Missing Color" })
         if (type==="") return res.status(401).json({ message: "Missing Type" })
@@ -48,10 +51,13 @@ export const createCategory  = async (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
        //{type:new color:new}
-       const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
+        const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
+    const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+    if (!admin) return res.status(400).json('admin not found')
+    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
         const { new_type, new_color } = req.body;
         if (req.body.color==="") return res.status(401).json({ message: "Missing Color" })
         if (req.body.type==="") return res.status(401).json({ message: "Missing Type" })
@@ -106,6 +112,13 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
     try {
+        const cookie = req.cookies
+         if (!cookie.refreshToken || !cookie.accessToken) {
+        return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }
+    const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+    if (!admin) return res.status(400).json('admin not found')
+    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
 
     } catch (error) {
         res.status(400).json({ error: error.message })
