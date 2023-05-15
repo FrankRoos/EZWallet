@@ -331,6 +331,14 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
+    const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
+    const admin = await User.findOne({ refreshToken: cookie.refreshToken })
+    if (!admin) return res.status(400).json('admin not found')
+    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
+    
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
     if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
 
