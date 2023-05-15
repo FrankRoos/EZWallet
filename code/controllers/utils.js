@@ -38,7 +38,7 @@ export const handleDateFilterParams = (req) => {
  */
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
-    if (!cookie.accessToken || !cookie.refreshToken) {
+    if (!cookie.accessToken && !cookie.refreshToken) {
         res.status(401).json({ message: "Unauthorized" });
         return false;
     }
@@ -57,19 +57,46 @@ export const verifyAuth = (req, res, info) => {
             res.status(401).json({ message: "Mismatched users" });
             return false;
         }
+        if(info.authType === "User" && decodedAccessToken.username !== info.username) {
+            res.status(401).json({ message: "Tokens have a different username from the requested one" });
+            return false;
+        }
+        if(info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
+            res.status(401).json({ message: "You are not an Admin" });
+            return false;
+        }
+        if(info.authType === "Group" && decodedAccessToken.email !== info.email) {
+            res.status(401).json({ message: "Mismatched email" });
+            return false;
+        }
+        
         return true
     } catch (err) {
-        if (err.name === "TokenExpiredError") {
+        if (err.name === "TokenExpiredError" || !cookie.accessToken) {
             try {
-                const refreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
+                const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
                 const newAccessToken = jwt.sign({
-                    username: refreshToken.username,
-                    email: refreshToken.email,
-                    id: refreshToken.id,
-                    role: refreshToken.role
+                    username: decodedRefreshToken.username,
+                    email: decodedRefreshToken.email,
+                    id: decodedRefreshToken.id,
+                    role: decodedRefreshToken.role
                 }, process.env.ACCESS_KEY, { expiresIn: '1h' })
                 res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
                 res.locals.message = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
+                
+                if(info.authType === "User" && decodedRefreshToken.username !== info.username) {
+                    res.status(401).json({ message: "Tokens have a different username from the requested one" });
+                    return false;
+                }
+                if(info.authType === "Admin" && decodedRefreshToken.role !== "Admin") {
+                    res.status(401).json({ message: "You are not an Admin" });
+                    return false;
+                }
+                if(info.authType === "Group" && decodedRefreshToken.email !== info.email) {
+                    res.status(401).json({ message: "Mismatched email" });
+                    return false;
+                }
+
                 return true
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
