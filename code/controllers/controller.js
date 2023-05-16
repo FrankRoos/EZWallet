@@ -178,7 +178,7 @@ export const createTransaction = async (req, res) => {
             const transactionSaved = await newTransaction
                 .save()
                 .catch((err) => { throw err; })
-            
+
             res.json({
                 username: transactionSaved.username,
                 amount: transactionSaved.amount,
@@ -244,12 +244,37 @@ export const getTransactionsByUser = async (req, res) => {
         if (req.url.indexOf("/transactions/users/") >= 0) {
         } else {
             const info = { authType: "User", username: req.url.substring(7, req.url.length - 13) };
+            
+            // Verify if the user exists
+            const user = await User.findOne({username: info.username});
+            if(!user)
+                throw new Error("User not found");
+            
+            // Verify the authentication
             if (verifyAuth(req, res, info)) {
-                res.status(200).json({ message: "Okay" })
+                // Do the query
+                let selectedTransactions = await transactions.aggregate([
+                    {
+                        $lookup: {
+                            from: "categories",
+                            localField: "type",
+                            foreignField: "type",
+                            as: "categories_info"
+                        }
+                    },
+                    { $unwind: "$categories_info" }
+                ]);
+                
+                selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, {_id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date}));
+                
+                return res.status(200).json(selectedTransactions);
             }
         }
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        if(error.message == "User not found") 
+            res.status(401).json({ error: error.message })
+        else
+            res.status(400).json({ error: error.message })
     }
 }
 
