@@ -411,7 +411,7 @@ export const deleteTransaction = async (req, res) => {
             throw new Error("Transaction not found");
 
         if (verifyAuth(req, res, info)) {
-            let data = await transactions.deleteOne({ _id: req.body._id });
+            await transactions.deleteOne({ _id: req.body._id });
             return res.json({ message: "Your transaction has been deleted successfully" });
         }
 
@@ -431,18 +431,41 @@ export const deleteTransaction = async (req, res) => {
     - error 401 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
  */
 export const deleteTransactions = async (req, res) => {
-    /*try {
+    try {
         // /transactions
         const info = { authType: "Admin" };
-        let selectedTransactions = [];
 
         if (verifyAuth(req, res, info)) {
-            await req.body._ids.forEach(element => {
-                selectedTransactions.push(transactions.findOne({ _id: element }))
-            });
-            res.status(200).json(selectedTransactions)
+            let ids = req.body._ids.map(element => {
+                const id = element.toString();
+                if(!id.match(/[0-9a-fA-F]{24}$/))
+                    throw new Error("Invalid ID")
+                else
+                    return id;
+            })
+            
+            /*let selectedTransactions = await transactions.find({
+                _id: { $in: ids }
+            });*/
+
+            let selectedTransactions = await Promise.all(ids.map(async (element) => {
+                const el = await transactions.findById(element)
+                if (!el)
+                    throw new Error("One or more Transactions not found");
+                else
+                    return el;
+            }));
+
+            await transactions.deleteMany({ _id: { $in: ids } })
+    
+            res.status(200).json({message: "Your transactions have been deleted successfully"})
         }
     } catch (error) {
-        res.status(400).json({ error: error.message })
-    }*/
+        if(error.message == "One or more Transactions not found")
+            res.status(401).json({ error: error.message });
+        else if(error.message == "Invalid ID")
+            res.status(403).json({ error: error.message });
+        else
+            res.status(400).json({ error: error.message })
+    }
 }
