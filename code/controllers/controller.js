@@ -239,39 +239,42 @@ export const getAllTransactions = async (req, res) => {
  */
 export const getTransactionsByUser = async (req, res) => {
     try {
+        let info = {};
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
+            info = { authType: "Admin", username: req.url.substring(20) };
+
         } else {
-            const info = { authType: "User", username: req.url.substring(7, req.url.length - 13) };
-            
-            // Verify if the user exists
-            const user = await User.findOne({username: info.username});
-            if(!user)
-                throw new Error("User not found");
-            
-            // Verify the authentication
-            if (verifyAuth(req, res, info)) {
-                // Do the query
-                let selectedTransactions = await transactions.aggregate([
-                    {
-                        $lookup: {
-                            from: "categories",
-                            localField: "type",
-                            foreignField: "type",
-                            as: "categories_info"
-                        }
-                    },
-                    { $unwind: "$categories_info" }
-                ]);
-                
-                selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, {_id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date}));
-                
-                return res.status(200).json(selectedTransactions);
-            }
+            info = { authType: "User", username: req.url.substring(7, req.url.length - 13) };
         }
+        // Verify if the user exists
+        const user = await User.findOne({ username: info.username });
+        if (!user)
+            throw new Error("User not found");
+
+        // Verify the authentication
+        if (verifyAuth(req, res, info)) {
+            // Do the query
+            let selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                { $unwind: "$categories_info" }
+            ]);
+
+            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+
+            return res.status(200).json(selectedTransactions);
+        }
+
     } catch (error) {
-        if(error.message == "User not found") 
+        if (error.message == "User not found")
             res.status(401).json({ error: error.message })
         else
             res.status(400).json({ error: error.message })
