@@ -294,8 +294,63 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
     try {
+        let info = {};
+        //Distinction between route accessed by Admins or Regular users for functions that can be called by both
+        //and different behaviors and access rights
+        if (req.url.indexOf("/transactions/users/") >= 0) {
+            // /transactions/users/:username/category/:category
+            const catInd = req.url.indexOf("category/");
+            info = { authType: "Admin", username: req.url.substring(20, catInd - 1), category: req.url.substring(catInd + 9) };
+
+        } else {
+            // /users/:username/transactions/category/:category
+            const catInd = req.url.indexOf("/transactions/category/");
+            info = { authType: "User", username: req.url.substring(7, catInd - 1), category: req.url.substring(catInd + 22) };
+        }
+        // Verify if the user exists
+        const user = await User.findOne({ username: info.username });
+        if (!user)
+            throw new Error("User not found");
+
+        // Verify if the category exists
+        const category = await categories.findOne({ type: info.category });
+        if (!category)
+            throw new Error("Category not found");
+
+        // Verify the authentication
+        if (verifyAuth(req, res, info)) {
+            // Do the query
+            let selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                {
+                    $match: {
+                        $and: [
+                            { 'username': info.username }, // Condizione di join
+                            { 'type': info.category } // Condizione di filtro
+                        ]
+
+                    }
+                },
+                { $unwind: "$categories_info" }
+            ]);
+
+            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+
+            return res.status(200).json(selectedTransactions);
+        }
+
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        if (error.message == "User not found" || error.message == "Category not found")
+            res.status(401).json({ error: error.message })
+        else
+            res.status(400).json({ error: error.message })
     }
 }
 
@@ -339,9 +394,12 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
+        /*if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
+        }*/
+
+        
+
         let data = await transactions.deleteOne({ _id: req.body._id });
         return res.json("deleted");
     } catch (error) {
