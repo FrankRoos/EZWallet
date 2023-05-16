@@ -265,6 +265,9 @@ export const getTransactionsByUser = async (req, res) => {
                         as: "categories_info"
                     }
                 },
+                {
+                    $match: { 'username': info.username }
+                },
                 { $unwind: "$categories_info" }
             ]);
 
