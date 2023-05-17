@@ -43,6 +43,9 @@ export const register = async (req, res) => {
  */
 export const registerAdmin = async (req, res) => {
     try {
+
+        const authAdmin = verifyAuth(req, res, { authType: "Admin" });
+
         const { username, email, password } = req.body;
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
@@ -116,8 +119,8 @@ export const login = async (req, res) => {
     - error 400 is returned if the user does not exist
  */
 export const logout = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken
-    if (!refreshToken) return res.status(400).json("user not found")
+
+    const authAdmin = verifyAuth(req, res,{authType: "Simple"});
     const user = await User.findOne({ refreshToken: refreshToken })
     if (!user) return res.status(400).json('user not found')
     try {
