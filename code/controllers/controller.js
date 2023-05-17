@@ -166,9 +166,7 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const cookie = req.cookies
-        /*if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }*/
+        
         if (verifyAuth(req, res, { authType: "User", username: req.body.username })) {
 
             const { username, amount, type } = req.body;
@@ -251,10 +249,10 @@ export const getTransactionsByUser = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
-            info = { authType: "Admin", username: req.url.substring(20) };
+            info = { authType: "Admin", username: req.params.username };
 
         } else {
-            info = { authType: "User", username: req.url.substring(7, req.url.length - 13) };
+            info = { authType: "User", username: req.params.username };
         }
         // Verify if the user exists
         const user = await User.findOne({ username: info.username });
@@ -307,13 +305,11 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
             // /transactions/users/:username/category/:category
-            const catInd = req.url.indexOf("category/");
-            info = { authType: "Admin", username: req.url.substring(20, catInd - 1), category: req.url.substring(catInd + 9) };
+            info = { authType: "Admin", username: req.params.username, category: req.params.category };
 
         } else {
             // /users/:username/transactions/category/:category
-            const catInd = req.url.indexOf("/transactions/category/");
-            info = { authType: "User", username: req.url.substring(7, catInd - 1), category: req.url.substring(catInd + 22) };
+            info = { authType: "User", username: req.params.username, category: req.params.category };
         }
         // Verify if the user exists
         const user = await User.findOne({ username: info.username });
@@ -377,11 +373,11 @@ export const getTransactionsByGroup = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name
-            info = { authType: "Admin", groupName: req.url.substring(21) };
+            info = { authType: "Admin", groupName: req.params.name };
 
         } else {
             // /groups/:name/transactions
-            info = { authType: "Group", groupName: req.url.substring(8, req.url.length - 13) };
+            info = { authType: "Admin", groupName: req.params.name };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -445,13 +441,11 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name/category/:category
-            const catInd = req.url.indexOf("category/");
-            info = { authType: "Admin", groupName: req.url.substring(21, catInd), category: req.url.substring(catInd+9) };
+            info = { authType: "Admin", groupName: req.params.name, category: req.params.category };
 
         } else {
             // /groups/:name/transactions/category/:category
-            const catInd = req.url.indexOf("/transactions/category/");
-            info = { authType: "Group", groupName: req.url.substring(8, catInd), category: req.url.substring(catInd+23) };
+            info = { authType: "Group", groupName: req.params.name, category: req.params.category };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -515,13 +509,8 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
  */
 export const deleteTransaction = async (req, res) => {
     try {
-        //const cookie = req.cookies;
-        /*if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }*/
-
-        // /users/:username/transactions   //REQ.PARAMS-!!!
-        const info = { authType: "User", username: req.url.substring(7, req.url.length - 13) };
+        // /users/:username/transactions   
+        const info = { authType: "User", username: req.params.username };
 
         const user = await User.findOne({ username: info.username });
         if (!user)
@@ -565,10 +554,6 @@ export const deleteTransactions = async (req, res) => {
                 else
                     return id;
             })
-            
-            /*let selectedTransactions = await transactions.find({
-                _id: { $in: ids }
-            });*/
 
             let selectedTransactions = await Promise.all(ids.map(async (element) => {
                 const el = await transactions.findById(element)
