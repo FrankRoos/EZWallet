@@ -364,8 +364,61 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
     try {
+        let info = {};
+        //Distinction between route accessed by Admins or Regular users for functions that can be called by both
+        //and different behaviors and access rights
+        if (req.url.indexOf("/transactions/groups/") >= 0) {
+            // /transactions/groups/:name
+            info = { authType: "Admin", groupName: req.url.substring(21) };
+
+        } else {
+            // /groups/:name/transactions
+            info = { authType: "Group", groupName: req.url.substring(8, req.url.length - 13) };
+        }
+        // Verify if the group exists
+        const group = await Group.findOne({ name: info.groupName });
+        if (!group)
+            throw new Error("Group not found");
+        else
+            info.emailList = await group.members.map( element => element.email );
+
+        // Verify the authentication
+        if (verifyAuth(req, res, info)) {
+            // Do the query
+            let selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "username",
+                        foreignField: "username",
+                        as: "user_info"
+                    }
+                },
+                {
+                    $match: { 'user_info.email': { $in: info.emailList } }
+                },
+                { $unwind: "$categories_info" },
+                { $unwind: "$user_info" }
+            ]);
+
+            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+
+            return res.status(200).json(selectedTransactions);
+        }
+
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        if (error.message == "Group not found")
+            res.status(401).json({ error: error.message })
+        else
+            res.status(400).json({ error: error.message })
     }
 }
 
@@ -379,8 +432,69 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
+        let info = {};
+        //Distinction between route accessed by Admins or Regular users for functions that can be called by both
+        //and different behaviors and access rights
+        if (req.url.indexOf("/transactions/groups/") >= 0) {
+            // /transactions/groups/:name/category/:category
+            const catInd = req.url.indexOf("category/");
+            info = { authType: "Admin", groupName: req.url.substring(21, catInd), category: req.url.substring(catInd+9) };
+
+        } else {
+            // /groups/:name/transactions/category/:category
+            const catInd = req.url.indexOf("/transactions/category/");
+            info = { authType: "Group", groupName: req.url.substring(8, catInd), category: req.url.substring(catInd+23) };
+        }
+        // Verify if the group exists
+        const group = await Group.findOne({ name: info.groupName });
+        if (!group)
+            throw new Error("Group not found");
+        else
+            info.emailList = await group.members.map( element => element.email );
+
+        // Verify the authentication
+        if (verifyAuth(req, res, info)) {
+            // Do the query
+            let selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "username",
+                        foreignField: "username",
+                        as: "user_info"
+                    }
+                },
+                {
+                    $match: {
+                        $and: [
+                            { 'user_info.email': { $in: info.emailList } }, 
+                            { 'type': info.category } 
+                        ]
+
+                    }
+                },
+                { $unwind: "$categories_info" },
+                { $unwind: "$user_info" }
+            ]);
+
+            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+
+            return res.status(200).json(selectedTransactions);
+        }
+
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        if (error.message == "Group not found")
+            res.status(401).json({ error: error.message })
+        else
+            res.status(400).json({ error: error.message })
     }
 }
 

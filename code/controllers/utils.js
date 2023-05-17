@@ -65,8 +65,8 @@ export const verifyAuth = (req, res, info) => {
             res.status(401).json({ message: "You are not an Admin" });
             return false;
         }
-        if(info.authType === "Group" && decodedAccessToken.email !== info.email) {
-            res.status(401).json({ message: "Mismatched email" });
+        if(info.authType === "Group" && info.emailList.includes(decodedAccessToken.email)) {
+            res.status(401).json({ message: "Your email is not the group" });
             return false;
         }
         
@@ -92,8 +92,8 @@ export const verifyAuth = (req, res, info) => {
                     res.status(401).json({ message: "You are not an Admin" });
                     return false;
                 }
-                if(info.authType === "Group" && decodedRefreshToken.email !== info.email) {
-                    res.status(401).json({ message: "Mismatched email" });
+                if(info.authType === "Group" && !info.emailList.includes(decodedRefreshToken.email)) {
+                    res.status(401).json({ message: "Your email is not the group" });
                     return false;
                 }
 
