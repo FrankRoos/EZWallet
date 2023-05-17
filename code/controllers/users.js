@@ -81,10 +81,15 @@ export const createGroup = async (req, res) => {
     if (!authUserorAdmin) {
       return res.status(401).json({ message: "Unauthorized as Admin" });
     }
+    for (const email of memberEmails) {
+      const existingUserInGroup = await Group.findOne({ 'members.email': email });
 
-    //console.log("Request received: ", name, memberEmails);
+      if (existingUserInGroup) {
+        return res.status(401).json({ message: `User with email ${email} is already a member of another group` });
+      }
+    }
     const groupExists = await Group.findOne({ name });
-    //Optional behavior
+
     if (groupExists) {
       return res.status(401).json({ message: 'There is already an existing group with the same name' });
     }
@@ -233,70 +238,129 @@ export const getGroup = async (req, res) => {//funziona perfettamente sia per ad
 //da finire bisogna fare la versione senza admin anche
 export const addToGroup = async (req, res) => {
   try {
-    const cookie = req.cookies
+    const cookie = req.cookies;
     if (!cookie.refreshToken || !cookie.accessToken) {
       return res.status(401).json({ message: "Unauthorized" }) // unauthorized
     }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
-    if (!admin) return res.status(400).json('admin not found');
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
-    const groupName = req.params.name;
-    const { memberEmails } = req.body;
-    const group = await Group.findOne({ name: groupName });
-    if (!group) {
-      return res.status(401).json({ message: `Group ${groupName} not found` });
-    }
-    // check if the emails of the members exist in the db, pushing them in the array
-    const membersNotFound = [];
-    let i = 0;
-    for (const email of memberEmails) {
-      const user = await User.findOne({ email });
-      if (!user) {
-        membersNotFound.push(email);
-      }
-      i++;
-    }
-    console.log("Membri totali nel body: ", i, memberEmails);
-    console.log("Non trovati: ", membersNotFound.length, membersNotFound);
-    //same for the email already in a group
-    const alreadyInGroup = [];
-    for (const email of memberEmails) {
-      const user = await User.findOne({ email, groups: group._id });
-      //console.log(email, group._id);
-      console.log(user)
-      if (user) {
-        alreadyInGroup.push(email);
-        console.log(email, group._id);
-      }
-    }
-    console.log("Gia in un gruppo: ", alreadyInGroup.length, alreadyInGroup);
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    //console.log(user);
+    if (!user) return res.status(400).json('user not found')
 
-    //now can add members to the group
-    const newMembers = [];
-    for (const email of memberEmails) {
-      const user = await User.findOneAndUpdate({ email }, { $addToSet: { groups: group._id } }, { new: true });
-      if (user && !membersNotFound.includes(email) && !alreadyInGroup.includes(email)) {
-        newMembers.push(user);
+    if (user.role === "Admin") {
+      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username });
+      if (!authAdmin) {
+        return res.status(401).json({ message: "Unauthorized as Admin" });
       }
+      //now do the things for the admin
+      const { name } = req.params;
+      if (!name || name.trim() === "") {
+        return res.status(401).json({ message: "Group name is NULL or empty" });
+      }
+      const group = await Group.findOne({ name: name });
+      if (!group) {
+        return res.status(401).json({ message: "Group does not exist" });
+      }
+
+      const { memberEmails } = req.body;//gets the array of emails on the body
+      if (!memberEmails || memberEmails.length === 0) {
+        return res.status(401).json({ message: "No member emails provided" });
+      }
+
+
+      const alreadyInGroup = [];
+      const membersNotFound = [];
+      //const memberToAdd = [];
+
+
+      for (const email of memberEmails) {
+        const user = await User.findOne({ email });
+        //console.log(group.members);
+        if (!user) {
+          membersNotFound.push(email);
+        } else {
+          //const existingMember = group.members.find(member => member.email === email);
+          const existingMember = await Group.findOne({ 'members.email': email });//checks if the user is in one of all the group already
+
+          if (existingMember) {
+            alreadyInGroup.push(user.username);
+          } else {
+            group.members.push({ email: user.email, user: user._id });
+          }
+        }
+      }
+      if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
+        return res.status(400).json({ message: "The member emails you provided either don't exist or are already in other groups" });
+      }
+      await group.save();
+
+      const responseData = {
+        group: {
+          name: group.name,
+          members: group.members,
+        },
+        alreadyInGroup,
+        membersNotFound,
+      };
+      return res.json(responseData);
     }
-    group.members.push(...newMembers);
-    console.log("Da aggiungere: ", newMembers.length, newMembers);
-    console.log("--------------------------- ");
-    //Optional behavior
-    const totalToAdd = membersNotFound.length + alreadyInGroup.length;
-    if (totalToAdd === i && newMembers.length === 0) {
-      return res.status(401).json({ message: "all the memberEmails either do not exist or are already in a group" });
+
+    if (user.role === "Regular") {
+      const authUser = verifyAuth(req, res, { authType: "User", username: user.username });
+      if (!authUser) {
+        return res.status(401).json({ message: "Unauthorized as User" });
+      }
+      const { name } = req.params;
+      if (!name || name.trim() === "") {
+        return res.status(401).json({ message: "Group name is NULL or empty" });
+      }
+      const group = await Group.findOne({ name: name });
+      if (!group) {
+        return res.status(401).json({ message: "Group does not exist" });
+      }
+
+      //checking if the member is a member of the group
+      const isMember = group.members.some(member => member.email === user.email);
+      if (!isMember) {
+        return res.status(401).json({ message: "You are not a member of the group" });
+      }
+
+      const { memberEmails } = req.body;//gets the array of emails on the body
+      if (!memberEmails || memberEmails.length === 0) {
+        return res.status(401).json({ message: "No member emails provided" });
+      }
+      const alreadyInGroup = [];
+      const membersNotFound = [];
+      for (const email of memberEmails) {
+        const existingMember = group.members.find(member => member.email === email);
+        if (existingMember) {
+          alreadyInGroup.push(existingMember.email);
+        } else {
+          const userToAdd = await User.findOne({ email });
+          if (!userToAdd) {
+            membersNotFound.push(email);
+          } else {
+            group.members.push({ email, user: userToAdd._id });
+          }
+        }
+      }
+      if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
+        return res.status(400).json({ message: "The member emails you provided either don't exist or are already in the group" });
+      }
+
+      await group.save();
+      const responseData = {
+        group: {
+          name: group.name,
+          members: group.members,
+        },
+        alreadyInGroup,
+        membersNotFound,
+      };
+
+      return res.json(responseData);
+
     }
-    await group.save();
-    // Return response
-    return res.json({
-      group: {
-        name: group.name,
-        members: group.members
-      },
-      alreadyInGroup,
-      membersNotFound,
-    });
+
   } catch (err) {
     res.status(500).json(err.message)
   }
@@ -312,7 +376,6 @@ export const addToGroup = async (req, res) => {
     - error 401 is returned if the group does not exist
     - error 401 is returned if all the `memberEmails` either do not exist or are not in the group
  */
-//da finire bisogna fare la versione senza admin anche
 export const removeFromGroup = async (req, res) => {
   try {
     const cookie = req.cookies
@@ -405,14 +468,14 @@ export const deleteGroup = async (req, res) => {
       const { name } = req.body;
       if (!name || name.trim() === "")
         return res.status(401).json({ message: `You inserted a null string` });
-      
-      const existingGroup = await Group.findOne({name});
-      if(!existingGroup)
+
+      const existingGroup = await Group.findOne({ name });
+      if (!existingGroup)
         return res.status(401).json({ message: `Group ${name} does not exist` });
 
       const data = await Group.findOneAndDelete({ name });
 
-      return res.json({message: `Group ${name} has been deleted` , data});
+      return res.json({ message: `Group ${name} has been deleted`, data });
       //res.status(200).json(`Group ${name} deleted`);
     }
   } catch (err) {
