@@ -422,8 +422,6 @@ export const deleteGroup = async (req, res) => {
       return res.status(401).json({ message: `Group ${name} not found` });
     }
     const groupToDelete = await Group.findOneAndDelete({ name });
-
-
     return res.json({ message: `Group ${name} deleted successfully` });
   } catch (err) {
     res.status(500).json(err.message)
