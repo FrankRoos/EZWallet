@@ -409,20 +409,21 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
   try {
-    const cookie = req.cookies
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
+    if (authAdmin) {
+      const { name } = req.body;
+      if (!name || name.trim() === "")
+        return res.status(401).json({ message: `You inserted a null string` });
+      
+      const existingGroup = await Group.findOne({name});
+      if(!existingGroup)
+        return res.status(401).json({ message: `Group ${name} does not exist` });
+
+      const data = await Group.findOneAndDelete({ name });
+
+      return res.json({message: `Group ${name} has been deleted` , data});
+      //res.status(200).json(`Group ${name} deleted`);
     }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
-    if (!admin) return res.status(400).json('admin not found');
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
-    const { name } = req.body;
-    const group = await Group.findOne({ name });
-    if (!group) {
-      return res.status(401).json({ message: `Group ${name} not found` });
-    }
-    const groupToDelete = await Group.findOneAndDelete({ name });
-    return res.json({ message: `Group ${name} deleted successfully` });
   } catch (err) {
     res.status(500).json(err.message)
   }
