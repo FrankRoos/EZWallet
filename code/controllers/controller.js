@@ -9,14 +9,7 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
  */
 export const createCategory = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.refreshToken || !cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-        if (!admin) return res.status(400).json('admin not found')
-        if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
-
+        const authAdmin = verifyAuth(req, res,{authType: "Admin"});
         const { type, color } = req.body;
         if (color === "") return res.status(401).json({ message: "Missing Color" })
         if (type === "") return res.status(401).json({ message: "Missing Type" })
@@ -51,13 +44,7 @@ export const createCategory = async (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         //{type:new color:new}
-        const cookie = req.cookies
-        if (!cookie.refreshToken || !cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-        if (!admin) return res.status(400).json('admin not found')
-        if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
+        const authAdmin = verifyAuth(req, res,{authType: "Admin"});
         const { new_type, new_color } = req.body;
         if (req.body.color === "") return res.status(401).json({ message: "Missing Color" })
         if (req.body.type === "") return res.status(401).json({ message: "Missing Type" })
@@ -120,6 +107,27 @@ export const deleteCategory = async (req, res) => {
         if (!admin) return res.status(400).json('admin not found')
         if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
 
+        const array_category = req.body.array  
+        if (!array_category.length)  return res.status(401).json({ message: "Missing values" })
+        //check categories
+       for (let category of array_category){
+        let check_exist= await  categories.findOne({ type: category });
+            if (!check_exist)
+                return res.status(401).json({ message: "You inserted an invalid category" })
+       }
+       
+ 
+       
+  
+         //delete categories
+         for (let category of array_category){
+          let find_delete= await  categories.findOneAndDelete({ type: category });
+         }
+
+
+             //da sistemare la parte sulle transaction 
+        
+         res.json("1")
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -134,11 +142,11 @@ export const deleteCategory = async (req, res) => {
  */
 export const getCategories = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
+        const authAdmin = verifyAuth(req, res,{authType: "Simple"});
         let data = await categories.find({})
+
+        if (!data)
+        return res.json([])  //if no categories
 
         let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
@@ -512,7 +520,7 @@ export const deleteTransaction = async (req, res) => {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }*/
 
-        // /users/:username/transactions
+        // /users/:username/transactions   //REQ.PARAMS-!!!
         const info = { authType: "User", username: req.url.substring(7, req.url.length - 13) };
 
         const user = await User.findOne({ username: info.username });

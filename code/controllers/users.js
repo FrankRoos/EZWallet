@@ -12,16 +12,12 @@ import jwt from 'jsonwebtoken';
  */
 export const getUsers = async (req, res) => {
   try {
-    const cookie = req.cookies
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-    if (!admin) return res.status(400).json('admin not found')
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
 
-
+    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
+ 
     const users = await User.find();
+    if(!users) 
+    res.status(200).json([])
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json(error.message);
@@ -37,11 +33,13 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
   try {
+    
+    const authAdmin = verifyAuth(req, res,{authType: "Simple"});
+   
     const cookie = req.cookies
-    if (!cookie.accessToken || !cookie.refreshToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
     const username = req.params.username
+
+
     const user = await User.findOne({ refreshToken: cookie.refreshToken })
     if (!user) return res.status(401).json({ message: "User not found" })
     if (user.username !== username && user.role != "Admin") return res.status(401).json({ message: "Unauthorized" })
@@ -377,14 +375,7 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    const cookie = req.cookies
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-    if (!admin) return res.status(400).json('admin not found')
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
-
+    const authAdmin = verifyAuth(req, res,{authType: "Admin"});
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
     if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
 

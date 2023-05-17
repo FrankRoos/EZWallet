@@ -1,14 +1,17 @@
 ---Second deadline 9 Giugno 23:59---
 
 ------FR1....	Manage users	------------- Frank+ Mikie
-FR11	register	create a new user       OK  
-FR12	login	authorize access for a given user  OK
-FR13	logout	stop authorization for a given user OK
-FR14	registerAdmin	create a new Admin OK
-FR15	getUsers	return all users       OK
-FR16	getUser	return info about a specific user OK
-FR17	deleteUser	cancel a user  da fare con filippo e angelo x gruppi
+FR11	register	create a new user      TEST?
+FR12	login	authorize access for a given user  TEST?
+FR13	logout	stop authorization for a given user TEST?
+FR14	registerAdmin	create a new Admin TEST?
+FR15	getUsers	return all users      TEST?
+FR16	getUser	return info about a specific user TEST?
+FR17	deleteUser	cancel a user   !!!!MISSING !!!!->   //Delete all transaction of existingUser and retrieve the number.
+                                                          //delete the user from all existing group  
 
+
+   
 
 -------FR2	Manage groups	------------- Filippo+Angelo
 FR21	createGroup	create a new group
@@ -33,7 +36,8 @@ FR38	deleteTransactions	delete many transactions
 
 
 ---------FR4	Manage categories	-------------  Frank+Mikie   
-FR41	createCategory	create a new category  X
-FR42	updateCategory	modify existing category X
-FR43	deleteCategory	delete a given category
-FR44	getCategories	list all categories
+FR41	createCategory	create a new category  TEST?
+FR42	updateCategory	modify existing category !!!MISSING !!!! -> //Count that is equal to the count of transactions whose category was changed with the new type
+FR43	deleteCategory	delete a given category !!!MISSING!!! -> //count that is equal to the count of affected transactions 
+                                                          (deleting a category sets all transactions with that category to have investment as their new category)
+FR44	getCategories	list all categories TEST?
