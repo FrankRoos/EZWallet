@@ -2,7 +2,7 @@ import { modelNames } from "mongoose";
 import { Group, User } from "../models/User.js";
 import { transactions } from "../models/model.js";
 import { verifyAuth } from "./utils.js";
-
+import jwt from 'jsonwebtoken';
 /**
  * Return all the users
   - Request Body Content: None
@@ -44,7 +44,7 @@ export const getUser = async (req, res) => {
     const username = req.params.username
     const user = await User.findOne({ refreshToken: cookie.refreshToken })
     if (!user) return res.status(401).json({ message: "User not found" })
-    if (user.username !== username && user.role!="Admin") return res.status(401).json({ message: "Unauthorized" })
+    if (user.username !== username && user.role != "Admin") return res.status(401).json({ message: "Unauthorized" })
     const usersearch = await User.findOne({ username: username })
     if (!usersearch) return res.status(401).json({ message: "User not found" })
     res.status(200).json(usersearch)
@@ -68,6 +68,22 @@ export const getUser = async (req, res) => {
 export const createGroup = async (req, res) => {
   try {
     const { name, memberEmails } = req.body;
+    const cookie = req.cookies
+    if (!cookie.refreshToken || !cookie.accessToken) {
+      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    }
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    //console.log(user);
+    if (!user) return res.status(400).json('user not found')
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ message: "Group name cannot be NULL or empty" });
+    }
+
+    const authUserorAdmin = verifyAuth(req, res, { authType: "User", username: user.username });
+    if (!authUserorAdmin) {
+      return res.status(401).json({ message: "Unauthorized as Admin" });
+    }
+
     //console.log("Request received: ", name, memberEmails);
     const groupExists = await Group.findOne({ name });
     //Optional behavior
@@ -123,25 +139,21 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
   try {
-    const cookie = req.cookies
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
-    if (!admin) return res.status(400).json('admin not found');
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
-    //const accessToken = req.cookies.accessToken;
-    const groups = await Group.find();
-    const responseData = groups.map(group => ({
-      name: group.name,
-      members: group.members
-    }))
-    res.json(responseData)
-  } catch (err) {
-    res.status(500).json(err.message)
-  }
-}
+    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
 
+    if (authAdmin) {
+      const groups = await Group.find();
+      const responseData = groups.map(group => ({
+        name: group.name,
+        members: group.members
+      }));
+
+      return res.json(responseData);
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 
 
@@ -153,22 +165,56 @@ export const getGroups = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
  */
-export const getGroup = async (req, res) => {
+export const getGroup = async (req, res) => {//funziona perfettamente sia per admin che per user regular
   try {
-    const cookie = req.cookies
+
+    const cookie = req.cookies;
     if (!cookie.refreshToken || !cookie.accessToken) {
       return res.status(401).json({ message: "Unauthorized" }) // unauthorized
     }
-    const groupName = req.params.name;
-    const group = await Group.findOne({ name: groupName });
-    if (!group) {
-      return res.status(401).json({ message: `The group ${groupName} does not exist` });
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    //console.log(user);
+    if (!user) return res.status(400).json('user not found')
+
+    if (user.role === "Admin") {
+      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username });
+      if (!authAdmin) {
+        return res.status(401).json({ message: "Unauthorized as Admin" });
+      }
+
+
+      const groupName = req.params.name;
+      const group = await Group.findOne({ name: groupName });
+      if (!group) {
+        return res.status(404).json({ message: `The group ${groupName} does not exist` });
+      }
+      const groupInfo = {
+        name: group.name,
+        members: group.members
+      };
+      return res.status(200).json({ data: groupInfo });
     }
-    const groupInfo = {
-      name: group.name,
-      members: group.members
-    };
-    res.status(200).json({ data: groupInfo });
+
+    if (user.role === "Regular") {
+      const authUser = verifyAuth(req, res, { authType: "User", username: user.username });
+      if (!authUser) {
+        return res.status(401).json({ message: "Unauthorized as User" });
+      }
+
+      // Perform user-related tasks here
+      const groupName = req.params.name;
+      const group = await Group.findOne({ name: groupName, "members.user": user._id });
+      if (!group) {
+        return res.status(401).json({ message: "You don't have permissions to access this group" });
+      }
+      const groupInfo = {
+        name: group.name,
+        members: group.members
+      };
+      return res.status(200).json({ data: groupInfo });
+    }
+
+    //return res.status(401).json({ message: "Unauthorized" });
 
   } catch (err) {
     res.status(500).json(err.message)
@@ -236,7 +282,7 @@ export const addToGroup = async (req, res) => {
       }
     }
     group.members.push(...newMembers);
-    console.log("Da aggiungere: ", newMembers.length,newMembers);
+    console.log("Da aggiungere: ", newMembers.length, newMembers);
     console.log("--------------------------- ");
     //Optional behavior
     const totalToAdd = membersNotFound.length + alreadyInGroup.length;
@@ -338,7 +384,7 @@ export const deleteUser = async (req, res) => {
     const admin = await User.findOne({ refreshToken: cookie.refreshToken })
     if (!admin) return res.status(400).json('admin not found')
     if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
-    
+
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
     if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
 
@@ -370,14 +416,14 @@ export const deleteGroup = async (req, res) => {
     const admin = await User.findOne({ refreshToken: cookie.refreshToken });
     if (!admin) return res.status(400).json('admin not found');
     if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
-    const {name} = req.body;
+    const { name } = req.body;
     const group = await Group.findOne({ name });
     if (!group) {
       return res.status(401).json({ message: `Group ${name} not found` });
     }
     const groupToDelete = await Group.findOneAndDelete({ name });
 
-    
+
     return res.json({ message: `Group ${name} deleted successfully` });
   } catch (err) {
     res.status(500).json(err.message)
