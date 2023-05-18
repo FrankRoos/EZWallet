@@ -14,12 +14,12 @@ FR17	deleteUser	cancel a user   !!!!MISSING !!!!->   //Delete all transaction of
    
 
 -------FR2	Manage groups	------------- Filippo+Angelo
-FR21	createGroup	create a new group
-FR22	getGroups	return all groups
-FR23	getGroup	return info about a specific group
-FR24	addToGroup	add many users to a given group
-FR26	removeFromGroup	remove many users from a given group
-FR28	deleteGroup	cancel a group, users members of the group remain unchanged
+FR21	createGroup	create a new group- Pronto per test
+FR22	getGroups	return all groups- Pronto per test
+FR23	getGroup	return info about a specific group - Pronto per test
+FR24	addToGroup	add many users to a given group - Pronto per test
+FR26	removeFromGroup	remove many users from a given group - !!!!MISSING !!!!
+FR28	deleteGroup	cancel a group, users members of the group remain unchanged - Pronto per test
 
 
 
