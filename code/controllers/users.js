@@ -14,10 +14,10 @@ export const getUsers = async (req, res) => {
   try {
 
     const authAdmin = verifyAuth(req, res, { authType: "Admin" });
- 
+
     const users = await User.find();
-    if(!users) 
-    res.status(200).json([])
+    if (!users)
+      res.status(200).json([])
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json(error.message);
@@ -33,9 +33,9 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
   try {
-    
-    const authAdmin = verifyAuth(req, res,{authType: "Simple"});
-   
+
+    const authAdmin = verifyAuth(req, res, { authType: "Simple" });
+
     const cookie = req.cookies
     const username = req.params.username
 
@@ -235,7 +235,6 @@ export const getGroup = async (req, res) => {//funziona perfettamente sia per ad
     - error 401 is returned if the group does not exist
     - error 401 is returned if all the `memberEmails` either do not exist or are already in a group
  */
-//da finire bisogna fare la versione senza admin anche
 export const addToGroup = async (req, res) => {
   try {
     const cookie = req.cookies;
@@ -378,54 +377,118 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
   try {
-    const cookie = req.cookies
+    const cookie = req.cookies;
     if (!cookie.refreshToken || !cookie.accessToken) {
       return res.status(401).json({ message: "Unauthorized" }) // unauthorized
     }
-    const admin = await User.findOne({ refreshToken: cookie.refreshToken });
-    if (!admin) return res.status(400).json('admin not found');
-    if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" });
-    const groupName = req.body.group.name;
-    const { members } = req.body.group;
-    const group = await Group.findOne({ name: groupName });
-    //existing check of the email in db and if is in the current group
-    const membersNotFound = [];
-    const notInGroup = [];
-    for (const email of members) {
-      const user = await User.findOne({ email });
-      if (!user) {
-        membersNotFound.push(email);
-      } else if (!group.members.includes(user._id)) {
-        notInGroup.push(email);
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    //console.log(user);
+    if (!user) return res.status(400).json('user not found')
+
+    if (user.role === "Admin") {
+      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username });
+      if (!authAdmin) {
+        return res.status(401).json({ message: "Unauthorized as Admin" });
       }
+      //admin logic
+      // Check if the group exists
+      const group = req.body.group;
+      const existingGroup = await Group.findOne({ name: group.name });
+      if (!existingGroup) {
+        return res.status(401).json({ message: "Group does not exist" });
+      }
+      const membersNotFound = [];
+      const notInGroup = [];
+      const removedMembers = [];
+
+      for (const email of group.members) {
+        const member = await User.findOne({ email: email });
+
+        if (!member) {
+          membersNotFound.push(email);
+        } else if (!existingGroup.members.some((member) => member.email === email)) {
+          notInGroup.push(email);
+        } else {
+          removedMembers.push(email);
+        }
+      }
+      const allTheMembers = existingGroup.members.map((member) => member.email);
+      const existingUsers = allTheMembers.filter((email) => !group.members.includes(email));
+      // Delete existingUsers from the group
+      existingGroup.members = existingGroup.members.filter((member) =>
+        existingUsers.includes(member.email)
+      );
+      if (removedMembers.length === 0) {
+        return res.status(200).json({ message: "No members have been removed from the group" });
+      }
+
+      const updatedGroup = await existingGroup.save();
+      return res.status(200).json({
+        message: "Members removed from the group successfully",
+        group: updatedGroup,
+        notInGroup: notInGroup,
+        membersNotFound: membersNotFound,
+      });
     }
-    // Optional behavior
-    const totalToCheck = membersNotFound.length + notInGroup.length;
-    if (totalToCheck === members.length) {
-      return res
-        .status(401)
-        .json({ message: "All the memberEmails either do not exist or are not in the group" });
+    if (user.role === "Regular") {
+      const authUser = verifyAuth(req, res, { authType: "User", username: user.username });
+      if (!authUser) {
+        return res.status(401).json({ message: "Unauthorized as User" });
+      }
+
+      const group = req.body.group;
+      const existingGroup = await Group.findOne({ name: group.name });
+
+      if (!existingGroup) {
+        return res.status(401).json({ message: "Group does not exist" });
+      }
+
+      if (!existingGroup.members.some((member) => member.email === user.email)) {
+        return res.status(401).json({ message: "You are not a member of this group" });
+      }
+
+      const membersNotFound = [];
+      const notInGroup = [];
+      const removedMembers = [];
+
+      for (const email of group.members) {
+        const member = await User.findOne({ email: email });
+
+        if (!member) {
+          membersNotFound.push(email);
+        } else if (!existingGroup.members.some((member) => member.email === email)) {
+          notInGroup.push(email);
+        } else {
+          removedMembers.push(email);
+        }
+      }
+
+      if (removedMembers.length === 0) {
+        return res.status(200).json({ message: "No members have been removed from the group" });
+      }
+
+      const allTheMembers = existingGroup.members.map((member) => member.email);
+      const existingUsers = allTheMembers.filter((email) => !group.members.includes(email));
+
+      existingGroup.members = existingGroup.members.filter((member) =>
+        existingUsers.includes(member.email)
+      );
+
+      const updatedGroup = await existingGroup.save();
+
+      return res.status(200).json({
+        message: "Members removed from the group successfully",
+        group: updatedGroup,
+        notInGroup: notInGroup,
+        membersNotFound: membersNotFound,
+      });
     }
-    // Remove members from the group
-    await User.updateMany({ email: { $in: members } }, { $pull: { groups: group._id } });
-    group.members = group.members.filter((member) => !members.includes(member.email));
 
-    await group.save();
-
-    const data = {
-      group: {
-        name: group.name,
-        members: group.members,
-      },
-      notInGroup,
-      membersNotFound,
-    };
-
-    res.json({ data });
   } catch (err) {
     res.status(500).json(err.message)
   }
 }
+
 
 /**
  * Delete a user
@@ -438,7 +501,7 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    const authAdmin = verifyAuth(req, res,{authType: "Admin"});
+    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
     if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
 
