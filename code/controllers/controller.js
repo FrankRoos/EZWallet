@@ -54,14 +54,13 @@ export const updateCategory = async (req, res) => {
         let find_bycolor = await categories.find({ color: req.body.color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
         if (color_found[0] && old_type === req.body.type)
-            return res.status(401).json({ message: "Color alredy used" })
+            return res.status(401).json({ message: "Color already used" })
 
         if (old_type != req.body.type) {
-            console.log("miao")
             let find_bytype = await categories.find({ type: req.body.type });
             let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
             if (category_found[0])
-                return res.status(401).json({ message: "Category type alredy exists" })
+                return res.status(401).json({ message: "Category type already exists" })
             //check sul colore nuovo 
             let find_bycolor = await categories.find({ color: req.body.color });
             let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
@@ -77,12 +76,19 @@ export const updateCategory = async (req, res) => {
         }
         //found by type 
         let update = await categories.findOneAndUpdate({ type: old_type }, { type: req.body.type, color: req.body.color })
+        let data = { message: "Category updated successfully" };
 
         //da sistemare count-->> vedi descrizione funzione
-        res.json("1")
-
-
-
+        if(old_type != req.body.type) {
+            const transactionsList = await transactions.updateMany({type: old_type}, {type: req.body.type});
+            data.count = transactionsList.modifiedCount;
+        }
+        else {
+            let num= await transactions.count({type: old_type});
+            data.count = num;
+        }
+        
+        res.status(200).json(data);
 
     } catch (error) {
         res.status(400).json({ error: error.message })
