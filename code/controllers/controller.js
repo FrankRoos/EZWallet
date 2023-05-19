@@ -105,14 +105,7 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.refreshToken || !cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        const admin = await User.findOne({ refreshToken: cookie.refreshToken })
-        if (!admin) return res.status(400).json('admin not found')
-        if (admin.role != "Admin") return res.status(401).json({ message: "You don't have permissions" })
-
+        const authAdmin = verifyAuth(req, res,{authType: "Admin"});
         const array_category = req.body.array  
         if (!array_category.length)  return res.status(401).json({ message: "Missing values" })
         //check categories
@@ -122,18 +115,23 @@ export const deleteCategory = async (req, res) => {
                 return res.status(401).json({ message: "You inserted an invalid category" })
        }
        
- 
-       
-  
+        
+        let data = {message: "Success",count: 0}
+        let counter=0;
          //delete categories
          for (let category of array_category){
+          let find_transaction= await transactions.updateMany({type: category},{type: "investement"})
+            counter+=find_transaction.modifiedCount
           let find_delete= await  categories.findOneAndDelete({ type: category });
-         }
+         }    
+         data.count=counter
+          
+
 
 
              //da sistemare la parte sulle transaction 
         
-         res.json("1")
+         res.json(data)
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
