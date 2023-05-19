@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken'
+import { get } from 'mongoose'
+import { removeAllListeners } from 'nodemon'
 
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
@@ -9,6 +11,38 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
+    const {date,from, upTo}=req.query 
+try{
+
+    if (date && (from|| upTo))
+    throw  new Error("Cannot use 'date' together with 'from' or 'Upto")
+  
+
+    if (date)
+    return {date: {$eq:  from}} 
+    if (from)  
+    return {date: {$gte:  from}} 
+    if (upTo) 
+     return {date: {$lte:  upTo}} 
+
+
+     if (from && upTo)  
+     return {date: {$gte: from , $lte: upTo}}
+
+
+     return {};
+
+
+}catch(error)
+{
+    if(error.message==="Cannot use 'date' together with 'from' or 'Upto")
+      res.status(401).json(error.message)
+    else
+      res.status(400).json({error: error.message})
+
+}
+
+
 }
 
 /**
