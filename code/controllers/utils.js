@@ -1,6 +1,4 @@
 import jwt from 'jsonwebtoken'
-import { get } from 'mongoose'
-import { removeAllListeners } from 'nodemon'
 
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
@@ -11,38 +9,31 @@ import { removeAllListeners } from 'nodemon'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
-    const {date,from, upTo}=req.query 
-try{
+    const { date, from, upTo } = req.query
+    try {
 
-    if (date && (from|| upTo))
-    throw  new Error("Cannot use 'date' together with 'from' or 'Upto")
-  
+        if (date && (from || upTo))
+            throw new Error("Cannot use 'date' together with 'from' or 'Upto")
 
-    if (date)
-    return {date: {$eq:  from}} 
-    if (from)  
-    return {date: {$gte:  from}} 
-    if (upTo) 
-     return {date: {$lte:  upTo}} 
-
-
-     if (from && upTo)  
-     return {date: {$gte: from , $lte: upTo}}
-
-
-     return {};
+        if (date)
+            return { 'date': { $eq: new Date(date) } }
+        if (from && upTo)
+            return { 'date': { $gte: new Date(from), $lte: new Date(upTo) } }
+        if (from)
+            return { 'date': { $gte: new Date(from) } }
+        if (upTo)
+            return { 'date': { $lte: new Date(upTo) } }
+    
+        return {};
 
 
-}catch(error)
-{
-    if(error.message==="Cannot use 'date' together with 'from' or 'Upto")
-      res.status(401).json(error.message)
-    else
-      res.status(400).json({error: error.message})
+    } catch (error) {
+        if (error.message === "Cannot use 'date' together with 'from' or 'Upto")
+            res.status(401).json(error.message)
+        else
+            res.status(400).json({ error: error.message })
 
-}
-
-
+    }
 }
 
 /**
@@ -91,19 +82,19 @@ export const verifyAuth = (req, res, info) => {
             res.status(401).json({ message: "Mismatched users" });
             return false;
         }
-        if(info.authType === "User" && decodedAccessToken.username !== info.username) {
+        if (info.authType === "User" && decodedAccessToken.username !== info.username) {
             res.status(401).json({ message: "Tokens have a different username from the requested one" });
             return false;
         }
-        if(info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
+        if (info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
             res.status(401).json({ message: "You are not an Admin" });
             return false;
         }
-        if(info.authType === "Group" && info.emailList.includes(decodedAccessToken.email)) {
+        if (info.authType === "Group" && info.emailList.includes(decodedAccessToken.email)) {
             res.status(401).json({ message: "Your email is not the group" });
             return false;
         }
-        
+
         return true
     } catch (err) {
         if (err.name === "TokenExpiredError" || !cookie.accessToken) {
@@ -117,16 +108,16 @@ export const verifyAuth = (req, res, info) => {
                 }, process.env.ACCESS_KEY, { expiresIn: '1h' })
                 res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
                 res.locals.message = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
-                
-                if(info.authType === "User" && decodedRefreshToken.username !== info.username) {
+
+                if (info.authType === "User" && decodedRefreshToken.username !== info.username) {
                     res.status(401).json({ message: "Tokens have a different username from the requested one" });
                     return false;
                 }
-                if(info.authType === "Admin" && decodedRefreshToken.role !== "Admin") {
+                if (info.authType === "Admin" && decodedRefreshToken.role !== "Admin") {
                     res.status(401).json({ message: "You are not an Admin" });
                     return false;
                 }
-                if(info.authType === "Group" && !info.emailList.includes(decodedRefreshToken.email)) {
+                if (info.authType === "Group" && !info.emailList.includes(decodedRefreshToken.email)) {
                     res.status(401).json({ message: "Your email is not the group" });
                     return false;
                 }
@@ -155,4 +146,29 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
+    const { amount, min, max } = req.query
+    try {
+
+        if (amount && (min || max))
+            throw new Error("Cannot use 'amount' together with 'min' or 'max")
+
+        if (amount)
+            return { 'amount': { $eq: parseFloat(amount) } }
+        if (min && max)
+            return { 'amount': { $gte: parseFloat(min), $lte: parseFloat(max) } }
+        if (min)
+            return { 'amount': { $gte: parseFloat(min) } }
+        if (max)
+            return { 'amount': { $lte: parseFloat(max) } }
+    
+        return {};
+
+
+    } catch (error) {
+        if (error.message === "Cannot use 'amount' together with 'min' or 'max")
+            res.status(401).json(error.message)
+        else
+            res.status(400).json({ error: error.message })
+
+    }
 }

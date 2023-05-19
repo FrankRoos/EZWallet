@@ -266,6 +266,9 @@ export const getTransactionsByUser = async (req, res) => {
         // Verify the authentication
         if (verifyAuth(req, res, info)) {
             // Do the query
+            const objDate = handleDateFilterParams(req);
+            const objAmount = handleAmountFilterParams(req);
+            
             let selectedTransactions = await transactions.aggregate([
                 {
                     $lookup: {
@@ -276,9 +279,18 @@ export const getTransactionsByUser = async (req, res) => {
                     }
                 },
                 {
-                    $match: { 'username': info.username }
+                    $match: {
+                        $and: [
+                            { 'username': info.username }, 
+                            // { 'date': obj.date },
+                            objDate,
+                            objAmount
+                        ]
+
+                    }
                 },
-                { $unwind: "$categories_info" }
+                { $unwind: "$categories_info" },
+                
             ]);
 
             selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
