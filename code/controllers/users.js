@@ -506,12 +506,20 @@ export const deleteUser = async (req, res) => {
     if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
 
     //Delete all transaction of existingUser and retrieve the number.
-
+    const transaction = await transactions.deleteMany({ username: existingUser.username });
     //delete the user from all existing group.... che partecapita
+    let data = { deleteTransactions: transaction.deletedCount, deletedFromGroup: false}
 
+    const group = await Group.findOne({ "members.email": existingUser.email });
 
+    if (group) {
+      group.members = group.members.filter((member) => member.email !== existingUser.email);
+      await group.save();
+      data.deletedFromGroup = true;
+    }
+    
     //delete users .....
-    res.status(200).json("ok")
+    res.status(200).json(data)
   } catch (err) {
     res.status(500).json(err.message)
   }
