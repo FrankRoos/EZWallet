@@ -183,20 +183,21 @@ export const getGroup = async (req, res) => {//funziona perfettamente sia per ad
     }
 
     if (user.role === "Regular") {
-      const authUser = verifyAuth(req, res, { authType: "User", username: user.username });
-      if (!authUser) {
-        return res.status(401).json({ message: "Unauthorized as User" });
-      }
       const groupName = req.params.name;
-      const group = await Group.findOne({ name: groupName, "members.user": user._id });
+      const group = await Group.findOne({ name: groupName });
       if (!group) {
-        return res.status(401).json({ message: "You don't have permissions to access this group" });
+        return res.status(401).json({ message: `The group ${groupName} does not exist` });
       }
-      const groupInfo = {
-        name: group.name,
-        members: group.members
-      };
-      return res.status(200).json({ data: groupInfo });
+      //console.log("Group.members: ",group.members,"groupName: ", groupName);
+      //const emailList1 = group.members.map(member => member.email);
+      //console.log(emailList1)
+      if(verifyAuth(req, res, { authType: "Group",  emailList : group.members })){
+        return res.status(200).json({
+          data: {
+            name: group.name,
+            members: group.members
+        }});
+      }
     }
   } catch (err) {
     res.status(500).json(err.message)
@@ -221,7 +222,8 @@ export const addToGroup = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" }) // unauthorized
     }
     const user = await User.findOne({ refreshToken: cookie.refreshToken });
-    if (!user) return res.status(400).json('user not found')
+    if (!user) return res.status(400).json('user not found');
+    
     if (user.role === "Admin") {
       const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username });
       if (!authAdmin) {
@@ -287,24 +289,14 @@ export const addToGroup = async (req, res) => {
     }
 
     if (user.role === "Regular") {
-      //User things
-      const authUser = verifyAuth(req, res, { authType: "User", username: user.username });
-      if (!authUser) {
-        return res.status(401).json({ message: "Unauthorized as User" });
-      }
+      //User things   
       const { name } = req.params;
-      if (!name || name.trim() === "") {
-        return res.status(401).json({ message: "Group name is NULL or empty" });
-      }
       const group = await Group.findOne({ name: name });
       if (!group) {
         return res.status(401).json({ message: "Group does not exist" });
-      }
-
-      //checking if the member is a member of the group
-      const isMember = group.members.some(member => member.email === user.email);
-      if (!isMember) {
-        return res.status(401).json({ message: "You are not a member of the group" });
+      }   
+      if (!name || name.trim() === "") {
+        return res.status(401).json({ message: "Group name is NULL or empty" });
       }
 
       const { memberEmails } = req.body;//gets the array of emails on the body
@@ -337,21 +329,20 @@ export const addToGroup = async (req, res) => {
       if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
         return res.status(400).json({ message: "The member emails you provided either don't exist or are already in the group" });
       }
-
-      await group.save();
-      const responseData = {
-        group: {
-          name: group.name,
-          members: group.members,
-        },
-        alreadyInGroup,
-        membersNotFound,
-      };
-
-      return res.json(responseData);
-
+      //console.log(group.members);
+      if(verifyAuth(req, res, { authType: "Group", emailList: group.members })){
+        const responseData = {
+          group: {
+            name: group.name,
+            members: group.members,
+          },
+          alreadyInGroup,
+          membersNotFound,
+        };
+        await group.save();
+        return res.status(200).json(responseData);
+      }
     }
-
   } catch (err) {
     res.status(500).json(err.message)
   }
@@ -434,19 +425,11 @@ export const removeFromGroup = async (req, res) => {
       });
     }
     if (user.role === "Regular") {
-      //user logic
-      const authUser = verifyAuth(req, res, { authType: "User", username: user.username });
-      if (!authUser) {
-        return res.status(401).json({ message: "Unauthorized as User" });
-      }
-
-      
+      //user logic      
       const existingGroup = await Group.findOne({ name: group.name });
-
       if (!existingGroup) {
         return res.status(401).json({ message: "Group does not exist" });
       }
-
       if (!existingGroup.members.some((member) => member.email === user.email)) {
         return res.status(401).json({ message: "You are not a member of this group" });
       }
@@ -481,15 +464,18 @@ export const removeFromGroup = async (req, res) => {
       if (removedMembers.length === 0) {
         return res.status(200).json({ message: "No members have been removed from the group" });
       }
-      
-      const updatedGroup = await existingGroup.save();
-      return res.status(200).json({
-        message: "Members removed from the group successfully",
-        group: updatedGroup,
-        removedMembers: removedMembers,
-        notInGroup: notInGroup,
-        membersNotFound: membersNotFound,
-      });
+      if(verifyAuth(req, res, {authType: "Group", emailList: existingGroup.members})){
+        const updatedGroup = await existingGroup.save();
+        const responseData = {
+          message: "Members removed from the group successfully",
+          group: updatedGroup,
+          removedMembers: removedMembers,
+          notInGroup: notInGroup,
+          membersNotFound: membersNotFound
+        };
+        
+        return res.status(200).json(responseData);
+      }
     }
 
   } catch (err) {
