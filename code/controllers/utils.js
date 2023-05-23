@@ -90,9 +90,13 @@ export const verifyAuth = (req, res, info) => {
             res.status(401).json({ message: "You are not an Admin" });
             return false;
         }
-        if (info.authType === "Group" && info.emailList.includes(decodedAccessToken.email)) {
-            res.status(401).json({ message: "Your email is not the group" });
-            return false;
+        if (info.authType === "Group" && info.emailList) {
+            
+            const userHasAccess = info.emailList.some(x => x.email === decodedAccessToken.email);
+            if (!userHasAccess) {
+                res.status(401).json({ message: "Your email is not in the group" });
+                return false;
+            }
         }
 
         return true
