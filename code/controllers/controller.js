@@ -9,7 +9,8 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth, handleNum
  */
 export const createCategory = async (req, res) => {
     try {
-        if (verifyAuth(req, res, { authType: "Admin" })) {
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        if (verifyAuth(req, res, { authType: "Admin"  ,token: user?user.refreshToken:0})) {
             const { type, color } = req.body;
             /*if (color === "") return res.status(401).json({ message: "Missing Color" })
             if (type === "") return res.status(401).json({ message: "Missing Type" })*/
@@ -45,7 +46,9 @@ export const createCategory = async (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         //{type:new color:new}
-        if (verifyAuth(req, res, { authType: "Admin" })) {
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        
+        if (verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0})) {
             /*if (req.body.color === "") return res.status(401).json({ message: "Missing Color" })
             if (req.body.type === "") return res.status(401).json({ message: "Missing Type" })*/
             const { type, color } = req.body;
@@ -110,7 +113,9 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
     try {
-        if (verifyAuth(req, res, { authType: "Admin" })) {
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        
+        if (verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0})) {
             const array_category = req.body.array
             if (!array_category.length) return res.status(401).json({ message: "Missing values" })
             //check categories
@@ -153,7 +158,7 @@ export const deleteCategory = async (req, res) => {
 export const getCategories = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        if (verifyAuth(req, res, { authType: "User/Admin", token: user?user.refreshToken:0 })) {
+        if (verifyAuth(req, res, { authType: "User/Admin", username: user.username ,token: user?user.refreshToken:0 })) {
             let data = await categories.find({})
 
             if (!data)
@@ -178,7 +183,7 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        info = { authType: "User", username: req.body.username, token: user?user.refreshToken:0 }
+        info = { authType: "User/Admin", username: req.params.username, token: user?user.refreshToken:0 }
         info.username = handleString(username, "username")
 
         if (verifyAuth(req, res, info)) {
@@ -227,7 +232,10 @@ export const createTransaction = async (req, res) => {
  */
 export const getAllTransactions = async (req, res) => {
     try {
-        if (verifyAuth(req, res, { authType: "Admin" })) {
+            
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        
+        if (verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0})) {
             /**
              * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
              */
@@ -333,15 +341,16 @@ export const getTransactionsByUser = async (req, res) => {
 export const getTransactionsByUserByCategory = async (req, res) => {
     try {
         let info = {};
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
             // /transactions/users/:username/category/:category
-            info = { authType: "Admin", username: req.params.username, category: req.params.category };
+            info = { authType: "Admin", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category"),token: user?user.refreshToken:0 };
 
         } else {
             // /users/:username/transactions/category/:category
-            info = { authType: "User", username: req.params.username, category: req.params.category };
+            info = { authType: "User", username:handleString(req.params.username, "username"), category: handleString(req.params.category, "category"),token: user?user.refreshToken:0 };
         }
 
         // Verify the authentication
@@ -403,15 +412,16 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 export const getTransactionsByGroup = async (req, res) => {
     try {
         let info = {};
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name
-            info = { authType: "Admin", groupName: handleString(req.params.name, "name") };
+            info = { authType: "Admin", groupName: handleString(req.params.name, "name"),token: user?user.refreshToken:0  };
 
         } else {
             // /groups/:name/transactions
-            info = { authType: "Group", groupName: handleString(req.params.name, "name") };
+            info = { authType: "Group", groupName: handleString(req.params.name, "name"),token: user?user.refreshToken:0  };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -474,15 +484,16 @@ export const getTransactionsByGroup = async (req, res) => {
 export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
         let info = {};
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name/category/:category
-            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") };
+            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") ,token: user?user.refreshToken:0 };
 
         } else {
             // /groups/:name/transactions/category/:category
-            info = { authType: "Group", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") };
+            info = { authType: "Group", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") ,token: user?user.refreshToken:0 };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -547,13 +558,17 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         // /users/:username/transactions   
-        const info = { authType: "User", username: handleString(req.params.username, "username") };
+
+        const token_user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const info = { authType: "User/Admin", username: handleString(req.params.username, "username"),token: token_user?token_user.refreshToken:0  };
 
         const user = await User.findOne({ username: info.username });
         if (!user)
             throw new Error("User not found");
 
         const idTransaction = req.body._id;
+        if (!id.match(/[0-9a-fA-F]{24}$/))
+                    throw new Error("Invalid ID")
         const transaction = await transactions.findOne({ _id: idTransaction });
         if (!transaction)
             throw new Error("Transaction not found");
@@ -581,7 +596,8 @@ export const deleteTransaction = async (req, res) => {
 export const deleteTransactions = async (req, res) => {
     try {
         // /transactions
-        const info = { authType: "Admin" };
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const info = { authType: "Admin" ,token: user?user.refreshToken:0 };
 
         if (verifyAuth(req, res, info)) {
             let ids = req.body._ids.map(element => {

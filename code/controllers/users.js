@@ -12,8 +12,8 @@ import jwt from 'jsonwebtoken';
  */
 export const getUsers = async (req, res) => {
   try {
-
-    if(verifyAuth(req, res, { authType: "Admin" })){
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+    if(verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0 })){
 
     const users = await User.find();
     const emptyArray = [];
@@ -45,18 +45,12 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
   try {
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
     let username = req.params.username;
     username=handleString(username, "username");
-    if (verifyAuth(req, res, { authType: "User/Admin", username: username })) {
 
-      const cookie = req.cookies
-      
-     
+    if (verifyAuth(req, res, { authType: "User/Admin", username: username ,token: user?user.refreshToken:0 })) {
 
-
-      const user = await User.findOne({ refreshToken: cookie.refreshToken })
-      if (!user) return res.status(401).json({ message: "User not found" })
-      if (user.username !== username && user.role != "Admin") return res.status(401).json({ message: "Unauthorized" })
       const usersearch = await User.findOne({ username: username })
       if (!usersearch) return res.status(401).json({ message: "User not found" })
       res.status(200).json({
@@ -85,13 +79,10 @@ export const getUser = async (req, res) => {
 
 export const createGroup = async (req, res) => {
   try {
-    if (verifyAuth(req, res, { authType: "Simple" })) {
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
+    if (verifyAuth(req, res, { authType: "User/Admin" , username: user.username ,token: user?user.refreshToken:0 })) {
       let { name, memberEmails } = req.body;
       name = handleString(name, "name");
-
-      if (!name || name.trim() === "") {
-        return res.status(400).json({ message: "Group name cannot be NULL or empty" });
-      }
       for (const email of memberEmails) {
         const existingUserInGroup = await Group.findOne({ 'members.email': email });
 
@@ -155,7 +146,8 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
   try {
-    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
+    const authAdmin = verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0 });
 
     if (authAdmin) {
       const groups = await Group.find();
@@ -186,14 +178,10 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {//funziona perfettamente sia per admin che per user regular
   try {
-
-    const cookie = req.cookies;
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
     const user = await User.findOne({ refreshToken: cookie.refreshToken });
+   
     if (user.role === "Admin") {
-      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username });
+      const authAdmin = verifyAuth(req, res, { authType: "Admin",token: user?user.refreshToken:0  });
       if (!authAdmin) {
         return res.status(401).json({ message: "Unauthorized as Admin" });
       }
@@ -225,7 +213,7 @@ export const getGroup = async (req, res) => {//funziona perfettamente sia per ad
       //const emailList1 = group.members.map(member => member.email);
       //console.log(emailList1)
 
-      if (verifyAuth(req, res, { authType: "Group", emailList: group.members })) {
+      if (verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email) ,token : user?user.refreshToken:0 })) {
         groupInfo = {
           name: group.name,
           members: group.members
@@ -253,15 +241,12 @@ export const getGroup = async (req, res) => {//funziona perfettamente sia per ad
  */
 export const addToGroup = async (req, res) => {
   try {
-    const cookie = req.cookies;
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
+ 
     const user = await User.findOne({ refreshToken: cookie.refreshToken });
     if (!user) return res.status(400).json('user not found');
 
     if (user.role === "Admin") {
-      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username });
+      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username ,token: user?user.refreshToken:0  });
       if (!authAdmin) {
         return res.status(401).json({ message: "Unauthorized as Admin" });
       }
@@ -361,7 +346,7 @@ export const addToGroup = async (req, res) => {
         return res.status(400).json({ message: "The member emails you provided either don't exist or are already in the group" });
       }
       //console.log(group.members);
-      if (verifyAuth(req, res, { authType: "Group", emailList: group.members })) {
+      if (verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email), token: user?user.refreshToken:0 } )) {
         const responseData = {
           data: {
             group: {
@@ -393,10 +378,7 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
   try {
-    const cookie = req.cookies;
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-    }
+ 
     const user = await User.findOne({ refreshToken: cookie.refreshToken });
     //console.log(user);
     if (!user) return res.status(400).json('user not found');
@@ -410,7 +392,7 @@ export const removeFromGroup = async (req, res) => {
     }
 
     if (user.role === "Admin") {
-      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username });
+      const authAdmin = verifyAuth(req, res, { authType: "Admin", username: user.username ,token: user?user.refreshToken:0 });
       if (!authAdmin) {
         return res.status(401).json({ message: "Unauthorized as Admin" });
       }
@@ -504,7 +486,7 @@ export const removeFromGroup = async (req, res) => {
       if (removedMembers.length === 0) {
         return res.status(200).json({ message: "No members have been removed from the group" });
       }
-      if (verifyAuth(req, res, { authType: "Group", emailList: existingGroup.members })) {
+      if (verifyAuth(req, res, { authType: "Group", emailList: existingGroup.members.map(member => member.email) ,token: user?user.refreshToken:0 })) {
         const updatedGroup = await existingGroup.save();
         return res.status(200).json({
           data: {
@@ -537,7 +519,9 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
+     const user = await User.findOne({ refreshToken: cookie.refreshToken });
+      if( verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0  }))
+        {
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
     if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
 
@@ -561,6 +545,7 @@ export const deleteUser = async (req, res) => {
       },
       message: res.locals.message
     })
+  }
   } catch (err) {
     res.status(500).json(err.message)
   }
@@ -575,7 +560,8 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
   try {
-    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    const authAdmin = verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0 });
     if (authAdmin) {
       let { name } = req.body;
       name = handleString(name, "name");

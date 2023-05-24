@@ -90,7 +90,7 @@ export const verifyAuth = (req, res, info) => {
             res.status(401).json({ message: "You are not an Admin" });
             return false;
         }
-        if(info.authType === "User/Admin" && decodedAccessToken.role !== "Admin" && decodedAccessToken.username !== info.username){
+        if (info.authType === "User/Admin" &&  (decodedAccessToken.role !== "Admin" && decodedAccessToken.username !== info.username)){
             res.status(401).json({ message: "Tokens have a different username from the requested one" });
             return false;
         }  
