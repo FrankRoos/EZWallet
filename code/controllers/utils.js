@@ -63,7 +63,7 @@ export const handleDateFilterParams = (req) => {
  */
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
-    if (!cookie.accessToken && !cookie.refreshToken) {
+    if (!cookie.accessToken || !cookie.refreshToken || !info.token) {
         res.status(401).json({ message: "Unauthorized" });
         return false;
     }
@@ -90,15 +90,18 @@ export const verifyAuth = (req, res, info) => {
             res.status(401).json({ message: "You are not an Admin" });
             return false;
         }
+        if(info.authType === "User/Admin" && decodedAccessToken.role !== "Admin" && decodedAccessToken.username !== info.username){
+            res.status(401).json({ message: "Tokens have a different username from the requested one" });
+            return false;
+        }  
         if (info.authType === "Group" && info.emailList) {
             
-            const userHasAccess = info.emailList.some(x => x.email === decodedAccessToken.email);
+            const userHasAccess = info.emailList.some(x => x === decodedAccessToken.email);
             if (!userHasAccess) {
                 res.status(401).json({ message: "Your email is not in the group" });
                 return false;
             }
         }
-
         return true
     } catch (err) {
         if (err.name === "TokenExpiredError" || !cookie.accessToken) {
@@ -121,9 +124,13 @@ export const verifyAuth = (req, res, info) => {
                     res.status(401).json({ message: "You are not an Admin" });
                     return false;
                 }
+                if(info.authType === "User/Admin" && decodedRefreshToken.role !== "Admin" && decodedRefreshToken.username !== info.username){
+                        res.status(401).json({ message: "Tokens have a different username from the requested one" });
+                        return false;
+                    }               
                 if (info.authType === "Group" && info.emailList) {
             
-                    const userHasAccess = info.emailList.some(x => x.email === decodedAccessToken.email);
+                    const userHasAccess = info.emailList.some(x => x.email === decodedRefreshToken.email);
                     if (!userHasAccess) {
                         res.status(401).json({ message: "Your email is not in the group" });
                         return false;
@@ -179,4 +186,27 @@ export const handleAmountFilterParams = (req) => {
             res.status(400).json({ error: error.message })
 
     }
+}
+
+export const handleString = (string, nameVar) => {
+    if(!string)
+        throw new Error("Empty string: " + nameVar)
+    else if(typeof(string) !="string" ) 
+        throw new Error("Invalid format of " + nameVar) 
+    else{
+        return string.trim().toLowerCase()
+    }
+
+}
+
+export const handleNumber = (number, nameVar) => {
+    
+    if(!number)
+        throw new Error("Missing value: " + nameVar)
+    else if(typeof(number)==="string" && isNaN(Number(number)) || (typeof(number)!=="number" && typeof(number)!=="string")) 
+        throw new Error("Invalid format of " + nameVar)
+    else{
+        return Number(number);
+    }
+
 }

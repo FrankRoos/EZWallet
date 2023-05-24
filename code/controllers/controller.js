@@ -1,6 +1,6 @@
 import { categories, transactions } from "../models/model.js";
 import { Group, User } from "../models/User.js";
-import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./utils.js";
+import { handleDateFilterParams, handleAmountFilterParams, verifyAuth, handleNumber, handleString } from "./utils.js";
 
 /**
  * Create a new category
@@ -9,25 +9,26 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
  */
 export const createCategory = async (req, res) => {
     try {
-        const authAdmin = verifyAuth(req, res,{authType: "Admin"});
-        const { type, color } = req.body;
-        if (color === "") return res.status(401).json({ message: "Missing Color" })
-        if (type === "") return res.status(401).json({ message: "Missing Type" })
+        if (verifyAuth(req, res, { authType: "Admin" })) {
+            const { type, color } = req.body;
+            if (color === "") return res.status(401).json({ message: "Missing Color" })
+            if (type === "") return res.status(401).json({ message: "Missing Type" })
 
-        let find_bytype = await categories.find({ type: type });
-        let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
+            let find_bytype = await categories.find({ type: type });
+            let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            if (category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
 
-        let find_bycolor = await categories.find({ color: color });
-        let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (color_found[0]) return res.status(401).json({ message: "Color alredy used" })
+            let find_bycolor = await categories.find({ color: color });
+            let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            if (color_found[0]) return res.status(401).json({ message: "Color alredy used" })
 
 
 
-        const new_categories = new categories({ type, color });
-        new_categories.save()
-            .then(data => res.json(data))
-            .catch(err => { throw err })
+            const new_categories = new categories({ type, color });
+            new_categories.save()
+                .then(data => res.json(data))
+                .catch(err => { throw err })
+        }
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -44,51 +45,52 @@ export const createCategory = async (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         //{type:new color:new}
-        const authAdmin = verifyAuth(req, res,{authType: "Admin"});
-        const { new_type, new_color } = req.body;
-        if (req.body.color === "") return res.status(401).json({ message: "Missing Color" })
-        if (req.body.type === "") return res.status(401).json({ message: "Missing Type" })
-        let old_type = req.params.type;
+        if (verifyAuth(req, res, { authType: "Admin" })) {
+            const { new_type, new_color } = req.body;
+            if (req.body.color === "") return res.status(401).json({ message: "Missing Color" })
+            if (req.body.type === "") return res.status(401).json({ message: "Missing Type" })
+            let old_type = req.params.type;
 
 
-        let find_bycolor = await categories.find({ color: req.body.color });
-        let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (color_found[0] && old_type === req.body.type)
-            return res.status(401).json({ message: "Color already used" })
-
-        if (old_type != req.body.type) {
-            let find_bytype = await categories.find({ type: req.body.type });
-            let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-            if (category_found[0])
-                return res.status(401).json({ message: "Category type already exists" })
-            //check sul colore nuovo 
             let find_bycolor = await categories.find({ color: req.body.color });
             let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-
-            let old_color_find = await categories.find({ type: old_type });
-            let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
-            let old_color = old_color_found[0].color;
-            if (color_found[0] && old_color != req.body.color)
+            if (color_found[0] && old_type === req.body.type)
                 return res.status(401).json({ message: "Color already used" })
 
+            if (old_type != req.body.type) {
+                let find_bytype = await categories.find({ type: req.body.type });
+                let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
+                if (category_found[0])
+                    return res.status(401).json({ message: "Category type already exists" })
+                //check sul colore nuovo 
+                let find_bycolor = await categories.find({ color: req.body.color });
+                let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+
+                let old_color_find = await categories.find({ type: old_type });
+                let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
+                let old_color = old_color_found[0].color;
+                if (color_found[0] && old_color != req.body.color)
+                    return res.status(401).json({ message: "Color already used" })
 
 
-        }
-        //found by type 
-        let update = await categories.findOneAndUpdate({ type: old_type }, { type: req.body.type, color: req.body.color })
-        let data = { message: "Category updated successfully" };
 
-        //da sistemare count-->> vedi descrizione funzione
-        if(old_type != req.body.type) {
-            const transactionsList = await transactions.updateMany({type: old_type}, {type: req.body.type});
-            data.count = transactionsList.modifiedCount;
+            }
+            //found by type 
+            let update = await categories.findOneAndUpdate({ type: old_type }, { type: req.body.type, color: req.body.color })
+            let data = { message: "Category updated successfully" };
+
+            //da sistemare count-->> vedi descrizione funzione
+            if (old_type != req.body.type) {
+                const transactionsList = await transactions.updateMany({ type: old_type }, { type: req.body.type });
+                data.count = transactionsList.modifiedCount;
+            }
+            else {
+                let num = await transactions.count({ type: old_type });
+                data.count = num;
+            }
+
+            res.status(200).json(data);
         }
-        else {
-            let num= await transactions.count({type: old_type});
-            data.count = num;
-        }
-        
-        res.status(200).json(data);
 
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -105,33 +107,34 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
     try {
-        const authAdmin = verifyAuth(req, res,{authType: "Admin"});
-        const array_category = req.body.array  
-        if (!array_category.length)  return res.status(401).json({ message: "Missing values" })
-        //check categories
-       for (let category of array_category){
-        let check_exist= await  categories.findOne({ type: category });
-            if (!check_exist)
-                return res.status(401).json({ message: "You inserted an invalid category" })
-       }
-       
-        
-        let data = {message: "Success",count: 0}
-        let counter=0;
-         //delete categories
-         for (let category of array_category){
-          let find_transaction= await transactions.updateMany({type: category},{type: "investement"})
-            counter+=find_transaction.modifiedCount
-          let find_delete= await  categories.findOneAndDelete({ type: category });
-         }    
-         data.count=counter
-          
+        if (verifyAuth(req, res, { authType: "Admin" })) {
+            const array_category = req.body.array
+            if (!array_category.length) return res.status(401).json({ message: "Missing values" })
+            //check categories
+            for (let category of array_category) {
+                let check_exist = await categories.findOne({ type: category });
+                if (!check_exist)
+                    return res.status(401).json({ message: "You inserted an invalid category" })
+            }
+
+
+            let data = { message: "Success", count: 0 }
+            let counter = 0;
+            //delete categories
+            for (let category of array_category) {
+                let find_transaction = await transactions.updateMany({ type: category }, { type: "investement" })
+                counter += find_transaction.modifiedCount
+                let find_delete = await categories.findOneAndDelete({ type: category });
+            }
+            data.count = counter
 
 
 
-             //da sistemare la parte sulle transaction 
-        
-         res.json(data)
+
+            //da sistemare la parte sulle transaction 
+
+            res.json(data)
+        }
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -146,15 +149,16 @@ export const deleteCategory = async (req, res) => {
  */
 export const getCategories = async (req, res) => {
     try {
-        const authAdmin = verifyAuth(req, res,{authType: "Simple"});
-        let data = await categories.find({})
+        if (verifyAuth(req, res, { authType: "Simple" })) {
+            let data = await categories.find({})
 
-        if (!data)
-        return res.json([])  //if no categories
+            if (!data)
+                return res.json([])  //if no categories
 
-        let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
-        return res.json(filter)
+            return res.json(filter)
+        }
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -170,10 +174,11 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const cookie = req.cookies
-        
-        if (verifyAuth(req, res, { authType: "User", username: req.body.username })) {
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
 
-            const { username, amount, type } = req.body;
+        if (verifyAuth(req, res, { authType: "User", username: req.body.username, token: user?user.refreshToken:0 })) {
+
+            let { username, amount, type } = req.body;
             const category = await categories.findOne({ type: type });
             const user = await User.findOne({ username });
 
@@ -184,16 +189,22 @@ export const createTransaction = async (req, res) => {
             else if (!user)
                 throw new Error("Username Not Found")
 
+            username = handleString(username, username)
+            type = handleString(type, type)
+            amount = handleNumber(amount, "amount")
             const newTransaction = new transactions({ username, amount, type: category.type });
             const transactionSaved = await newTransaction
                 .save()
                 .catch((err) => { throw err; })
 
             res.json({
-                username: transactionSaved.username,
-                amount: transactionSaved.amount,
-                type: transactionSaved.type,
-                date: transactionSaved.date
+                data: {
+                    username: transactionSaved.username,
+                    amount: transactionSaved.amount,
+                    type: transactionSaved.type,
+                    date: transactionSaved.date
+                },
+                message: res.locals.message
             })
 
         }
@@ -212,27 +223,25 @@ export const createTransaction = async (req, res) => {
  */
 export const getAllTransactions = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        if (verifyAuth(req, res, { authType: "Admin" })) {
+            /**
+             * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
+             */
+            transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                { $unwind: "$categories_info" }
+            ]).then((result) => {
+                let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
+                res.json(data);
+            }).catch(error => { throw (error) })
         }
-        /**
-         * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
-         */
-        transactions.aggregate([
-            {
-                $lookup: {
-                    from: "categories",
-                    localField: "type",
-                    foreignField: "type",
-                    as: "categories_info"
-                }
-            },
-            { $unwind: "$categories_info" }
-        ]).then((result) => {
-            let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
-            res.json(data);
-        }).catch(error => { throw (error) })
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -250,25 +259,28 @@ export const getAllTransactions = async (req, res) => {
 export const getTransactionsByUser = async (req, res) => {
     try {
         let info = {};
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
-            info = { authType: "Admin", username: req.params.username };
+            info = { authType: "Admin", username: req.params.username, token: user?user.refreshToken:0 };
 
         } else {
-            info = { authType: "User", username: req.params.username };
+            info = { authType: "User", username: req.params.username, token: user?user.refreshToken:0 };
         }
-        // Verify if the user exists
-        const user = await User.findOne({ username: info.username });
-        if (!user)
-            throw new Error("User not found");
 
         // Verify the authentication
         if (verifyAuth(req, res, info)) {
+
+            // Verify if the user exists
+            const user = await User.findOne({ username: info.username });
+            if (!user)
+                throw new Error("User not found");
+
             // Do the query
             const objDate = handleDateFilterParams(req);
             const objAmount = handleAmountFilterParams(req);
-            
+
             let selectedTransactions = await transactions.aggregate([
                 {
                     $lookup: {
@@ -281,7 +293,7 @@ export const getTransactionsByUser = async (req, res) => {
                 {
                     $match: {
                         $and: [
-                            { 'username': info.username }, 
+                            { 'username': info.username },
                             // { 'date': obj.date },
                             objDate,
                             objAmount
@@ -290,7 +302,7 @@ export const getTransactionsByUser = async (req, res) => {
                     }
                 },
                 { $unwind: "$categories_info" },
-                
+
             ]);
 
             selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
@@ -327,18 +339,20 @@ export const getTransactionsByUserByCategory = async (req, res) => {
             // /users/:username/transactions/category/:category
             info = { authType: "User", username: req.params.username, category: req.params.category };
         }
-        // Verify if the user exists
-        const user = await User.findOne({ username: info.username });
-        if (!user)
-            throw new Error("User not found");
-
-        // Verify if the category exists
-        const category = await categories.findOne({ type: info.category });
-        if (!category)
-            throw new Error("Category not found");
 
         // Verify the authentication
         if (verifyAuth(req, res, info)) {
+
+            // Verify if the user exists
+            const user = await User.findOne({ username: info.username });
+            if (!user)
+                throw new Error("User not found");
+
+            // Verify if the category exists
+            const category = await categories.findOne({ type: info.category });
+            if (!category)
+                throw new Error("Category not found");
+
             // Do the query
             let selectedTransactions = await transactions.aggregate([
                 {
@@ -393,14 +407,14 @@ export const getTransactionsByGroup = async (req, res) => {
 
         } else {
             // /groups/:name/transactions
-            info = { authType: "Admin", groupName: req.params.name };
+            info = { authType: "Group", groupName: req.params.name };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
         if (!group)
             throw new Error("Group not found");
         else
-            info.emailList = await group.members.map( element => element.email );
+            info.emailList = await group.members.map(element => element.email);
 
         // Verify the authentication
         if (verifyAuth(req, res, info)) {
@@ -431,7 +445,10 @@ export const getTransactionsByGroup = async (req, res) => {
 
             selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-            return res.status(200).json(selectedTransactions);
+            return res.status(200).json({
+                data: selectedTransactions,
+                message: res.locals.message
+            });
         }
 
     } catch (error) {
@@ -468,7 +485,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         if (!group)
             throw new Error("Group not found");
         else
-            info.emailList = await group.members.map( element => element.email );
+            info.emailList = await group.members.map(element => element.email);
 
         // Verify the authentication
         if (verifyAuth(req, res, info)) {
@@ -493,8 +510,8 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
                 {
                     $match: {
                         $and: [
-                            { 'user_info.email': { $in: info.emailList } }, 
-                            { 'type': info.category } 
+                            { 'user_info.email': { $in: info.emailList } },
+                            { 'type': info.category }
                         ]
 
                     }
@@ -565,7 +582,7 @@ export const deleteTransactions = async (req, res) => {
         if (verifyAuth(req, res, info)) {
             let ids = req.body._ids.map(element => {
                 const id = element.toString();
-                if(!id.match(/[0-9a-fA-F]{24}$/))
+                if (!id.match(/[0-9a-fA-F]{24}$/))
                     throw new Error("Invalid ID")
                 else
                     return id;
@@ -580,13 +597,13 @@ export const deleteTransactions = async (req, res) => {
             }));
 
             await transactions.deleteMany({ _id: { $in: ids } })
-    
-            res.status(200).json({message: "Your transactions have been deleted successfully"})
+
+            res.status(200).json({ message: "Your transactions have been deleted successfully" })
         }
     } catch (error) {
-        if(error.message == "One or more Transactions not found")
+        if (error.message == "One or more Transactions not found")
             res.status(401).json({ error: error.message });
-        else if(error.message == "Invalid ID")
+        else if (error.message == "Invalid ID")
             res.status(403).json({ error: error.message });
         else
             res.status(400).json({ error: error.message })

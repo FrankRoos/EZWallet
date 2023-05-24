@@ -46,7 +46,7 @@ export const getUsers = async (req, res) => {
 export const getUser = async (req, res) => {
   try {
 
-    if (verifyAuth(req, res, { authType: "Simple" })) {
+    if (verifyAuth(req, res, { authType: "User/Admin", username: req.params.username })) {
 
       const cookie = req.cookies
       const username = req.params.username

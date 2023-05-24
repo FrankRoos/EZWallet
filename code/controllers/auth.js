@@ -16,12 +16,12 @@ export const register = async (req, res) => {
         const { username, email, password } = req.body;
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/; 
+        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
         if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
 
-        if(req.body.password.length<8)  return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
+        if (req.body.password.length < 8) return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
@@ -30,7 +30,7 @@ export const register = async (req, res) => {
         });
         res.status(200).json('user added succesfully');
     } catch (err) {
-        res.status(400).json(err);  
+        res.status(400).json(err);
     }
 };
 
@@ -49,12 +49,12 @@ export const registerAdmin = async (req, res) => {
         const { username, email, password } = req.body;
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/; 
+        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
         if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
 
-        if(req.body.password.length<8)  return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
+        if (req.body.password.length < 8) return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
@@ -119,16 +119,17 @@ export const login = async (req, res) => {
     - error 400 is returned if the user does not exist
  */
 export const logout = async (req, res) => {
-
-    const authAdmin = verifyAuth(req, res,{authType: "Simple"});
-    const user = await User.findOne({ refreshToken: refreshToken })
-    if (!user) return res.status(400).json('user not found')
     try {
-        user.refreshToken = null
-        res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
-        res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
-        const savedUser = await user.save()
-        res.status(200).json('logged out')
+        if (verifyAuth(req, res, {})) {
+            const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+            if (!user) return res.status(400).json('user not found')
+
+            user.refreshToken = null
+            res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
+            res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
+            const savedUser = await user.save()
+            res.status(200).json('logged out')
+        }
     } catch (error) {
         res.status(400).json(error)
     }
