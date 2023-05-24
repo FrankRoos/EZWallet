@@ -13,7 +13,7 @@ import jwt from 'jsonwebtoken';
 export const getUsers = async (req, res) => {
   try {
 
-    const authAdmin = verifyAuth(req, res, { authType: "Admin" });
+    if(verifyAuth(req, res, { authType: "Admin" })){
 
     const users = await User.find();
     const emptyArray = [];
@@ -30,6 +30,7 @@ export const getUsers = async (req, res) => {
       },
       message: res.locals.message
     })
+  }
   } catch (error) {
     res.status(500).json(error.message);
   }
