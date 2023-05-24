@@ -13,7 +13,8 @@ import { verifyAuth } from './utils.js';
 
 export const register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        let { username, email, password } = req.body;
+        username = handleString(username, "username");
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
         var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
@@ -46,7 +47,8 @@ export const registerAdmin = async (req, res) => {
 
         const authAdmin = verifyAuth(req, res, { authType: "Admin" });
 
-        const { username, email, password } = req.body;
+        let { username, email, password } = req.body;
+        username = handleString(username, "username");
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
         var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
