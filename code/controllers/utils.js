@@ -163,6 +163,9 @@ export const verifyAuth = (req, res, info) => {
 export const handleAmountFilterParams = (req) => {
     const { amount, min, max } = req.query
     try {
+        amount = handleNumber(amount);
+        min = handleNumber(min);
+        max = handleNumber(max);
 
         if (amount && (min || max))
             throw new Error("Cannot use 'amount' together with 'min' or 'max")
