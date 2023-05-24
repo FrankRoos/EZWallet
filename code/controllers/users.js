@@ -1,7 +1,7 @@
 import { modelNames } from "mongoose";
 import { Group, User } from "../models/User.js";
 import { transactions } from "../models/model.js";
-import { verifyAuth } from "./utils.js";
+import { handleString, verifyAuth } from "./utils.js";
 import jwt from 'jsonwebtoken';
 /**
  * Return all the users
@@ -45,11 +45,13 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
   try {
-
-    if (verifyAuth(req, res, { authType: "User/Admin", username: req.params.username })) {
+    let username = req.params.username;
+    username=handleString(username, "username");
+    if (verifyAuth(req, res, { authType: "User/Admin", username: username })) {
 
       const cookie = req.cookies
-      const username = req.params.username
+      
+     
 
 
       const user = await User.findOne({ refreshToken: cookie.refreshToken })
@@ -84,7 +86,9 @@ export const getUser = async (req, res) => {
 export const createGroup = async (req, res) => {
   try {
     if (verifyAuth(req, res, { authType: "Simple" })) {
-      const { name, memberEmails } = req.body;
+      let { name, memberEmails } = req.body;
+      name = handleString(name, "name");
+
       if (!name || name.trim() === "") {
         return res.status(400).json({ message: "Group name cannot be NULL or empty" });
       }
@@ -193,7 +197,8 @@ export const getGroup = async (req, res) => {//funziona perfettamente sia per ad
       if (!authAdmin) {
         return res.status(401).json({ message: "Unauthorized as Admin" });
       }
-      const groupName = req.params.name;
+      let groupName = req.params.name;
+      groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(404).json({ message: `The group ${groupName} does not exist` });
@@ -210,7 +215,8 @@ export const getGroup = async (req, res) => {//funziona perfettamente sia per ad
     }
 
     if (user.role === "Regular") {
-      const groupName = req.params.name;
+      let groupName = req.params.name;
+      groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(401).json({ message: `The group ${groupName} does not exist` });
@@ -260,11 +266,9 @@ export const addToGroup = async (req, res) => {
         return res.status(401).json({ message: "Unauthorized as Admin" });
       }
       //Admin things
-      const { name } = req.params;
-      if (!name || name.trim() === "") {
-        return res.status(401).json({ message: "Group name is NULL or empty" });
-      }
-      const group = await Group.findOne({ name: name });
+      let { groupName } = req.params;
+      groupName = handleString(groupName, "groupName");
+      const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(401).json({ message: "Group does not exist" });
       }
@@ -321,14 +325,10 @@ export const addToGroup = async (req, res) => {
 
     if (user.role === "Regular") {
       //User things   
-      const { name } = req.params;
-      const group = await Group.findOne({ name: name });
-      if (!group) {
-        return res.status(401).json({ message: "Group does not exist" });
-      }
-      if (!name || name.trim() === "") {
-        return res.status(401).json({ message: "Group name is NULL or empty" });
-      }
+      let { groupName } = req.params;
+      groupName=handleString(groupName,"groupName");
+      const group = await Group.findOne({ name: groupName });
+    
 
       const { memberEmails } = req.body;//gets the array of emails on the body
       if (!memberEmails || memberEmails.length === 0) {
@@ -400,8 +400,12 @@ export const removeFromGroup = async (req, res) => {
     const user = await User.findOne({ refreshToken: cookie.refreshToken });
     //console.log(user);
     if (!user) return res.status(400).json('user not found');
-    const group = req.body.group;
-    if (req.params.name !== group.name) {
+    let group_name_body = req.body.group;
+    group_name_body= handleString(group_name_body,"group_name_body")
+    let group_name_params = req.params.name;
+    group_name_params= handleString(group_name_params,"group_name_params")
+
+    if (group_name_params !== group_name_body) {
       return res.status(401).json({ message: "The group name provided in the URL and the one given in the body don't match" });
     }
 
@@ -573,9 +577,8 @@ export const deleteGroup = async (req, res) => {
   try {
     const authAdmin = verifyAuth(req, res, { authType: "Admin" });
     if (authAdmin) {
-      const { name } = req.body;
-      if (!name || name.trim() === "")
-        return res.status(401).json({ message: `You inserted a null string` });
+      let { name } = req.body;
+      name = handleString(name, "name");
 
       const existingGroup = await Group.findOne({ name });
       if (!existingGroup)
