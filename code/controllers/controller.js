@@ -29,6 +29,10 @@ export const createCategory = async (req, res) => {
             new_categories.save()
                 .then(data => res.json(data))
                 .catch(err => { throw err })
+            return res.status(200).json({
+                data: new_categories,
+                message: res.locals.message
+            });
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -57,7 +61,6 @@ export const updateCategory = async (req, res) => {
 
             let old_type = req.params.type;
 
-
             let find_bycolor = await categories.find({ color: color });
             let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
             if (color_found[0] && old_type === type)
@@ -77,9 +80,6 @@ export const updateCategory = async (req, res) => {
                 let old_color = old_color_found[0].color;
                 if (color_found[0] && old_color != color)
                     return res.status(401).json({ message: "Color already used" })
-
-
-
             }
             //found by type 
             let update = await categories.findOneAndUpdate({ type: old_type }, { type: type, color:color })
@@ -95,9 +95,11 @@ export const updateCategory = async (req, res) => {
                 data.count = num;
             }
 
-            res.status(200).json(data);
+            return res.status(200).json({
+                data: data,
+                message:res.locals.message
+            })  
         }
-
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -124,8 +126,6 @@ export const deleteCategory = async (req, res) => {
                 if (!check_exist)
                     return res.status(401).json({ message: "You inserted an invalid category" })
             }
-
-
             let data = { message: "Success", count: 0 }
             let counter = 0;
             //delete categories
@@ -135,13 +135,11 @@ export const deleteCategory = async (req, res) => {
                 let find_delete = await categories.findOneAndDelete({ type: category });
             }
             data.count = counter
-
-
-
-
             //da sistemare la parte sulle transaction 
-
-            res.json(data)
+            return res.status(200).json({
+                data: data,
+                message:res.locals.message
+            }) 
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -166,7 +164,10 @@ export const getCategories = async (req, res) => {
 
             let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
-            return res.json(filter)
+            return res.status(200).json({
+                data: filter,
+                message:res.locals.message
+            }) 
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -251,7 +252,10 @@ export const getAllTransactions = async (req, res) => {
                 { $unwind: "$categories_info" }
             ]).then((result) => {
                 let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
-                res.json(data);
+                return res.status(200).json({
+                    data: data,
+                    message:res.locals.message
+                }) 
             }).catch(error => { throw (error) })
         }
     } catch (error) {
@@ -319,7 +323,10 @@ export const getTransactionsByUser = async (req, res) => {
 
             selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-            return res.status(200).json(selectedTransactions);
+            return res.status(200).json({
+                data: selectedTransactions,
+                message:res.locals.message
+            }) 
         }
 
     } catch (error) {
@@ -390,7 +397,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 
             selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-            return res.status(200).json(selectedTransactions);
+            return res.status(200).json({
+                data: selectedTransactions,
+                message:res.locals.message
+            }) 
         }
 
     } catch (error) {
@@ -537,7 +547,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 
             selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-            return res.status(200).json(selectedTransactions);
+            return res.status(200).json({
+                data: selectedTransactions,
+                message: res.locals.message
+            });
         }
 
     } catch (error) {
@@ -575,7 +588,10 @@ export const deleteTransaction = async (req, res) => {
 
         if (verifyAuth(req, res, info)) {
             await transactions.deleteOne({ _id: req.body._id });
-            return res.json({ message: "Your transaction has been deleted successfully" });
+            return res.json({ 
+                data: "Your transaction has been deleted successfully",
+                message: res.locals.message
+            });
         }
 
     } catch (error) {
@@ -618,7 +634,10 @@ export const deleteTransactions = async (req, res) => {
 
             await transactions.deleteMany({ _id: { $in: ids } })
 
-            res.status(200).json({ message: "Your transactions have been deleted successfully" })
+            return res.json({ 
+                data: "Your transaction has been deleted successfully",
+                message: res.locals.message
+            });
         }
     } catch (error) {
         if (error.message == "One or more Transactions not found")

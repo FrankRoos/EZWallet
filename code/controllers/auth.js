@@ -112,7 +112,9 @@ export const login = async (req, res) => {
         const savedUser = await existingUser.save()
         res.cookie("accessToken", accessToken, { httpOnly: true, domain: "localhost", path: "/api", maxAge: 60 * 60 * 1000, sameSite: "none", secure: true })
         res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true })
-        res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken }, message: res.locals.message })
+        res.status(200).json({ 
+            data: { accessToken: accessToken, refreshToken: refreshToken }, 
+            message: res.locals.message })
     } catch (error) {
         res.status(400).json(error)
     }
@@ -135,7 +137,7 @@ export const logout = async (req, res) => {
             res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
             const savedUser = await user.save()
             res.status(200).json({
-                data: 'logged out', 
+                data: 'Logged out', 
                 message:res.locals.message
             })
         }
