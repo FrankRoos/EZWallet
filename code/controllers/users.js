@@ -538,11 +538,8 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    const cookie = req.cookies;
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" })
-    }
-    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
     if (verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })) {
       const existingUser = await User.findOneAndDelete({ email: req.body.email });
       if (!existingUser) return res.status(401).json({ message: "User doesn't exists" });
@@ -595,9 +592,8 @@ export const deleteGroup = async (req, res) => {
       const existingGroup = await Group.findOne({ name });
       if (!existingGroup)
         return res.status(401).json({ message: `Group ${name} does not exist` });
-
       const data = await Group.findOneAndDelete({ name });
-
+      
       return res.json({
         data: `Group ${name} has been deleted`,
         message: res.locals.message
