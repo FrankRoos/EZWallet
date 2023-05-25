@@ -29,7 +29,10 @@ export const register = async (req, res) => {
             email,
             password: hashedPassword,
         });
-        res.status(200).json('user added succesfully');
+        res.status(200).json({
+            data: 'User added succesfully',
+            message: res.locals.message
+        });
     } catch (err) {
         res.status(400).json(err);
     }
@@ -64,7 +67,10 @@ export const registerAdmin = async (req, res) => {
             password: hashedPassword,
             role: "Admin"
         });
-        res.status(200).json('admin added succesfully');
+        res.status(200).json({
+            data: 'User added succesfully',
+            message: res.locals.message
+        });
     } catch (err) {
         res.status(500).json(err);
     }
@@ -106,7 +112,7 @@ export const login = async (req, res) => {
         const savedUser = await existingUser.save()
         res.cookie("accessToken", accessToken, { httpOnly: true, domain: "localhost", path: "/api", maxAge: 60 * 60 * 1000, sameSite: "none", secure: true })
         res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true })
-        res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken } })
+        res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken }, message: res.locals.message })
     } catch (error) {
         res.status(400).json(error)
     }
@@ -122,15 +128,16 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
     try {
-        if (verifyAuth(req, res, {})) {
-            const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-            if (!user) return res.status(400).json('user not found')
-
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        if (verifyAuth(req, res, {authType: "User/Admin", username: user.username, token: user ? user.refreshToken : 0})) {
             user.refreshToken = null
             res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
             res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
             const savedUser = await user.save()
-            res.status(200).json('logged out')
+            res.status(200).json({
+                data: 'logged out', 
+                message:res.locals.message
+            })
         }
     } catch (error) {
         res.status(400).json(error)
