@@ -556,11 +556,8 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    const cookie = req.cookies;
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" })
-    }
-    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
 
     const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
     if (verify.flag === false)
@@ -616,18 +613,18 @@ export const deleteGroup = async (req, res) => {
     let { name } = req.body;
     name = handleString(name, "name");
 
-    const existingGroup = await Group.findOne({ name });
-    if (!existingGroup)
-      return res.status(401).json({ message: `Group ${name} does not exist` });
+      const existingGroup = await Group.findOne({ name });
+      if (!existingGroup)
+        return res.status(401).json({ message: `Group ${name} does not exist` });
 
-    const data = await Group.findOneAndDelete({ name });
+      const data = await Group.findOneAndDelete({ name });
 
-    return res.json({
-      data: `Group ${name} has been deleted`,
-      message: res.locals.message
-    });
-    //res.status(200).json(`Group ${name} deleted`);
-
+      return res.json({
+        data: `Group ${name} has been deleted`,
+        message: res.locals.message
+      });
+      //res.status(200).json(`Group ${name} deleted`);
+    
   } catch (err) {
     res.status(500).json(err.message)
   }

@@ -30,11 +30,14 @@ export const createCategory = async (req, res) => {
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
         if (color_found[0]) return res.status(401).json({ message: "Color alredy used" })
 
-        const new_categories = new categories({ type, color });
-        new_categories.save()
-            .then(data => res.json(data))
-            .catch(err => { throw err })
-
+            const new_categories = new categories({ type, color });
+            new_categories.save()
+                .then(data => res.json(data))
+                .catch(err => { throw err })
+            return res.status(200).json({
+                data: new_categories,
+                message: res.locals.message
+            });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -181,6 +184,11 @@ export const getCategories = async (req, res) => {
 
         return res.json(filter)
 
+            return res.status(200).json({
+                data: filter,
+                message:res.locals.message
+            })
+        
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -340,6 +348,11 @@ export const getTransactionsByUser = async (req, res) => {
         selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
         return res.status(200).json(selectedTransactions);
+
+            return res.status(200).json({
+                data: selectedTransactions,
+                message:res.locals.message
+            })
 
 
     } catch (error) {
@@ -635,25 +648,29 @@ export const deleteTransactions = async (req, res) => {
         if (verify.flag === false)
             return res.status(401).json({ error: verify.cause })
 
-            let ids = req.body._ids.map(element => {
-                const id = element.toString();
-                if (!id.match(/[0-9a-fA-F]{24}$/))
-                    throw new Error("Invalid ID")
-                else
-                    return id;
-            })
+        let ids = req.body._ids.map(element => {
+            const id = element.toString();
+            if (!id.match(/[0-9a-fA-F]{24}$/))
+                throw new Error("Invalid ID")
+            else
+                return id;
+        })
 
-            let selectedTransactions = await Promise.all(ids.map(async (element) => {
-                const el = await transactions.findById(element)
-                if (!el)
-                    throw new Error("One or more Transactions not found");
-                else
-                    return el;
-            }));
+        let selectedTransactions = await Promise.all(ids.map(async (element) => {
+            const el = await transactions.findById(element)
+            if (!el)
+                throw new Error("One or more Transactions not found");
+            else
+                return el;
+        }));
 
-            await transactions.deleteMany({ _id: { $in: ids } })
+        await transactions.deleteMany({ _id: { $in: ids } })
 
-            res.status(200).json({ message: "Your transactions have been deleted successfully" })
+        return res.json({
+            data: "Your transaction has been deleted successfully",
+            message: res.locals.message
+        });
+
     } catch (error) {
         if (error.message == "One or more Transactions not found")
             res.status(401).json({ error: error.message });
