@@ -13,7 +13,10 @@ export const createCategory = async (req, res) => {
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
+            return res.status(401).json({
+                error: verify.cause,
+                refreshedTokenMessage: res.locals.message
+            })
 
 
         const { type, color } = req.body;
@@ -24,22 +27,31 @@ export const createCategory = async (req, res) => {
 
         let find_bytype = await categories.find({ type: type });
         let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
+        if (category_found[0]) return res.status(401).json({
+            error: "Category type alredy exists",
+            refreshedTokenMessage: res.locals.message
+        })
 
         let find_bycolor = await categories.find({ color: color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (color_found[0]) return res.status(401).json({ message: "Color alredy used" })
+        if (color_found[0]) return res.status(401).json({
+            error: "Color alredy used",
+            refreshedTokenMessage: res.locals.message
+        })
 
-            const new_categories = new categories({ type, color });
-            new_categories.save()
-                .then(data => res.json(data))
-                .catch(err => { throw err })
-            return res.status(200).json({
-                data: new_categories,
-                message: res.locals.message
-            });
+        const new_categories = new categories({ type, color });
+        new_categories.save()
+            .then(data => res.json(data))
+            .catch(err => { throw err })
+        return res.status(200).json({
+            data: new_categories,
+            message: res.locals.message
+        });
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(400).json({
+            error: error.message,
+            refreshedTokenMessage: res.locals.message
+        })
     }
 }
 
@@ -58,25 +70,34 @@ export const updateCategory = async (req, res) => {
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
+            return res.status(401).json({
+                error: verify.cause,
+                refreshedTokenMessage: res.locals.message
+            })
 
         const { type, color } = req.body;
         type = handleString(type, "type")
         color = handleString(color, "color")
 
-        let old_type = req.params.type;
+        let old_type = handleString(req.params.type, "type");
 
 
         let find_bycolor = await categories.find({ color: color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
         if (color_found[0] && old_type === type)
-            return res.status(401).json({ message: "Color already used" })
+            return res.status(401).json({
+                error: "Color already used",
+                refreshedTokenMessage: res.locals.message
+            })
 
         if (old_type != type) {
             let find_bytype = await categories.find({ type: type });
             let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
             if (category_found[0])
-                return res.status(401).json({ message: "Category type already exists" })
+                return res.status(401).json({
+                    error: "Category type already exists",
+                    refreshedTokenMessage: res.locals.message
+                })
             //check sul colore nuovo 
             let find_bycolor = await categories.find({ color: color });
             let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
@@ -85,7 +106,10 @@ export const updateCategory = async (req, res) => {
             let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
             let old_color = old_color_found[0].color;
             if (color_found[0] && old_color != color)
-                return res.status(401).json({ message: "Color already used" })
+                return res.status(401).json({
+                    error: "Color already used",
+                    refreshedTokenMessage: res.locals.message
+                })
 
 
 
@@ -104,10 +128,22 @@ export const updateCategory = async (req, res) => {
             data.count = num;
         }
 
-        res.status(200).json(data);
+        res.status(200).json({
+            data: data,
+            refreshedTokenMessage: res.locals.message
+        });
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        if (error.message === "Empty string: type")
+            res.status(404).json({
+                error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else
+            res.status(400).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
     }
 
 }
@@ -125,7 +161,10 @@ export const deleteCategory = async (req, res) => {
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
+            return res.status(401).json({
+                error: verify.cause,
+                refreshedTokenMessage: res.locals.message
+            })
 
 
         const array_category = req.body.array
@@ -147,9 +186,6 @@ export const deleteCategory = async (req, res) => {
             let find_delete = await categories.findOneAndDelete({ type: category });
         }
         data.count = counter
-
-
-
 
         //da sistemare la parte sulle transaction 
 
@@ -173,7 +209,10 @@ export const getCategories = async (req, res) => {
 
         const verify = verifyAuth(req, res, { authType: "User/Admin", username: user.username, token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
+            return res.status(401).json({
+                error: verify.cause,
+                refreshedTokenMessage: res.locals.message
+            })
 
         let data = await categories.find({})
 
@@ -182,13 +221,12 @@ export const getCategories = async (req, res) => {
 
         let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
-        return res.json(filter)
 
-            return res.status(200).json({
-                data: filter,
-                message:res.locals.message
-            })
-        
+        return res.status(200).json({
+            data: filter,
+            message: res.locals.message
+        })
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -204,12 +242,15 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        info = { authType: "User/Admin", username: req.params.username, token: user ? user.refreshToken : 0 }
-        info.username = handleString(username, "username")
+        let info = { authType: "User/Admin", username: req.params.username, token: user ? user.refreshToken : 0 }
+        info.username = handleString(info.username, "username")
 
         const verify = verifyAuth(req, res, info)
         if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
+            return res.status(401).json({
+                error: verify.cause,
+                refreshedTokenMessage: res.locals.message
+            })
 
         let { username, amount, type } = req.body;
         type = handleString(type, "type")
@@ -241,7 +282,16 @@ export const createTransaction = async (req, res) => {
 
     }
     catch (error) {
-        res.status(400).json({ error: error.message })
+        if (error.message === "Empty string: username")
+            res.status(404).json({
+                error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else
+            res.status(400).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
     }
 }
 
@@ -259,7 +309,10 @@ export const getAllTransactions = async (req, res) => {
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
+            return res.status(401).json({
+                error: verify.cause,
+                refreshedTokenMessage: res.locals.message
+            })
 
 
         /**
@@ -277,11 +330,18 @@ export const getAllTransactions = async (req, res) => {
             { $unwind: "$categories_info" }
         ]).then((result) => {
             let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
-            res.json(data);
+            res.json({
+                data: data,
+                refreshedTokenMessage: res.locals.message
+            });
         }).catch(error => { throw (error) })
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(400).json({
+            error: error.message,
+            refreshedTokenMessage: res.locals.message
+        })
+
     }
 }
 
@@ -347,19 +407,28 @@ export const getTransactionsByUser = async (req, res) => {
 
         selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-        return res.status(200).json(selectedTransactions);
-
-            return res.status(200).json({
-                data: selectedTransactions,
-                message:res.locals.message
-            })
-
+        return res.status(200).json({
+            data: selectedTransactions,
+            message: res.locals.message
+        })
 
     } catch (error) {
-        if (error.message == "User not found")
-            res.status(401).json({ error: error.message })
+        if (error.message === "Empty string: username")
+            res.status(404).json({
+                error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else if (error.message == "User not found")
+            res.status(401).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
         else
-            res.status(400).json({ error: error.message })
+            res.status(400).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+
     }
 }
 
@@ -425,14 +494,28 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 
         selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-        return res.status(200).json(selectedTransactions);
+        return res.status(200).json({
+            data: selectedTransactions,
+            refreshedTokenMessage: res.locals.message
+        });
 
 
     } catch (error) {
-        if (error.message == "User not found" || error.message == "Category not found")
-            res.status(401).json({ error: error.message })
+        if (error.message === "Empty string: category" || error.message === "Empty string: username")
+            res.status(404).json({
+                error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else if (error.message == "User not found" || error.message == "Category not found")
+            res.status(401).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
         else
-            res.status(400).json({ error: error.message })
+            res.status(400).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
     }
 }
 
@@ -505,11 +588,23 @@ export const getTransactionsByGroup = async (req, res) => {
 
 
     } catch (error) {
-        if (error.message == "Group not found")
-            res.status(401).json({ error: error.message })
+        if (error.message === "Empty string: name")
+            res.status(404).json({
+                error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else if (error.message == "Group not found")
+            res.status(401).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
         else
-            res.status(400).json({ error: error.message })
+            res.status(400).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
     }
+
 }
 
 /**
@@ -580,14 +675,28 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 
         selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-        return res.status(200).json(selectedTransactions);
+        return res.status(200).json({
+            data: selectedTransactions,
+            refreshedTokenMessage: res.locals.message
+        });
 
 
     } catch (error) {
-        if (error.message == "Group not found")
-            res.status(401).json({ error: error.message })
-        else
-            res.status(400).json({ error: error.message })
+        if (error.message === "Empty string: name" || error.message === "Empty string: category")
+            res.status(404).json({
+                error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else if (error.message == "Group not found")
+            res.status(401).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else res.status(400).json({
+            error: error.message,
+            refreshedTokenMessage: res.locals.message
+        })
+
     }
 }
 
@@ -624,11 +733,23 @@ export const deleteTransaction = async (req, res) => {
         return res.json({ message: "Your transaction has been deleted successfully" });
 
     } catch (error) {
-        if (error.message == "User not found" || error.message == "Transaction not found")
-            res.status(401).json({ error: error.message })
+        if (error.message === "Empty string: username")
+            res.status(404).json({
+                error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else if (error.message == "User not found" || error.message == "Transaction not found")
+            res.status(401).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
         else
-            res.status(400).json({ error: error.message })
+            res.status(400).json({
+                error: error.message,
+                refreshedTokenMessage: res.locals.message
+            })
     }
+
 }
 
 /**
@@ -668,15 +789,15 @@ export const deleteTransactions = async (req, res) => {
 
         return res.json({
             data: "Your transaction has been deleted successfully",
-            message: res.locals.message
+            refreshedTokenMessage: res.locals.message
         });
 
     } catch (error) {
         if (error.message == "One or more Transactions not found")
-            res.status(401).json({ error: error.message });
+            res.status(401).json({ error: error.message, refreshedTokenMessage: res.locals.message });
         else if (error.message == "Invalid ID")
-            res.status(403).json({ error: error.message });
+            res.status(403).json({ error: error.message, refreshedTokenMessage: res.locals.message });
         else
-            res.status(400).json({ error: error.message })
+            res.status(400).json({ error: error.message, refreshedTokenMessage: res.locals.message })
     }
 }

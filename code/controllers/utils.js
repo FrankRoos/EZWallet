@@ -77,42 +77,42 @@ export const handleDateFilterParams = (req) => {
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken || !info.token) {
-        res.status(401).json({ message: "Unauthorized" });
-        return false;
+        //res.status(401).json({ message: "Unauthorized" });
+        return {flag: false, cause: "Unauthorized"};
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
+            //res.status(401).json({ message: "Token is missing information" })
+            return {flag: false, cause: "Token is missing information"}
         }
         if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
+            //res.status(401).json({ message: "Token is missing information" })
+            return {flag: false, cause: "Token is missing information"}
         }
         if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            res.status(401).json({ message: "Mismatched users" });
-            return false;
+            //res.status(401).json({ message: "Mismatched users" });
+            return {flag: false, cause: "Mismatched users"};
         }
         if (info.authType === "User" && decodedAccessToken.username !== info.username) {
-            res.status(401).json({ message: "Tokens have a different username from the requested one" });
-            return false;
+            //res.status(401).json({ message: "Tokens have a different username from the requested one" });
+            return {flag: false, cause: "Tokens have a different username from the requested one"};
         }
         if (info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
-            res.status(401).json({ message: "You are not an Admin" });
-            return false;
+            //res.status(401).json({ message: "You are not an Admin" });
+            return {flag: false, cause: "You are not an Admin"};
         }
         if (info.authType === "User/Admin" &&  (decodedAccessToken.role !== "Admin" && decodedAccessToken.username !== info.username)){
-            res.status(401).json({ message: "Tokens have a different username from the requested one" });
-            return false;
+            //res.status(401).json({ message: "Tokens have a different username from the requested one" });
+            return {flag: false, cause: "Tokens have a different username from the requested one"};
         }  
         if (info.authType === "Group" && info.emailList) {
             
             const userHasAccess = info.emailList.some(x => x === decodedAccessToken.email);
             if (!userHasAccess) {
-                res.status(401).json({ message: "Your email is not in the group" });
-                return false;
+                //res.status(401).json({ message: "Your email is not in the group" });
+                return {flag: false, cause: "Tokens have a different username from the requested one"};
             }
         }
         return true
@@ -134,19 +134,19 @@ export const verifyAuth = (req, res, info) => {
                     return {flag: false, cause: "Tokens have a different username from the requested one"};
                 }
                 if (info.authType === "Admin" && decodedRefreshToken.role !== "Admin") {
-                    res.status(401).json({ message: "You are not an Admin" });
-                    return false;
+                    // res.status(401).json({ message: "You are not an Admin" });
+                    return {flag: false, cause: "You are not an Admin"};
                 }
                 if(info.authType === "User/Admin" && decodedRefreshToken.role !== "Admin" && decodedRefreshToken.username !== info.username){
-                        res.status(401).json({ message: "Tokens have a different username from the requested one" });
-                        return false;
+                        // res.status(401).json({ message: "Tokens have a different username from the requested one" });
+                        return {flag: false, cause: "Tokens have a different username from the requested one"};
                     }               
                 if (info.authType === "Group" && info.emailList) {
             
                     const userHasAccess = info.emailList.some(x => x.email === decodedRefreshToken.email);
                     if (!userHasAccess) {
-                        res.status(401).json({ message: "Your email is not in the group" });
-                        return false;
+                        // res.status(401).json({ message: "Your email is not in the group" });
+                        return {flag: false, cause: "Your email is not in the group"};
                     }
                 }
 
@@ -205,12 +205,13 @@ export const handleAmountFilterParams = (req) => {
 }
 
 export const handleString = (string, nameVar) => {
+    string = string.trim();
     if(!string)
         throw new Error("Empty string: " + nameVar)
     else if(typeof(string) !="string" ) 
         throw new Error("Invalid format of " + nameVar) 
     else{
-        return string.trim().toLowerCase()
+        return string.toLowerCase()
     }
 
 }
