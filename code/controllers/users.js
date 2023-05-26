@@ -72,14 +72,20 @@ export const getUser = async (req, res) => {
 
 /**
  * Create a new group
-  - Request Body Content: An object having a string attribute for the `name` of the group and an array that lists all the `memberEmails`
-  - Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name`
-    of the created group and an array for the `members` of the group), an array that lists the `alreadyInGroup` members
-    (members whose email is already present in a group) and an array that lists the `membersNotFound` (members whose email
-    +does not appear in the system)
-  - Optional behavior:
-    - error 401 is returned if there is already an existing group with the same name
-    - error 401 is returned if all the `memberEmails` either do not exist or are already in a group
+  - Request Parameters: None
+- Request request body Content: An object having a string attribute for the `name` of the group and an array that lists all the `memberEmails`
+  - Example: `{name: "Family", memberEmails: ["mario.red@email.com", "luigi.red@email.com"]}`
+- Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name` of the created group and an array for the `members` of the group), an array that lists the `alreadyInGroup` members (members whose email is already present in a group) and an array that lists the `membersNotFound` (members whose email does not appear in the system)
+  - Example: `res.status(200).json({data: {group: {name: "Family", members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}]}, membersNotFound: [], alreadyInGroup: []} refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- If the user who calls the API does not have their email in the list of emails then their email is added to the list of members
+- Returns a 400 error if the request body does not contain all the necessary attributes
+- Returns a 400 error if the group name passed in the request body is an empty string
+- Returns a 400 error if the group name passed in the request body represents an already existing group in the database
+- Returns a 400 error if all the provided emails represent users that are already in a group or do not exist in the database
+- Returns a 400 error if the user who calls the API is already in a group
+- Returns a 400 error if at least one of the member emails is not in a valid email format
+- Returns a 400 error if at least one of the member emails is an empty string
+- Returns a 401 error if called by a user who is not authenticated (authType = Simple)
  */
 
 export const createGroup = async (req, res) => {
@@ -96,10 +102,18 @@ export const createGroup = async (req, res) => {
 
     let { name, memberEmails } = req.body;
     name = handleString(name, "name");
-    const groupExists = await Group.findOne({ name });
+    if (!name || !memberEmails) {
+      return res.status(400).json({ error: 'Missing attributes in the request body' });
+    }
 
+    const groupExists = await Group.findOne({ name });
     if (groupExists) {
-      return res.status(401).json({ message: 'There is already an existing group with the same name' });
+      return res.status(400).json({ message: 'There is already an existing group with the same name' });
+    }
+
+    const userGroup = await Group.findOne({ "members.user": user._id });
+    if (userGroup) {
+      return res.status(400).json({ message: 'You are already a member of a group' });
     }
     /*for (const email of memberEmails) {
       const existingUserInGroup = await Group.findOne({ 'members.email': email });
@@ -112,17 +126,23 @@ export const createGroup = async (req, res) => {
     const members = [];
     const alreadyInGroup = [];
     const membersNotFound = [];
+    const invalidEmails = [];
+    const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
 
     for (const email of memberEmails) {
-      const user = await User.findOne({ email }); //find the email in db
-      if (!user) {
-        membersNotFound.push(email);
+      if (!myRegEx.test(email) || email==='') {
+        invalidEmails.push(email);
       } else {
-        const existingGroup = await Group.findOne({ 'members.user': user._id });
-        if (existingGroup) {
-          alreadyInGroup.push(email);
+        const user = await User.findOne({ email }); //find the email in db
+        if (!user) {
+          membersNotFound.push(email);
         } else {
-          members.push({ email, user: user._id });
+          const existingGroup = await Group.findOne({ 'members.user': user._id });
+          if (existingGroup) {
+            alreadyInGroup.push(email);
+          } else {
+            members.push({ email, user: user._id });
+          }
         }
       }
     }
@@ -130,10 +150,7 @@ export const createGroup = async (req, res) => {
     if (memberEmails.length === 0) return res.status(401).json({ message: "memberEmails is empty" });
     if (memberEmails.length === alreadyInGroup.length + membersNotFound.length)
       return res.status(401).json({ message: "all the `memberEmails` either do not exist or are already in a group" });
-    /*if (members.length === 0 || alreadyInGroup.length > 0 || membersNotFound.length > 0) {
-      return res.status(401).json({ message: "all the `memberEmails` either do not exist or are already in a group" });
-    }*/
-    //create group with id and mail
+
     const group = new Group({ name, members });
     await group.save();
     return res.status(200).json({
@@ -155,11 +172,11 @@ export const createGroup = async (req, res) => {
 
 /**
  * Return all the groups
-  - Request Body Content: None
-  - Response `data` Content: An array of objects, each one having a string attribute for the `name` of the group
-    and an array for the `members` of the group
-  - Optional behavior:
-    - empty array is returned if there are no groups
+- Request Parameters: None
+- Request Body Content: None
+- Response `data` Content: An array of objects, each one having a string attribute for the `name` of the group and an array for the `members` of the group
+- Example: `res.status(200).json({data: [{name: "Family", members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}]}] refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- Returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)
  */
 export const getGroups = async (req, res) => {
   try {
@@ -176,7 +193,7 @@ export const getGroups = async (req, res) => {
         name: group.name,
         members: group.members
       })),
-      message: res.locals.message
+      refreshedTokenMessage: res.locals.refreshedTokenMessage
     };
 
     return res.json(responseData);
@@ -189,11 +206,13 @@ export const getGroups = async (req, res) => {
 
 /**
  * Return information of a specific group
-  - Request Body Content: None
-  - Response `data` Content: An object having a string attribute for the `name` of the group and an array for the 
-    `members` of the group
-  - Optional behavior:
-    - error 401 is returned if the group does not exist
+- Request Parameters: A string equal to the `name` of the requested group
+  - Example: `/api/groups/Family`
+- Request Body Content: None
+- Response `data` Content: An object having a string attribute for the `name` of the group and an array for the `members` of the group
+  - Example: `res.status(200).json({data: {group: {name: "Family", members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}]}} refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- Returns a 400 error if the group name passed as a route parameter does not represent a group in the database
+- Returns a 401 error if called by an authenticated user who is neither part of the group (authType = Group) nor an admin (authType = Admin)
  */
 export const getGroup = async (req, res) => {
   try {
@@ -212,16 +231,16 @@ export const getGroup = async (req, res) => {
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
-        return res.status(404).json({ message: `The group ${groupName} does not exist` });
+        return res.status(400).json({ message: `The group ${groupName} does not exist` });
       }
       const groupInfo = {
         name: group.name,
-        members: group.members
+        members: group.members.map(member => member.email)
       };
       return res.status(200).json({
         data: {
           groupInfo
-        }, message: res.locals.message
+        }, refreshedTokenMessage: res.locals.refreshedTokenMessage
       });
     }
 
@@ -230,7 +249,7 @@ export const getGroup = async (req, res) => {
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
-        return res.status(401).json({ message: `The group ${groupName} does not exist` });
+        return res.status(400).json({ message: `The group ${groupName} does not exist` });
       }
 
       const verify = verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email), token: user ? user.refreshToken : 0 })
@@ -239,7 +258,7 @@ export const getGroup = async (req, res) => {
 
       const groupInfo = {
         name: group.name,
-        members: group.members
+        members: group.members.map(member => member.email)
       };
       return res.status(200).json({
         data: {
@@ -255,21 +274,33 @@ export const getGroup = async (req, res) => {
 
 /**
  * Add new members to a group
-  - Request Body Content: An array of strings containing the emails of the members to add to the group
-  - Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name` of the
-    created group and an array for the `members` of the group, this array must include the new members as well as the old ones), 
-    an array that lists the `alreadyInGroup` members (members whose email is already present in a group) and an array that lists 
-    the `membersNotFound` (members whose email does not appear in the system)
-  - Optional behavior:
-    - error 401 is returned if the group does not exist
-    - error 401 is returned if all the `memberEmails` either do not exist or are already in a group
+- Request Parameters: A string equal to the `name` of the group
+  - Example: `api/groups/Family/add` (user route)
+  - Example: `api/groups/Family/insert` (admin route)
+- Request Body Content: An array of strings containing the `emails` of the members to add to the group
+  - Example: `{emails: ["pietro.blue@email.com"]}`
+- Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name` of the created group and an array for the `members` of the group, this array must include the new members as well as the old ones), an array that lists the `alreadyInGroup` members (members whose email is already present in a group) and an array that lists the `membersNotFound` (members whose email does not appear in the system)
+  - Example: `res.status(200).json({data: {group: {name: "Family", members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}, {email: "pietro.blue@email.com"}]}, membersNotFound: [], alreadyInGroup: []} refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- In case any of the following errors apply then no user is added to the group
+- Returns a 400 error if the request body does not contain all the necessary attributes
+- Returns a 400 error if the group name passed as a route parameter does not represent a group in the database
+- Returns a 400 error if all the provided emails represent users that are already in a group or do not exist in the database
+- Returns a 400 error if at least one of the member emails is not in a valid email format
+- Returns a 400 error if at least one of the member emails is an empty string
+- Returns a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add`
+- Returns a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/insert`
+
  */
 export const addToGroup = async (req, res) => {
   try {
 
     const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
     if (!user) return res.status(400).json('Unauthorized');
-
+    let groupName = req.params.name;
+    const { memberEmails } = req.body;//gets the array of emails on the body
+    if (!memberEmails) {
+      return res.status(400).json({ error: 'Missing attributes in the request body' });
+    }
     if (user.role === "Admin") {
 
       const verify = verifyAuth(req, res, { authType: "Admin", username: user.username, token: user ? user.refreshToken : 0 })
@@ -277,22 +308,25 @@ export const addToGroup = async (req, res) => {
         return res.status(401).json({ error: verify.cause })
 
       //Admin things
-      let groupName = req.params.name;
+      
       groupName = handleString(groupName, "groupName");
-      console.log("3");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(401).json({ message: "Group does not exist" });
       }
 
-      const { memberEmails } = req.body;//gets the array of emails on the body
       if (!memberEmails || memberEmails.length === 0) {
         return res.status(401).json({ message: "No member emails provided" });
       }
 
       const alreadyInGroup = [];
       const membersNotFound = [];
+      const invalidEmails = [];
+      const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
       for (const email of memberEmails) {
+        if(!myRegEx.test(email) || email===''){
+          invalidEmails.push(email);
+        }else{
         const user = await User.findOne({ email });
         if (!user) {
           membersNotFound.push(email);
@@ -302,7 +336,7 @@ export const addToGroup = async (req, res) => {
           });
 
           if (existingGroup) {
-            alreadyInGroup.push(user.username);
+            alreadyInGroup.push(user.email);
           } else {
             const memberExists = group.members.some(
               (member) => member.email === email
@@ -313,6 +347,10 @@ export const addToGroup = async (req, res) => {
           }
         }
       }
+    }
+    if (invalidEmails.length > 0) {
+      return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
+    }
 
       if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
         return res.status(400).json({
@@ -326,11 +364,11 @@ export const addToGroup = async (req, res) => {
         data: {
           group: {
             name: group.name,
-            members: group.members,
+            members: group.members.map(member => member.email),
           },
           alreadyInGroup,
           membersNotFound,
-        }, message: res.locals.message
+        }, refreshedTokenMessage: res.locals.refreshedTokenMessage
       };
       return res.json(responseData);
     }
@@ -339,20 +377,23 @@ export const addToGroup = async (req, res) => {
       if (req.url.indexOf("insert") > 0)
         return res.status(401).json({ message: "You are trying to use an Admin route while still a Regular" });
       //User things   
-      let groupName = req.params.name;
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(401).json({ message: "Group does not exist" });
       }
 
-      const { memberEmails } = req.body;//gets the array of emails on the body
       if (!memberEmails || memberEmails.length === 0) {
         return res.status(401).json({ message: "No member emails provided" });
       }
       const alreadyInGroup = [];
       const membersNotFound = [];
+      const invalidEmails = [];
+      const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
       for (const email of memberEmails) {
+        if(!myRegEx.test(email) || email===''){
+          invalidEmails.push(email);
+        }else{
         const user = await User.findOne({ email });
         if (!user) {
           membersNotFound.push(email);
@@ -362,7 +403,7 @@ export const addToGroup = async (req, res) => {
           });
 
           if (existingGroup) {
-            alreadyInGroup.push(user.username);
+            alreadyInGroup.push(user.email);
           } else {
             const memberExists = group.members.some(
               (member) => member.email === email
@@ -373,6 +414,10 @@ export const addToGroup = async (req, res) => {
           }
         }
       }
+    }
+    if (invalidEmails.length > 0) {
+      return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
+    }
       if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
         return res.status(400).json({ message: "The member emails you provided either don't exist or are already in the group" });
       }
@@ -385,11 +430,11 @@ export const addToGroup = async (req, res) => {
         data: {
           group: {
             name: group.name,
-            members: group.members,
+            members: group.members.map(member => member.email),
           },
           alreadyInGroup,
           membersNotFound,
-        }, message: res.locals.message
+        }, refreshedTokenMessage: res.locals.refreshedTokenMessage
       };
       await group.save();
       return res.status(200).json(responseData);
@@ -401,14 +446,23 @@ export const addToGroup = async (req, res) => {
 }
 
 /**
- * Remove members from a group
-  - Request Body Content: An object having an attribute `group` (this object must have a string attribute for the `name` of the
-    created group and an array for the `members` of the group, this array must include only the remaining members),
-    an array that lists the `notInGroup` members (members whose email is not in the group) and an array that lists 
-    the `membersNotFound` (members whose email does not appear in the system)
-  - Optional behavior:
-    - error 401 is returned if the group does not exist
-    - error 401 is returned if all the `memberEmails` either do not exist or are not in the group
+- Request Parameters: A string equal to the `name` of the group
+  - Example: `api/groups/Family/remove` (user route)
+  - Example: `api/groups/Family/pull` (admin route)
+- Request Body Content: An array of strings containing the `emails` of the members to remove from the group
+  - Example: `{emails: ["pietro.blue@email.com"]}`
+- Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name` of the created group and an array for the `members` of the group, this array must include only the remaining members), an array that lists the `notInGroup` members (members whose email is not in the group) and an array that lists the `membersNotFound` (members whose email does not appear in the system)
+  - Example: `res.status(200).json({data: {group: {name: "Family", members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}]}, membersNotFound: [], notInGroup: []} refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- In case any of the following errors apply then no user is removed from the group
+- Returns a 400 error if the request body does not contain all the necessary attributes
+- Returns a 400 error if the group name passed as a route parameter does not represent a group in the database
+- Returns a 400 error if all the provided emails represent users that do not belong to the group or do not exist in the database
+- Returns a 400 error if at least one of the emails is not in a valid email format
+- Returns a 400 error if at least one of the emails is an empty string
+- Returns a 400 error if the group contains only one member before deleting any user
+- Returns a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove`
+- Returns a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`
+
  */
 export const removeFromGroup = async (req, res) => {
   try {
@@ -424,7 +478,7 @@ export const removeFromGroup = async (req, res) => {
       return res.status(401).json({ message: "The group name provided in the URL and the one given in the body don't match" });
     }
 
-    if (user.role === "Admin" && req.url.indexOf("/groups/:name/pull")) {
+    if (user.role === "Admin" ) {
 
       const verify = verifyAuth(req, res, { authType: "Admin", username: user.username, token: user ? user.refreshToken : 0 })
       if (verify.flag === false)
@@ -593,10 +647,16 @@ export const deleteUser = async (req, res) => {
 
 /**
  * Delete a group
-  - Request Body Content: A string equal to the `name` of the group to be deleted
-  - Response `data` Content: A message confirming successful deletion
-  - Optional behavior:
-    - error 401 is returned if the group does not exist
+- Request Parameters: None
+- Request Body Content: A string equal to the `name` of the group to be deleted
+  - Example: `{name: "Family"}`
+- Response `data` Content: A message confirming successful deletion
+  - Example: `res.status(200).json({data: {message: "Group deleted successfully"} , refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- Returns a 400 error if the request body does not contain all the necessary attributes
+- Returns a 400 error if the name passed in the request body is an empty string
+- Returns a 400 error if the name passed in the request body does not represent a group in the database
+- Returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)
+
  */
 export const deleteGroup = async (req, res) => {
   try {
@@ -604,6 +664,7 @@ export const deleteGroup = async (req, res) => {
     if (!cookie.refreshToken || !cookie.accessToken) {
       return res.status(401).json({ message: "Unauthorized" })
     }
+    
     const user = await User.findOne({ refreshToken: cookie.refreshToken });
 
     const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
@@ -611,6 +672,9 @@ export const deleteGroup = async (req, res) => {
       return res.status(401).json({ error: verify.cause })
 
     let { name } = req.body;
+    if (!name || name==='') {
+      return res.status(400).json({ error: 'Missing attribute in the request body or the string is empty' });
+    }
     name = handleString(name, "name");
 
       const existingGroup = await Group.findOne({ name });
@@ -621,7 +685,7 @@ export const deleteGroup = async (req, res) => {
 
       return res.json({
         data: `Group ${name} has been deleted`,
-        message: res.locals.message
+        refreshedTokenMessage: res.locals.refreshedTokenMessage
       });
       //res.status(200).json(`Group ${name} deleted`);
     
