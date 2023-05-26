@@ -215,8 +215,11 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
   try {
-
-    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
+    const cookie = req.cookies;
+    if(!cookie.refreshToken || cookie.accessToken){
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
     if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
     }//
@@ -244,7 +247,7 @@ export const getGroup = async (req, res) => {
     }
 
     if (user.role === "Regular") {
-      console.log("1");
+      //console.log("1");
       let groupName = req.params.name;
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
@@ -293,7 +296,11 @@ export const getGroup = async (req, res) => {
  */
 export const addToGroup = async (req, res) => {
   try {
-    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
+    const cookie = req.cookies;
+    if(!cookie.refreshToken || cookie.accessToken){
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
     let groupName = req.params.name;
     const { memberEmails } = req.body;//gets the array of emails on the body
     if (!memberEmails ) {
@@ -372,7 +379,7 @@ export const addToGroup = async (req, res) => {
     }
 
     if (user.role === "Regular") {
-      console.log("1");
+      //console.log("1");
       if (req.url.indexOf("insert") > 0)
         return res.status(401).json({ message: "You are trying to use an Admin route while still a Regular" });
       //User things   
@@ -468,7 +475,11 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
   try {
-    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
+    const cookie = req.cookies;
+    if(!cookie.refreshToken || cookie.accessToken){
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const user = await User.findOne({ refreshToken: cookie.refreshToken });
     if (!user) return res.status(400).json('user not found');
     let groupName = req.params.name;
     if (!groupName) {
@@ -601,136 +612,6 @@ export const removeFromGroup = async (req, res) => {
         return res.status(200).json(responseData);
     }
 
-  } catch (err) {
-    res.status(500).json(err.message)
-  }
-}
-
-export const removeFromGroup2 = async (req, res) => {
-  try {
-    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
-    if (!user) return res.status(400).json('user not found');
-    let group = req.body.group;
-
-    let group_name = handleString(group.name, "group_name");
-    let group_name_params = req.params.name;
-    group_name_params = handleString(group_name_params, "group_name_params")
-
-    if (group_name_params !== group_name) {
-      return res.status(401).json({ message: "The group name provided in the URL and the one given in the body don't match" });
-    }
-
-    if (user.role === "Admin") {
-
-      const verify = verifyAuth(req, res, { authType: "Admin", username: user.username, token: user ? user.refreshToken : 0 })
-      if (verify.flag === false)
-        return res.status(401).json({ error: verify.cause })
-
-      //admin logic
-      // Check if the group exists
-
-      const existingGroup = await Group.findOne({ name: group.name });
-      if (!existingGroup) {
-        return res.status(401).json({ message: "Group does not exist" });
-      }
-      const membersNotFound = [];
-      const notInGroup = [];
-      const removedMembers = [];
-
-      for (const member of group.members) {
-        const user = await User.findOne({ email: member });
-        if (!user) {
-          membersNotFound.push(member);
-        } else if (!existingGroup.members.some((groupMember) => groupMember.email === member)) {//this else if checks if the currect member is a part of the existingGroup, 
-          if (!existingGroup.members.some((groupMember) => groupMember.email === member)) {//if it is it doesn't do nothing
-            notInGroup.push(member);
-          }
-        }
-      }
-
-      for (const member of existingGroup.members) {
-        if (!group.members.includes(member.email)) {
-          removedMembers.push(member.email);
-          //console.log(removedMembers);
-        }
-      }
-
-      // Remove existingUsers from the group
-      existingGroup.members = existingGroup.members.filter((member) =>
-        group.members.includes(member.email)
-      );
-
-      if (removedMembers.length === 0) {
-        return res.status(200).json({ message: "No members have been removed from the group" });
-      }
-
-      const updatedGroup = await existingGroup.save();
-      return res.status(200).json({
-        data: {
-          message: "Members removed from the group successfully",
-          group: updatedGroup,
-          removedMembers: removedMembers,
-          notInGroup: notInGroup,
-          membersNotFound: membersNotFound,
-        },
-        message: res.locals.message
-      });
-    }
-    if (user.role === "Regular") {
-      if (req.url.indexOf("pull") > 0)
-        return res.status(401).json({ message: "You are trying to use an Admin route while still a Regular" });
-      //user logic      
-      const existingGroup = await Group.findOne({ name: group.name });
-      if (!existingGroup) {
-        return res.status(401).json({ message: "Group does not exist" });
-      }
-      const verify = verifyAuth(req, res, { authType: "Group", emailList: existingGroup.members.map(member => member.email), token: user ? user.refreshToken : 0 })
-      if (verify.flag === false)
-        return res.status(401).json({ error: verify.cause })
-
-      const membersNotFound = [];
-      const notInGroup = [];
-      const removedMembers = [];
-
-      for (const member of group.members) {
-        const user = await User.findOne({ email: member });
-        if (!user) {
-          membersNotFound.push(member);
-        } else if (!existingGroup.members.some((groupMember) => groupMember.email === member)) {//this else if checks if the currect member is a part of the existingGroup, 
-          if (!existingGroup.members.some((groupMember) => groupMember.email === member)) {//if it is it doesn't do nothing
-            notInGroup.push(member);
-          }
-        }
-      }
-
-      for (const member of existingGroup.members) {
-        if (!group.members.includes(member.email)) {
-          removedMembers.push(member.email);
-          //console.log(removedMembers);
-        }
-      }
-
-      // Remove existingUsers from the group
-      existingGroup.members = existingGroup.members.filter((member) =>
-        group.members.includes(member.email)
-      );
-
-      if (removedMembers.length === 0) {
-        return res.status(200).json({ message: "No members have been removed from the group" });
-      }
-
-      const updatedGroup = await existingGroup.save();
-      return res.status(200).json({
-        data: {
-          message: "Members removed from the group successfully",
-          group: updatedGroup,
-          removedMembers: removedMembers,
-          notInGroup: notInGroup,
-          membersNotFound: membersNotFound,
-        },
-        message: res.locals.message
-      });
-    }
   } catch (err) {
     res.status(500).json(err.message)
   }
