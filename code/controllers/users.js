@@ -92,10 +92,9 @@ export const createGroup = async (req, res) => {
   try {
 
     const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
+    //if (!user) {
+      //return res.status(401).json({ message: "Unauthorized" });
+    //}
     const verify = verifyAuth(req, res, { authType: "User/Admin", username: user.username, token: user ? user.refreshToken : 0 })
     if (verify.flag === false)
       return res.status(401).json({ error: verify.cause })
@@ -130,7 +129,7 @@ export const createGroup = async (req, res) => {
     const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
 
     for (const email of memberEmails) {
-      if (!myRegEx.test(email) || email==='') {
+      if (!myRegEx.test(email) || email === '') {
         invalidEmails.push(email);
       } else {
         const user = await User.findOne({ email }); //find the email in db
@@ -245,6 +244,7 @@ export const getGroup = async (req, res) => {
     }
 
     if (user.role === "Regular") {
+      console.log("1");
       let groupName = req.params.name;
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
@@ -293,12 +293,10 @@ export const getGroup = async (req, res) => {
  */
 export const addToGroup = async (req, res) => {
   try {
-
     const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
-    if (!user) return res.status(400).json('Unauthorized');
     let groupName = req.params.name;
     const { memberEmails } = req.body;//gets the array of emails on the body
-    if (!memberEmails) {
+    if (!memberEmails ) {
       return res.status(400).json({ error: 'Missing attributes in the request body' });
     }
     if (user.role === "Admin") {
@@ -308,14 +306,14 @@ export const addToGroup = async (req, res) => {
         return res.status(401).json({ error: verify.cause })
 
       //Admin things
-      
+
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(401).json({ message: "Group does not exist" });
       }
 
-      if (!memberEmails || memberEmails.length === 0) {
+      if ( memberEmails.length === 0) {
         return res.status(401).json({ message: "No member emails provided" });
       }
 
@@ -324,33 +322,33 @@ export const addToGroup = async (req, res) => {
       const invalidEmails = [];
       const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
       for (const email of memberEmails) {
-        if(!myRegEx.test(email) || email===''){
+        if (!myRegEx.test(email) || email === '') {
           invalidEmails.push(email);
-        }else{
-        const user = await User.findOne({ email });
-        if (!user) {
-          membersNotFound.push(email);
         } else {
-          const existingGroup = await Group.findOne({
-            'members.email': email,
-          });
-
-          if (existingGroup) {
-            alreadyInGroup.push(user.email);
+          const user = await User.findOne({ email });
+          if (!user) {
+            membersNotFound.push(email);
           } else {
-            const memberExists = group.members.some(
-              (member) => member.email === email
-            );
-            if (!memberExists) {
-              group.members.push({ email: user.email, user: user._id });
+            const existingGroup = await Group.findOne({
+              'members.email': email,
+            });
+
+            if (existingGroup) {
+              alreadyInGroup.push(user.email);
+            } else {
+              const memberExists = group.members.some(
+                (member) => member.email === email
+              );
+              if (!memberExists) {
+                group.members.push({ email: user.email, user: user._id });
+              }
             }
           }
         }
       }
-    }
-    if (invalidEmails.length > 0) {
-      return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
-    }
+      if (invalidEmails.length > 0) {
+        return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
+      }
 
       if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
         return res.status(400).json({
@@ -374,16 +372,22 @@ export const addToGroup = async (req, res) => {
     }
 
     if (user.role === "Regular") {
+      console.log("1");
       if (req.url.indexOf("insert") > 0)
         return res.status(401).json({ message: "You are trying to use an Admin route while still a Regular" });
       //User things   
+      
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(401).json({ message: "Group does not exist" });
       }
+      const verify = verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email), token: user ? user.refreshToken : 0 })
+      if (verify.flag === false)
+        return res.status(401).json({ error: verify.cause })
+      
 
-      if (!memberEmails || memberEmails.length === 0) {
+      if ( memberEmails.length === 0) {
         return res.status(401).json({ message: "No member emails provided" });
       }
       const alreadyInGroup = [];
@@ -391,40 +395,38 @@ export const addToGroup = async (req, res) => {
       const invalidEmails = [];
       const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
       for (const email of memberEmails) {
-        if(!myRegEx.test(email) || email===''){
+        if (!myRegEx.test(email) || email === '') {
           invalidEmails.push(email);
-        }else{
-        const user = await User.findOne({ email });
-        if (!user) {
-          membersNotFound.push(email);
         } else {
-          const existingGroup = await Group.findOne({
-            'members.email': email,
-          });
-
-          if (existingGroup) {
-            alreadyInGroup.push(user.email);
+          const user = await User.findOne({ email });
+          if (!user) {
+            membersNotFound.push(email);
           } else {
-            const memberExists = group.members.some(
-              (member) => member.email === email
-            );
-            if (!memberExists) {
-              group.members.push({ email: user.email, user: user._id });
+            const existingGroup = await Group.findOne({
+              'members.email': email,
+            });
+
+            if (existingGroup) {
+              alreadyInGroup.push(user.email);
+            } else {
+              const memberExists = group.members.some(
+                (member) => member.email === email
+              );
+              if (!memberExists) {
+                group.members.push({ email: user.email, user: user._id });
+              }
             }
           }
         }
       }
-    }
-    if (invalidEmails.length > 0) {
-      return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
-    }
+      if (invalidEmails.length > 0) {
+        return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
+      }
       if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
         return res.status(400).json({ message: "The member emails you provided either don't exist or are already in the group" });
       }
-      //console.log(group.members);
-      const verify = verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email), token: user ? user.refreshToken : 0 })
-      if (verify.flag === false)
-        return res.status(401).json({ error: verify.cause })
+
+      
 
       const responseData = {
         data: {
@@ -468,6 +470,146 @@ export const removeFromGroup = async (req, res) => {
   try {
     const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
     if (!user) return res.status(400).json('user not found');
+    let groupName = req.params.name;
+    if (!groupName) {
+      return res.status(400).json({ error: 'Missing attributes in the request body' });
+    }
+    const { emails } = req.body;
+    if (user.role === "Admin") {
+      const verify = verifyAuth(req, res, { authType: "Admin", username: user.username, token: user ? user.refreshToken : 0 })
+      if (verify.flag === false)
+        return res.status(401).json({ error: verify.cause })
+      groupName = handleString(groupName, "groupName");
+      const existingGroup = await Group.findOne({ name: groupName });
+      if (!existingGroup) {
+        return res.status(400).json({ message: "Group does not exist" });
+      }
+      
+      const membersNotFound = [];
+      const notInGroup = [];
+      const removedMembers = [];
+      const invalidEmails = [];
+      const remaining = [];
+      const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
+      for (const email of emails) {
+        if (!myRegEx.test(email) || email === '') {
+          invalidEmails.push(email);
+        } else {
+          const user = await User.findOne({ email: email });
+          if (!user) {
+            membersNotFound.push(email);
+          } else if (!existingGroup.members.some((groupMember) => groupMember.email === email)) {
+            notInGroup.push(email);
+          } else if (existingGroup.members.some((groupMember) => groupMember.email === email)) {
+            removedMembers.push(email);
+            existingGroup.members = existingGroup.members.filter((groupMember) => groupMember.email !== email)
+          }
+          else {
+            remaining.push(email);
+
+          }
+        }
+      }
+
+      if (membersNotFound.length + notInGroup.length === emails.length) {
+        return res.status(400).json({ message: "All the provided emails represent users that do not belong to the group or do not exist in the database" });
+      }
+      if (existingGroup.members.length === 1) {
+        return res.status(400).json({ message: "This group contains only 1 member, so you can't delete it" });
+      }
+      if (invalidEmails.length > 0) {
+        return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
+      }
+
+      await existingGroup.save();
+      const responseData = {
+        data: {
+          group: {
+            name: existingGroup.name,
+            members: existingGroup.members
+          },
+          membersNotFound,
+          notInGroup
+        },
+        refreshedTokenMessage: res.locals.refreshedTokenMessage
+      }
+      return res.status(200).json(responseData);
+
+
+    }
+
+    if (user.role === "Regular") {
+      if (req.url.indexOf("pull") > 0)
+        return res.status(401).json({ message: "You are trying to use an Admin route while still a Regular" });
+        groupName = handleString(groupName, "groupName");
+        const existingGroup = await Group.findOne({ name: groupName });
+        if (!existingGroup) {
+          return res.status(400).json({ message: "Group does not exist" });
+        }
+        
+        const membersNotFound = [];
+        const notInGroup = [];
+        const removedMembers = [];
+        const invalidEmails = [];
+        const remaining = [];
+        const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
+        for (const email of emails) {
+          if (!myRegEx.test(email) || email === '') {
+            invalidEmails.push(email);
+          } else {
+            const user = await User.findOne({ email: email });
+            if (!user) {
+              membersNotFound.push(email);
+            } else if (!existingGroup.members.some((groupMember) => groupMember.email === email)) {
+              notInGroup.push(email);
+            } else if (existingGroup.members.some((groupMember) => groupMember.email === email)) {
+              removedMembers.push(email);
+              existingGroup.members = existingGroup.members.filter((groupMember) => groupMember.email !== email)
+            }
+            else {
+              remaining.push(email);
+  
+            }
+          }
+        }
+  
+        if (membersNotFound.length + notInGroup.length === emails.length) {
+          return res.status(400).json({ message: "All the provided emails represent users that do not belong to the group or do not exist in the database" });
+        }
+        if (existingGroup.members.length === 1) {
+          return res.status(400).json({ message: "This group contains only 1 member, so you can't delete it" });
+        }
+        if (invalidEmails.length > 0) {
+          return res.status(400).json({ message: "Invalid email format or email with empty string", invalidEmails });
+        }
+        const verify = verifyAuth(req, res, { authType: "Group", emailList: existingGroup.members.map(member => member.email), token: user ? user.refreshToken : 0 })
+        if (verify.flag === false)
+          return res.status(401).json({ error: verify.cause })
+  
+        await existingGroup.save();
+        const responseData = {
+          data: {
+            group: {
+              name: existingGroup.name,
+              members: existingGroup.members
+            },
+            membersNotFound,
+            notInGroup
+          },
+          refreshedTokenMessage: res.locals.refreshedTokenMessage
+        }
+        return res.status(200).json(responseData);
+    }
+
+  } catch (err) {
+    res.status(500).json(err.message)
+  }
+}
+
+export const removeFromGroup2 = async (req, res) => {
+  try {
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
+    if (!user) return res.status(400).json('user not found');
     let group = req.body.group;
 
     let group_name = handleString(group.name, "group_name");
@@ -478,7 +620,7 @@ export const removeFromGroup = async (req, res) => {
       return res.status(401).json({ message: "The group name provided in the URL and the one given in the body don't match" });
     }
 
-    if (user.role === "Admin" ) {
+    if (user.role === "Admin") {
 
       const verify = verifyAuth(req, res, { authType: "Admin", username: user.username, token: user ? user.refreshToken : 0 })
       if (verify.flag === false)
@@ -542,9 +684,9 @@ export const removeFromGroup = async (req, res) => {
       if (!existingGroup) {
         return res.status(401).json({ message: "Group does not exist" });
       }
-      if (!existingGroup.members.some((member) => member.email === user.email)) {
-        return res.status(401).json({ message: "You are not a member of this group" });
-      }
+      const verify = verifyAuth(req, res, { authType: "Group", emailList: existingGroup.members.map(member => member.email), token: user ? user.refreshToken : 0 })
+      if (verify.flag === false)
+        return res.status(401).json({ error: verify.cause })
 
       const membersNotFound = [];
       const notInGroup = [];
@@ -577,10 +719,6 @@ export const removeFromGroup = async (req, res) => {
         return res.status(200).json({ message: "No members have been removed from the group" });
       }
 
-      const verify = verifyAuth(req, res, { authType: "Group", emailList: existingGroup.members.map(member => member.email), token: user ? user.refreshToken : 0 })
-      if (verify.flag === false)
-        return res.status(401).json({ error: verify.cause })
-
       const updatedGroup = await existingGroup.save();
       return res.status(200).json({
         data: {
@@ -610,7 +748,7 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    
+
     const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
 
     const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
@@ -660,35 +798,32 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
   try {
-    const cookie = req.cookies;
-    if (!cookie.refreshToken || !cookie.accessToken) {
-      return res.status(401).json({ message: "Unauthorized" })
-    }
-    
-    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+
+
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
 
     const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
     if (verify.flag === false)
       return res.status(401).json({ error: verify.cause })
 
     let { name } = req.body;
-    if (!name || name==='') {
+    if (!name || name === '') {
       return res.status(400).json({ error: 'Missing attribute in the request body or the string is empty' });
     }
     name = handleString(name, "name");
 
-      const existingGroup = await Group.findOne({ name });
-      if (!existingGroup)
-        return res.status(401).json({ message: `Group ${name} does not exist` });
+    const existingGroup = await Group.findOne({ name });
+    if (!existingGroup)
+      return res.status(401).json({ message: `Group ${name} does not exist` });
 
-      const data = await Group.findOneAndDelete({ name });
+    const data = await Group.findOneAndDelete({ name });
 
-      return res.json({
-        data: `Group ${name} has been deleted`,
-        refreshedTokenMessage: res.locals.refreshedTokenMessage
-      });
-      //res.status(200).json(`Group ${name} deleted`);
-    
+    return res.json({
+      data: `Group ${name} has been deleted`,
+      refreshedTokenMessage: res.locals.refreshedTokenMessage
+    });
+    //res.status(200).json(`Group ${name} deleted`);
+
   } catch (err) {
     res.status(500).json(err.message)
   }
