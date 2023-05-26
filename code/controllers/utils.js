@@ -29,13 +29,13 @@ export const handleDateFilterParams = (req, res) => {
              return {queryObj : { 'date': { $eq: new Date(date[0], date[1]-1, date[2], 0, 0, 0) } },'flag': true} }
         if (from && upTo) {
             from=from.split("-");
-            upTo=Upto.split("-");
+            upTo=upTo.split("-");
             return {queryObj : { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0), $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) }} ,'flag': true}}
         if (from) {
             from=from.split("-");
             return {queryObj : { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0) }} ,'flag': true}}
         if (upTo){
-             upTo=Upto.split("-");
+             upTo=upTo.split("-");
             return { queryObj : {'date': { $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) }},'flag': true} }
     
         return  { queryObj : {'date': {}},'flag': true};
