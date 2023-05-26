@@ -29,22 +29,20 @@ export const handleDateFilterParams = (req) => {
 
         // Date constructor works with indexes, so months start from 0 
         if (date)
-            return { 'date': { $eq: new Date(date[0], date[1]-1, date[2], 0, 0, 0) } }
+            return {queryObj : { 'date': { $eq: new Date(date[0], date[1]-1, date[2], 0, 0, 0) } },'flag': true}
         if (from && upTo)
-            return { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0), $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) } }
+            return {queryObj : { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0), $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) }} ,'flag': true}
         if (from)
-            return { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0) } }
+            return {queryObj : { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0) }} ,'flag': true}
         if (upTo)
-            return { 'date': { $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) } }
+            return { queryObj : {'date': { $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) }},'flag': true}
     
-        return {};
+        return  { queryObj : {'date': {}},'flag': true};
 
 
     } catch (error) {
-        if (error.message === "Cannot use 'date' together with 'from' or 'Upto")
-            res.status(401).json(error.message)
-        else
-            res.status(400).json({ error: error.message })
+       
+        return  { error: error.message,'flag': false};
 
     }
 }
