@@ -18,8 +18,13 @@ export const createCategory = async (req, res) => {
                 refreshedTokenMessage: res.locals.message
             })
 
-
         const { type, color } = req.body;
+        
+        if(!type || !color)
+        return res.status(401).json({
+            error: "Missing attributes in the body",
+            refreshedTokenMessage: res.locals.message
+        })    
         /*if (color === "") return res.status(401).json({ message: "Missing Color" })
         if (type === "") return res.status(401).json({ message: "Missing Type" })*/
         type = handleString(type, "type")
@@ -75,13 +80,26 @@ export const updateCategory = async (req, res) => {
                 refreshedTokenMessage: res.locals.message
             })
 
+        let old_type = handleString(req.params.type, "type");
+        let old_color_find = await categories.find({ type: old_type });
+        if(!old_color_find)
+            return res.status(401).json({
+                error: "Category type does not exist in the database",
+                refreshedTokenMessage: res.locals.message
+            })
+        
         const { type, color } = req.body;
+
+        if(!type || !color)
+        return res.status(401).json({
+            error: "Missing attributes in the body",
+            refreshedTokenMessage: res.locals.message
+        })  
+
         type = handleString(type, "type")
         color = handleString(color, "color")
 
-        let old_type = handleString(req.params.type, "type");
-
-
+        
         let find_bycolor = await categories.find({ color: color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
         if (color_found[0] && old_type === type)
@@ -102,7 +120,6 @@ export const updateCategory = async (req, res) => {
             let find_bycolor = await categories.find({ color: color });
             let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
-            let old_color_find = await categories.find({ type: old_type });
             let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
             let old_color = old_color_found[0].color;
             if (color_found[0] && old_color != color)
@@ -110,8 +127,6 @@ export const updateCategory = async (req, res) => {
                     error: "Color already used",
                     refreshedTokenMessage: res.locals.message
                 })
-
-
 
         }
         //found by type 
@@ -166,9 +181,12 @@ export const deleteCategory = async (req, res) => {
                 refreshedTokenMessage: res.locals.message
             })
 
-
         const array_category = req.body.array
-        if (!array_category.length) return res.status(401).json({ message: "Missing values" })
+        if (!array_category.length)
+             return res.status(401).json({
+                 error: "Missing necessary attributes",
+                refreshedTokenMessage: res.locals.message })
+                
         //check categories
         for (let category of array_category) {
             let check_exist = await categories.findOne({ type: category });
