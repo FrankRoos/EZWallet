@@ -219,7 +219,7 @@ export const getGroup = async (req, res) => {
     const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
     if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
-    }
+    }//
 
     if (user.role === "Admin") {
       const authAdmin = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 });

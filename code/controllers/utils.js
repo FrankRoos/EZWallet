@@ -79,7 +79,7 @@ export const verifyAuth = (req, res, info) => {
     if (!cookie.accessToken || !cookie.refreshToken || !info.token) {
         //res.status(401).json({ message: "Unauthorized" });
         return {flag: false, cause: "Unauthorized"};
-    }
+    }//
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
