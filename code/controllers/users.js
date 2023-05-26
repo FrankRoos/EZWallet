@@ -771,7 +771,7 @@ export const deleteUser = async (req, res) => {
       data.deletedFromGroup = true;
     }
 
-    //delete users .....
+    //delete users .....fffff
     res.status(200).json({
       data: {
         data
