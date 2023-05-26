@@ -9,20 +9,33 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
-    const { date, from, upTo } = req.query
+    let { date, from, upTo } = req.query
+    const regEx = /((?:19|20)[0-9][0-9])-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])/
+    if(!regEx.test(date))
+        throw new Error("Invalid format of date parameter")
+    if(!regEx.test(from))
+        throw new Error("Invalid format of from parameter")
+    if(!regEx.test(upTo))
+        throw new Error("Invalid format of upTo parameter")
+
+    date = date.split("-")
+    from = from.split("-")
+    upTo = upTo.split("-")
+
     try {
 
         if (date && (from || upTo))
             throw new Error("Cannot use 'date' together with 'from' or 'Upto")
 
+        // Date constructor works with indexes, so months start from 0 
         if (date)
-            return { 'date': { $eq: new Date(date) } }
+            return { 'date': { $eq: new Date(date[0], date[1]-1, date[2], 0, 0, 0) } }
         if (from && upTo)
-            return { 'date': { $gte: new Date(from), $lte: new Date(upTo) } }
+            return { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0), $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) } }
         if (from)
-            return { 'date': { $gte: new Date(from) } }
+            return { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0) } }
         if (upTo)
-            return { 'date': { $lte: new Date(upTo) } }
+            return { 'date': { $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) } }
     
         return {};
 
@@ -117,8 +130,8 @@ export const verifyAuth = (req, res, info) => {
                 res.locals.message = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
 
                 if (info.authType === "User" && decodedRefreshToken.username !== info.username) {
-                    res.status(401).json({ message: "Tokens have a different username from the requested one" });
-                    return false;
+                    // res.status(401).json({ message: "Tokens have a different username from the requested one" });
+                    return {flag: false, cause: "Tokens have a different username from the requested one"};
                 }
                 if (info.authType === "Admin" && decodedRefreshToken.role !== "Admin") {
                     res.status(401).json({ message: "You are not an Admin" });

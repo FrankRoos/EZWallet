@@ -122,16 +122,19 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
     try {
-        if (verifyAuth(req, res, {})) {
-            const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-            if (!user) return res.status(400).json('user not found')
+        const verify = verifyAuth(req, res, {})
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-            user.refreshToken = null
-            res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
-            res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
-            const savedUser = await user.save()
-            res.status(200).json('logged out')
-        }
+
+        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        if (!user) return res.status(400).json('user not found')
+
+        user.refreshToken = null
+        res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
+        res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
+        const savedUser = await user.save()
+        res.status(200).json('logged out')
     } catch (error) {
         res.status(400).json(error)
     }

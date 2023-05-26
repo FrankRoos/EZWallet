@@ -10,26 +10,31 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth, handleNum
 export const createCategory = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        if (verifyAuth(req, res, { authType: "Admin"  ,token: user?user.refreshToken:0})) {
-            const { type, color } = req.body;
-            /*if (color === "") return res.status(401).json({ message: "Missing Color" })
-            if (type === "") return res.status(401).json({ message: "Missing Type" })*/
-            type = handleString(type, "type")
-            color = handleString(color, "color")
 
-            let find_bytype = await categories.find({ type: type });
-            let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-            if (category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
+        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-            let find_bycolor = await categories.find({ color: color });
-            let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-            if (color_found[0]) return res.status(401).json({ message: "Color alredy used" })
 
-            const new_categories = new categories({ type, color });
-            new_categories.save()
-                .then(data => res.json(data))
-                .catch(err => { throw err })
-        }
+        const { type, color } = req.body;
+        /*if (color === "") return res.status(401).json({ message: "Missing Color" })
+        if (type === "") return res.status(401).json({ message: "Missing Type" })*/
+        type = handleString(type, "type")
+        color = handleString(color, "color")
+
+        let find_bytype = await categories.find({ type: type });
+        let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if (category_found[0]) return res.status(401).json({ message: "Category type alredy exists" })
+
+        let find_bycolor = await categories.find({ color: color });
+        let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if (color_found[0]) return res.status(401).json({ message: "Color alredy used" })
+
+        const new_categories = new categories({ type, color });
+        new_categories.save()
+            .then(data => res.json(data))
+            .catch(err => { throw err })
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -47,56 +52,56 @@ export const updateCategory = async (req, res) => {
     try {
         //{type:new color:new}
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        
-        if (verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0})) {
-            /*if (req.body.color === "") return res.status(401).json({ message: "Missing Color" })
-            if (req.body.type === "") return res.status(401).json({ message: "Missing Type" })*/
-            const { type, color } = req.body;
-            type = handleString(type, "type")
-            color = handleString(color, "color")
 
-            let old_type = req.params.type;
+        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
+
+        const { type, color } = req.body;
+        type = handleString(type, "type")
+        color = handleString(color, "color")
+
+        let old_type = req.params.type;
 
 
+        let find_bycolor = await categories.find({ color: color });
+        let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if (color_found[0] && old_type === type)
+            return res.status(401).json({ message: "Color already used" })
+
+        if (old_type != type) {
+            let find_bytype = await categories.find({ type: type });
+            let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            if (category_found[0])
+                return res.status(401).json({ message: "Category type already exists" })
+            //check sul colore nuovo 
             let find_bycolor = await categories.find({ color: color });
             let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-            if (color_found[0] && old_type === type)
+
+            let old_color_find = await categories.find({ type: old_type });
+            let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
+            let old_color = old_color_found[0].color;
+            if (color_found[0] && old_color != color)
                 return res.status(401).json({ message: "Color already used" })
 
-            if (old_type != type) {
-                let find_bytype = await categories.find({ type: type });
-                let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-                if (category_found[0])
-                    return res.status(401).json({ message: "Category type already exists" })
-                //check sul colore nuovo 
-                let find_bycolor = await categories.find({ color: color });
-                let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-
-                let old_color_find = await categories.find({ type: old_type });
-                let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
-                let old_color = old_color_found[0].color;
-                if (color_found[0] && old_color != color)
-                    return res.status(401).json({ message: "Color already used" })
 
 
-
-            }
-            //found by type 
-            let update = await categories.findOneAndUpdate({ type: old_type }, { type: type, color:color })
-            let data = { message: "Category updated successfully" };
-
-            //da sistemare count-->> vedi descrizione funzione
-            if (old_type != type) {
-                const transactionsList = await transactions.updateMany({ type: old_type }, { type: type });
-                data.count = transactionsList.modifiedCount;
-            }
-            else {
-                let num = await transactions.count({ type: old_type });
-                data.count = num;
-            }
-
-            res.status(200).json(data);
         }
+        //found by type 
+        let update = await categories.findOneAndUpdate({ type: old_type }, { type: type, color: color })
+        let data = { message: "Category updated successfully" };
+
+        //da sistemare count-->> vedi descrizione funzione
+        if (old_type != type) {
+            const transactionsList = await transactions.updateMany({ type: old_type }, { type: type });
+            data.count = transactionsList.modifiedCount;
+        }
+        else {
+            let num = await transactions.count({ type: old_type });
+            data.count = num;
+        }
+
+        res.status(200).json(data);
 
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -114,35 +119,39 @@ export const updateCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        
-        if (verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0})) {
-            const array_category = req.body.array
-            if (!array_category.length) return res.status(401).json({ message: "Missing values" })
-            //check categories
-            for (let category of array_category) {
-                let check_exist = await categories.findOne({ type: category });
-                if (!check_exist)
-                    return res.status(401).json({ message: "You inserted an invalid category" })
-            }
+
+        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
 
-            let data = { message: "Success", count: 0 }
-            let counter = 0;
-            //delete categories
-            for (let category of array_category) {
-                let find_transaction = await transactions.updateMany({ type: category }, { type: "investement" })
-                counter += find_transaction.modifiedCount
-                let find_delete = await categories.findOneAndDelete({ type: category });
-            }
-            data.count = counter
-
-
-
-
-            //da sistemare la parte sulle transaction 
-
-            res.json(data)
+        const array_category = req.body.array
+        if (!array_category.length) return res.status(401).json({ message: "Missing values" })
+        //check categories
+        for (let category of array_category) {
+            let check_exist = await categories.findOne({ type: category });
+            if (!check_exist)
+                return res.status(401).json({ message: "You inserted an invalid category" })
         }
+
+
+        let data = { message: "Success", count: 0 }
+        let counter = 0;
+        //delete categories
+        for (let category of array_category) {
+            let find_transaction = await transactions.updateMany({ type: category }, { type: "investement" })
+            counter += find_transaction.modifiedCount
+            let find_delete = await categories.findOneAndDelete({ type: category });
+        }
+        data.count = counter
+
+
+
+
+        //da sistemare la parte sulle transaction 
+
+        res.json(data)
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -158,16 +167,20 @@ export const deleteCategory = async (req, res) => {
 export const getCategories = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        if (verifyAuth(req, res, { authType: "User/Admin", username: user.username ,token: user?user.refreshToken:0 })) {
-            let data = await categories.find({})
 
-            if (!data)
-                return res.json([])  //if no categories
+        const verify = verifyAuth(req, res, { authType: "User/Admin", username: user.username, token: user ? user.refreshToken : 0 })
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-            let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        let data = await categories.find({})
 
-            return res.json(filter)
-        }
+        if (!data)
+            return res.json([])  //if no categories
+
+        let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
+
+        return res.json(filter)
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -183,40 +196,41 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        info = { authType: "User/Admin", username: req.params.username, token: user?user.refreshToken:0 }
+        info = { authType: "User/Admin", username: req.params.username, token: user ? user.refreshToken : 0 }
         info.username = handleString(username, "username")
 
-        if (verifyAuth(req, res, info)) {
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-            let { username, amount, type } = req.body;
-            type = handleString(type, "type")
-            amount = handleNumber(amount, "amount")
-            const category = await categories.findOne({ type: type });
-            // const user = await User.findOne({ username });
+        let { username, amount, type } = req.body;
+        type = handleString(type, "type")
+        amount = handleNumber(amount, "amount")
+        const category = await categories.findOne({ type: type });
+        // const user = await User.findOne({ username });
 
-            if (!category && !username)
-                throw new Error("Category and Username Not Found")
-            else if (!category)
-                throw new Error("Category Not Found")
-            else if (!user)
-                throw new Error("Username Not Found")
+        if (!category && !username)
+            throw new Error("Category and Username Not Found")
+        else if (!category)
+            throw new Error("Category Not Found")
+        else if (!user)
+            throw new Error("Username Not Found")
 
-            const newTransaction = new transactions({ username, amount, type: category.type });
-            const transactionSaved = await newTransaction
-                .save()
-                .catch((err) => { throw err; })
+        const newTransaction = new transactions({ username, amount, type: category.type });
+        const transactionSaved = await newTransaction
+            .save()
+            .catch((err) => { throw err; })
 
-            res.json({
-                data: {
-                    username: transactionSaved.username,
-                    amount: transactionSaved.amount,
-                    type: transactionSaved.type,
-                    date: transactionSaved.date
-                },
-                message: res.locals.message
-            })
+        res.json({
+            data: {
+                username: transactionSaved.username,
+                amount: transactionSaved.amount,
+                type: transactionSaved.type,
+                date: transactionSaved.date
+            },
+            message: res.locals.message
+        })
 
-        }
     }
     catch (error) {
         res.status(400).json({ error: error.message })
@@ -232,28 +246,32 @@ export const createTransaction = async (req, res) => {
  */
 export const getAllTransactions = async (req, res) => {
     try {
-            
+
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        
-        if (verifyAuth(req, res, { authType: "Admin" ,token: user?user.refreshToken:0})) {
-            /**
-             * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
-             */
-            transactions.aggregate([
-                {
-                    $lookup: {
-                        from: "categories",
-                        localField: "type",
-                        foreignField: "type",
-                        as: "categories_info"
-                    }
-                },
-                { $unwind: "$categories_info" }
-            ]).then((result) => {
-                let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
-                res.json(data);
-            }).catch(error => { throw (error) })
-        }
+
+        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
+
+
+        /**
+         * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
+         */
+        transactions.aggregate([
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info"
+                }
+            },
+            { $unwind: "$categories_info" }
+        ]).then((result) => {
+            let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
+            res.json(data);
+        }).catch(error => { throw (error) })
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -275,52 +293,54 @@ export const getTransactionsByUser = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
-            info = { authType: "Admin", username: handleString(req.params.username, "username"), token: user?user.refreshToken:0 };
+            info = { authType: "Admin", username: handleString(req.params.username, "username"), token: user ? user.refreshToken : 0 };
 
         } else {
-            info = { authType: "User", username: handleString(req.params.username, "username"), token: user?user.refreshToken:0 };
+            info = { authType: "User", username: handleString(req.params.username, "username"), token: user ? user.refreshToken : 0 };
         }
-       
+
         // Verify the authentication
-        if (verifyAuth(req, res, info)) {
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-            // Verify if the user exists
-            const user = await User.findOne({ username: info.username });
-            if (!user)
-                throw new Error("User not found");
+        // Verify if the user exists
+        const userByUsername = await User.findOne({ username: info.username });
+        if (!userByUsername)
+            throw new Error("User not found");
 
-            // Do the query
-            const objDate = handleDateFilterParams(req);
-            const objAmount = handleAmountFilterParams(req);
+        // Do the query
+        const objDate = handleDateFilterParams(req);
+        const objAmount = handleAmountFilterParams(req);
 
-            let selectedTransactions = await transactions.aggregate([
-                {
-                    $lookup: {
-                        from: "categories",
-                        localField: "type",
-                        foreignField: "type",
-                        as: "categories_info"
-                    }
-                },
-                {
-                    $match: {
-                        $and: [
-                            { 'username': info.username },
-                            // { 'date': obj.date },
-                            objDate,
-                            objAmount
-                        ]
+        let selectedTransactions = await transactions.aggregate([
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info"
+                }
+            },
+            {
+                $match: {
+                    $and: [
+                        { 'username': info.username },
+                        // { 'date': obj.date },
+                        objDate,
+                        objAmount
+                    ]
 
-                    }
-                },
-                { $unwind: "$categories_info" },
+                }
+            },
+            { $unwind: "$categories_info" },
 
-            ]);
+        ]);
 
-            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-            return res.status(200).json(selectedTransactions);
-        }
+        return res.status(200).json(selectedTransactions);
+
 
     } catch (error) {
         if (error.message == "User not found")
@@ -346,52 +366,54 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
             // /transactions/users/:username/category/:category
-            info = { authType: "Admin", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category"),token: user?user.refreshToken:0 };
+            info = { authType: "Admin", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
 
         } else {
             // /users/:username/transactions/category/:category
-            info = { authType: "User", username:handleString(req.params.username, "username"), category: handleString(req.params.category, "category"),token: user?user.refreshToken:0 };
+            info = { authType: "User", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
         }
 
         // Verify the authentication
-        if (verifyAuth(req, res, info)) {
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-            // Verify if the user exists
-            const user = await User.findOne({ username: info.username });
-            if (!user)
-                throw new Error("User not found");
+        // Verify if the user exists
+        const userByUsername = await User.findOne({ username: info.username });
+        if (!userByUsername)
+            throw new Error("User not found");
 
-            // Verify if the category exists
-            const category = await categories.findOne({ type: info.category });
-            if (!category)
-                throw new Error("Category not found");
+        // Verify if the category exists
+        const category = await categories.findOne({ type: info.category });
+        if (!category)
+            throw new Error("Category not found");
 
-            // Do the query
-            let selectedTransactions = await transactions.aggregate([
-                {
-                    $lookup: {
-                        from: "categories",
-                        localField: "type",
-                        foreignField: "type",
-                        as: "categories_info"
-                    }
-                },
-                {
-                    $match: {
-                        $and: [
-                            { 'username': info.username }, // Condizione di join
-                            { 'type': info.category } // Condizione di filtro
-                        ]
+        // Do the query
+        let selectedTransactions = await transactions.aggregate([
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info"
+                }
+            },
+            {
+                $match: {
+                    $and: [
+                        { 'username': info.username }, // Condizione di join
+                        { 'type': info.category } // Condizione di filtro
+                    ]
 
-                    }
-                },
-                { $unwind: "$categories_info" }
-            ]);
+                }
+            },
+            { $unwind: "$categories_info" }
+        ]);
 
-            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-            return res.status(200).json(selectedTransactions);
-        }
+        return res.status(200).json(selectedTransactions);
+
 
     } catch (error) {
         if (error.message == "User not found" || error.message == "Category not found")
@@ -417,11 +439,11 @@ export const getTransactionsByGroup = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name
-            info = { authType: "Admin", groupName: handleString(req.params.name, "name"),token: user?user.refreshToken:0  };
+            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), token: user ? user.refreshToken : 0 };
 
         } else {
             // /groups/:name/transactions
-            info = { authType: "Group", groupName: handleString(req.params.name, "name"),token: user?user.refreshToken:0  };
+            info = { authType: "Group", groupName: handleString(req.params.name, "name"), token: user ? user.refreshToken : 0 };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -431,39 +453,43 @@ export const getTransactionsByGroup = async (req, res) => {
             info.emailList = await group.members.map(element => element.email);
 
         // Verify the authentication
-        if (verifyAuth(req, res, info)) {
-            // Do the query
-            let selectedTransactions = await transactions.aggregate([
-                {
-                    $lookup: {
-                        from: "categories",
-                        localField: "type",
-                        foreignField: "type",
-                        as: "categories_info"
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "username",
-                        foreignField: "username",
-                        as: "user_info"
-                    }
-                },
-                {
-                    $match: { 'user_info.email': { $in: info.emailList } }
-                },
-                { $unwind: "$categories_info" },
-                { $unwind: "$user_info" }
-            ]);
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
-            return res.status(200).json({
-                data: selectedTransactions,
-                message: res.locals.message
-            });
-        }
+        // Do the query
+        let selectedTransactions = await transactions.aggregate([
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "username",
+                    foreignField: "username",
+                    as: "user_info"
+                }
+            },
+            {
+                $match: { 'user_info.email': { $in: info.emailList } }
+            },
+            { $unwind: "$categories_info" },
+            { $unwind: "$user_info" }
+        ]);
+
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+
+        return res.status(200).json({
+            data: selectedTransactions,
+            message: res.locals.message
+        });
+
 
     } catch (error) {
         if (error.message == "Group not found")
@@ -489,11 +515,11 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name/category/:category
-            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") ,token: user?user.refreshToken:0 };
+            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
 
         } else {
             // /groups/:name/transactions/category/:category
-            info = { authType: "Group", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") ,token: user?user.refreshToken:0 };
+            info = { authType: "Group", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -503,42 +529,46 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
             info.emailList = await group.members.map(element => element.email);
 
         // Verify the authentication
-        if (verifyAuth(req, res, info)) {
-            // Do the query
-            let selectedTransactions = await transactions.aggregate([
-                {
-                    $lookup: {
-                        from: "categories",
-                        localField: "type",
-                        foreignField: "type",
-                        as: "categories_info"
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "username",
-                        foreignField: "username",
-                        as: "user_info"
-                    }
-                },
-                {
-                    $match: {
-                        $and: [
-                            { 'user_info.email': { $in: info.emailList } },
-                            { 'type': info.category }
-                        ]
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
-                    }
-                },
-                { $unwind: "$categories_info" },
-                { $unwind: "$user_info" }
-            ]);
 
-            selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+        // Do the query
+        let selectedTransactions = await transactions.aggregate([
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "username",
+                    foreignField: "username",
+                    as: "user_info"
+                }
+            },
+            {
+                $match: {
+                    $and: [
+                        { 'user_info.email': { $in: info.emailList } },
+                        { 'type': info.category }
+                    ]
 
-            return res.status(200).json(selectedTransactions);
-        }
+                }
+            },
+            { $unwind: "$categories_info" },
+            { $unwind: "$user_info" }
+        ]);
+
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+
+        return res.status(200).json(selectedTransactions);
+
 
     } catch (error) {
         if (error.message == "Group not found")
@@ -560,7 +590,7 @@ export const deleteTransaction = async (req, res) => {
         // /users/:username/transactions   
 
         const token_user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        const info = { authType: "User/Admin", username: handleString(req.params.username, "username"),token: token_user?token_user.refreshToken:0  };
+        const info = { authType: "User/Admin", username: handleString(req.params.username, "username"), token: token_user ? token_user.refreshToken : 0 };
 
         const user = await User.findOne({ username: info.username });
         if (!user)
@@ -568,15 +598,17 @@ export const deleteTransaction = async (req, res) => {
 
         const idTransaction = req.body._id;
         if (!id.match(/[0-9a-fA-F]{24}$/))
-                    throw new Error("Invalid ID")
+            throw new Error("Invalid ID")
         const transaction = await transactions.findOne({ _id: idTransaction });
         if (!transaction)
             throw new Error("Transaction not found");
 
-        if (verifyAuth(req, res, info)) {
-            await transactions.deleteOne({ _id: req.body._id });
-            return res.json({ message: "Your transaction has been deleted successfully" });
-        }
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
+
+        await transactions.deleteOne({ _id: req.body._id });
+        return res.json({ message: "Your transaction has been deleted successfully" });
 
     } catch (error) {
         if (error.message == "User not found" || error.message == "Transaction not found")
@@ -597,9 +629,12 @@ export const deleteTransactions = async (req, res) => {
     try {
         // /transactions
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        const info = { authType: "Admin" ,token: user?user.refreshToken:0 };
+        const info = { authType: "Admin", token: user ? user.refreshToken : 0 };
 
-        if (verifyAuth(req, res, info)) {
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
+
             let ids = req.body._ids.map(element => {
                 const id = element.toString();
                 if (!id.match(/[0-9a-fA-F]{24}$/))
@@ -619,7 +654,6 @@ export const deleteTransactions = async (req, res) => {
             await transactions.deleteMany({ _id: { $in: ids } })
 
             res.status(200).json({ message: "Your transactions have been deleted successfully" })
-        }
     } catch (error) {
         if (error.message == "One or more Transactions not found")
             res.status(401).json({ error: error.message });
