@@ -143,7 +143,7 @@ export const verifyAuth = (req, res, info) => {
                     }               
                 if (info.authType === "Group" && info.emailList) {
             
-                    const userHasAccess = info.emailList.some(x => x.email === decodedRefreshToken.email);
+                    const userHasAccess = info.emailList.some(x => x === decodedRefreshToken.email);
                     if (!userHasAccess) {
                         // res.status(401).json({ message: "Your email is not in the group" });
                         return {flag: false, cause: "Your email is not in the group"};
