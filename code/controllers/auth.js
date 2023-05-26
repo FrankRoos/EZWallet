@@ -13,16 +13,23 @@ import { verifyAuth, handleString } from './utils.js';
 
 export const register = async (req, res) => {
     try {
-        let { username, email, password } = req.body;
-        username = handleString(username, "username");
-        const existingUser_email = await User.findOne({ email: req.body.email });
-        if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
-        if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
-        const existingUser_username = await User.findOne({ username: req.body.username });
-        if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
+        let  { username, email, password } = req.body;
+        if(!email || !username || !password)
+            return res.status(400).json({ error: "Missing Parameters" , refreshedTokenMessage: res.locals.message});
 
-        if (req.body.password.length < 8) return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
+         username = handleString(username, "username");
+        if(email==="")
+             return res.status(400).json({ error: "Email empty" , refreshedTokenMessage: res.locals.message});
+        if(password==="")
+            return res.status(400).json({ error: "Password empty" , refreshedTokenMessage: res.locals.message});
+        const existingUser_email = await User.findOne({ email: req.body.email });
+        if (existingUser_email) return res.status(400).json({ error: "Email already taken" , refreshedTokenMessage: res.locals.message});
+        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
+        if (!myRegEx.test(req.body.email)) return res.status(400).json({ error: "Email format is not correct", refreshedTokenMessage: res.locals.message });
+        const existingUser_username = await User.findOne({ username: req.body.username });
+        if (existingUser_username) return res.status(400).json({ error: "Username already taken", refreshedTokenMessage: res.locals.message });
+
+        if (req.body.password.length < 8) return res.status(400).json({ error: "Password doesn't match constraints,requires at least 8 characters", refreshedTokenMessage: res.locals.message });
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
@@ -30,11 +37,12 @@ export const register = async (req, res) => {
             password: hashedPassword,
         });
         res.status(200).json({
-            data: 'User added succesfully',
-            message: res.locals.message
+            data: {message :'User added succesfully'} ,
+            refreshedTokenMessage: res.locals.message
         });
-    } catch (err) {
-        res.status(400).json(err);
+    } catch (error) {
+        res.status(400).json( {error: error.message,
+            refreshedTokenMessage: res.locals.message});
     }
 };
 
@@ -49,17 +57,23 @@ export const registerAdmin = async (req, res) => {
     try {
 
         const authAdmin = verifyAuth(req, res, { authType: "Admin" });
-
         let { username, email, password } = req.body;
-        username = handleString(username, "username");
-        const existingUser_email = await User.findOne({ email: req.body.email });
-        if (existingUser_email) return res.status(400).json({ message: "Email already taken" });
-        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
-        if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
-        const existingUser_username = await User.findOne({ username: req.body.username });
-        if (existingUser_username) return res.status(400).json({ message: "Username already taken" });
 
-        if (req.body.password.length < 8) return res.status(400).json({ message: "Password doesn't match constraints,requires at least 8 characters" });
+        if(!email || !username || !password)
+            return res.status(400).json({ error: "Missing Parameters" , refreshedTokenMessage: res.locals.message});
+         username = handleString(username, "username");
+        if(email==="")
+        return res.status(400).json({ error: "Email empty" , refreshedTokenMessage: res.locals.message});
+        if(password==="")
+        return res.status(400).json({ error: "Password empty" , refreshedTokenMessage: res.locals.message});
+        const existingUser_email = await User.findOne({ email: req.body.email });
+        if (existingUser_email) return res.status(400).json({ error : "Email already taken" , refreshedTokenMessage: res.locals.message});
+        var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
+        if (!myRegEx.test(req.body.email)) return res.status(400).json({ error: "Email format is not correct" , refreshedTokenMessage: res.locals.message});
+        const existingUser_username = await User.findOne({ username: req.body.username });
+        if (existingUser_username) return res.status(400).json({ error: "Username already taken", refreshedTokenMessage: res.locals.message });
+
+        if (req.body.password.length < 8) return res.status(400).json({ error: "Password doesn't match constraints,requires at least 8 characters", refreshedTokenMessage: res.locals.message });
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
@@ -68,11 +82,12 @@ export const registerAdmin = async (req, res) => {
             role: "Admin"
         });
         res.status(200).json({
-            data: 'User added succesfully',
-            message: res.locals.message
+            data:{message :'Admin added succesfully' },
+            refreshedTokenMessage: res.locals.message
         });
     } catch (err) {
-        res.status(500).json(err);
+        res.status(400).json( {error: error.message,
+            refreshedTokenMessage: res.locals.message});
     }
 
 }
@@ -87,12 +102,19 @@ export const registerAdmin = async (req, res) => {
  */
 export const login = async (req, res) => {
     const { email, password } = req.body
-    const cookie = req.cookies
+    if( !email || !password )
+      return res.status(400).json({ error: "Missing Parameters" , refreshedTokenMessage: res.locals.message});
+    if(email==="")
+      return res.status(400).json({ error: "Email empty" , refreshedTokenMessage: res.locals.message});
+     if(password==="")
+      return res.status(400).json({ error: "Password empty" , refreshedTokenMessage: res.locals.message});
+     var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
+      if (!myRegEx.test(req.body.email)) return res.status(400).json({ message: "Email format is not correct" });
     const existingUser = await User.findOne({ email: email })
-    if (!existingUser) return res.status(400).json('please you need to register')
+    if (!existingUser) return res.status(400).json({error:'please you need to register', refreshedTokenMessage: res.locals.message})
     try {
         const match = await bcrypt.compare(password, existingUser.password)
-        if (!match) return res.status(400).json('wrong credentials')
+        if (!match) return res.status(400).json({error:'wrong password', refreshedTokenMessage: res.locals.message})
         //CREATE ACCESSTOKEN
         const accessToken = jwt.sign({
             email: existingUser.email,
@@ -114,9 +136,10 @@ export const login = async (req, res) => {
         res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true })
         res.status(200).json({ 
             data: { accessToken: accessToken, refreshToken: refreshToken }, 
-            message: res.locals.message })
+            refreshedTokenMessage: res.locals.message})
     } catch (error) {
-        res.status(400).json(error)
+        res.status(400).json( {error: error.message,
+            refreshedTokenMessage: res.locals.message});
     }
 }
 
@@ -132,18 +155,19 @@ export const logout = async (req, res) => {
     try {
         const verify = verifyAuth(req, res, {})
         if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
+            return res.status(401).json({ error: verify.cause ,refreshedTokenMessage: res.locals.message })
 
 
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
-        if (!user) return res.status(400).json('user not found')
+        if (!user) return res.status(400).json({error:'user not found',refreshedTokenMessage: res.locals.message})
 
         user.refreshToken = null
         res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
         res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
         const savedUser = await user.save()
-        res.status(200).json('logged out')
+        res.status(200).json({data: {message: "User logged out"},refreshedTokenMessage: res.locals.message})
     } catch (error) {
-        res.status(400).json(error)
+        res.status(400).json( {error: error.message,
+            refreshedTokenMessage: res.locals.message});
     }
 }
