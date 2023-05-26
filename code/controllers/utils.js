@@ -8,19 +8,15 @@ import jwt from 'jsonwebtoken'
  *  Example: {date: {$gte: "2023-04-30T00:00:00.000Z"}} returns all transactions whose `date` parameter indicates a date from 30/04/2023 (included) onwards
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
-export const handleDateFilterParams = (req) => {
+export const handleDateFilterParams = (req, res) => {
     let { date, from, upTo } = req.query
     const regEx = /((?:19|20)[0-9][0-9])-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])/
-    if(!regEx.test(date))
+    if(date && !regEx.test(date))
         throw new Error("Invalid format of date parameter")
-    if(!regEx.test(from))
+    if(from && !regEx.test(from))
         throw new Error("Invalid format of from parameter")
-    if(!regEx.test(upTo))
+    if(upTo && !regEx.test(upTo))
         throw new Error("Invalid format of upTo parameter")
-
-    date = date.split("-")
-    from = from.split("-")
-    upTo = upTo.split("-")
 
     try {
 
@@ -28,14 +24,27 @@ export const handleDateFilterParams = (req) => {
             throw new Error("Cannot use 'date' together with 'from' or 'Upto")
 
         // Date constructor works with indexes, so months start from 0 
-        if (date)
+        if (date) {
+            date = date.split("-")
             return { 'date': { $eq: new Date(date[0], date[1]-1, date[2], 0, 0, 0) } }
-        if (from && upTo)
+        }
+            
+        if (from && upTo) {
+            from = from.split("-")
+            upTo = upTo.split("-")
             return { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0), $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) } }
-        if (from)
+        }
+            
+        if (from) {
+            from = from.split("-")
             return { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0) } }
-        if (upTo)
+        }
+            
+        if (upTo) {
+            upTo = upTo.split("-")
             return { 'date': { $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) } }
+        }
+            
     
         return {};
 
@@ -153,15 +162,18 @@ export const verifyAuth = (req, res, info) => {
                 return true
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
-                    res.status(401).json({ message: "Perform login again" });
+                    // res.status(401).json({ message: "Perform login again" });
+                    return {flag: false, cause: "Perform login again"}
                 } else {
-                    res.status(401).json({ message: err.name });
+                    // res.status(401).json({ message: err.name });
+                    return {flag: false, cause: err.name}
                 }
-                return false;
+                // return false;
             }
         } else {
-            res.status(401).json({ message: err.name });
-            return false;
+            // res.status(401).json({ message: err.name });
+            // return false;
+            return {flag: false, cause: err.name}
         }
     }
 }
@@ -173,33 +185,39 @@ export const verifyAuth = (req, res, info) => {
  *  The returned object must handle all possible combination of amount filtering parameters, including the case where none are present.
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
-export const handleAmountFilterParams = (req) => {
+export const handleAmountFilterParams = (req, res) => {
     const { amount, min, max } = req.query
     try {
-        amount = handleNumber(amount);
-        min = handleNumber(min);
-        max = handleNumber(max);
 
         if (amount && (min || max))
             throw new Error("Cannot use 'amount' together with 'min' or 'max")
 
-        if (amount)
-            return { 'amount': { $eq: parseFloat(amount) } }
-        if (min && max)
-            return { 'amount': { $gte: parseFloat(min), $lte: parseFloat(max) } }
-        if (min)
-            return { 'amount': { $gte: parseFloat(min) } }
-        if (max)
-            return { 'amount': { $lte: parseFloat(max) } }
+        if (amount) {
+            amount = handleNumber(amount);
+            return { queryObj: {'amount': { $eq: parseFloat(amount) } }, 'flag': true }
+        }
+           
+        if (min && max) {
+            min = handleNumber(min);
+            max = handleNumber(max);
+            return { queryObj: {'amount': { $gte: parseFloat(min), $lte: parseFloat(max) } }, 'flag': true }
+        }
+            
+        if (min) {
+            min = handleNumber(min);
+            return { queryObj: {'amount': { $gte: parseFloat(min) } }, 'flag': true }
+        }
+            
+        if (max) {
+            max = handleNumber(max);
+            return { queryObj: {'amount': { $lte: parseFloat(max) } }, 'flag': true }
+        }
+           
     
-        return {};
-
+        return { 'flag': true, queryObj: {} };
 
     } catch (error) {
-        if (error.message === "Cannot use 'amount' together with 'min' or 'max")
-            res.status(401).json(error.message)
-        else
-            res.status(400).json({ error: error.message })
+            return { 'flag': false, error: error.message}
 
     }
 }
