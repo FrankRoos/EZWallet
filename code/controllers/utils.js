@@ -77,7 +77,7 @@ export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken || !info.token) {
         //res.status(401).json({ message: "Unauthorized" });
-        return {flag: false, cause: "Unauthorized"};
+        return {flag: false, cause: "Missing Token"};
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
@@ -234,4 +234,13 @@ export const handleNumber = (number, nameVar) => {
         return Number(number);
     }
 
+}
+
+export const isJsonString = (str) => {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
 }

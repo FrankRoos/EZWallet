@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { User } from '../models/User.js';
 import jwt from 'jsonwebtoken';
-import { verifyAuth, handleString } from './utils.js';
+import { verifyAuth, handleString, isJsonString } from './utils.js';
 
 /**
  *  Register a new user in the system
@@ -55,8 +55,6 @@ export const register = async (req, res) => {
  */
 export const registerAdmin = async (req, res) => {
     try {
-
-        const authAdmin = verifyAuth(req, res, { authType: "Admin" });
         let { username, email, password } = req.body;
 
         if(!email || !username || !password)
@@ -85,7 +83,7 @@ export const registerAdmin = async (req, res) => {
             data:{message :'Admin added succesfully' },
             refreshedTokenMessage: res.locals.message
         });
-    } catch (err) {
+    } catch (error) {
         res.status(400).json( {error: error.message,
             refreshedTokenMessage: res.locals.message});
     }
@@ -153,13 +151,12 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
     try {
-        const verify = verifyAuth(req, res, {})
-        if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause ,refreshedTokenMessage: res.locals.message })
-
-
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         if (!user) return res.status(400).json({error:'user not found',refreshedTokenMessage: res.locals.message})
+
+        const verify = verifyAuth(req, res, {token: user ? user.refreshToken : 0})
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause, refreshedTokenMessage: res.locals.message })
 
         user.refreshToken = null
         res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
