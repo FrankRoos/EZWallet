@@ -18,7 +18,7 @@ export const createCategory = async (req, res) => {
                 refreshedTokenMessage: res.locals.message
             })
 
-        const { type, color } = req.body;
+        let { type, color } = req.body;
 
         if (!type || !color)
             return res.status(401).json({
@@ -33,20 +33,19 @@ export const createCategory = async (req, res) => {
         let find_bytype = await categories.find({ type: type });
         let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
         if (category_found[0]) return res.status(401).json({
-            error: "Category type alredy exists",
+            error: "Category type already exists",
             refreshedTokenMessage: res.locals.message
         })
 
         let find_bycolor = await categories.find({ color: color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
         if (color_found[0]) return res.status(401).json({
-            error: "Color alredy used",
+            error: "Color already used",
             refreshedTokenMessage: res.locals.message
         })
 
         const new_categories = new categories({ type, color });
         new_categories.save()
-            .then(data => res.json(data))
             .catch(err => { throw err })
         return res.status(200).json({
             data: new_categories,
@@ -82,13 +81,13 @@ export const updateCategory = async (req, res) => {
 
         let old_type = handleString(req.params.type, "type");
         let old_color_find = await categories.find({ type: old_type });
-        if (!old_color_find)
+        if (!old_color_find.length)
             return res.status(401).json({
                 error: "Category type does not exist in the database",
                 refreshedTokenMessage: res.locals.message
             })
 
-        const { type, color } = req.body;
+        let { type, color } = req.body;
 
         if (!type || !color)
             return res.status(401).json({
@@ -102,7 +101,7 @@ export const updateCategory = async (req, res) => {
 
         let find_bycolor = await categories.find({ color: color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (color_found[0] && old_type === type)
+        if (color_found[0] && old_type === type && color_found[0].type !== type)
             return res.status(401).json({
                 error: "Color already used",
                 refreshedTokenMessage: res.locals.message
