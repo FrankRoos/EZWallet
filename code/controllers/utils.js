@@ -226,13 +226,26 @@ export const handleString = (string, nameVar) => {
 
 export const handleNumber = (number, nameVar) => {
     
+
     if(!number)
         throw new Error("Missing value: " + nameVar)
-    else if(typeof(number)==="string" && isNaN(Number(number)) || (typeof(number)!=="number" && typeof(number)!=="string")) 
+    /*if(typeof(number)==="string" && isNaN(Number(number)) || (typeof(number)!=="number" && typeof(number)!=="string")) 
         throw new Error("Invalid format of " + nameVar)
     else{
         return Number(number);
+    }*/
+    if(typeof(number)!=="number" && typeof(number)!=="string")
+        throw new Error("Invalid format of " + nameVar)
+    else if(typeof(number)==="string")
+        number = number.replace(",", ".")
+    try{
+        number = Number(number)
+        return number
     }
+    catch{
+        throw new Error("Invalid format of " + nameVar)
+    }
+
 
 }
 

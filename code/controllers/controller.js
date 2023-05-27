@@ -286,6 +286,9 @@ export const createTransaction = async (req, res) => {
         if (!body_user)
             throw new Error("User given in body not found")
 
+        if(body_user._id.toString() != param_user._id.toString())
+            throw new Error("User in parameters and User in body are different")
+
         const category = await categories.findOne({ type: type });
         // const user = await User.findOne({ username });
 
