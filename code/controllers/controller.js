@@ -180,10 +180,7 @@ export const deleteCategory = async (req, res) => {
                 refreshedTokenMessage: res.locals.message
             })
 
-        let n_category = await categories.find({});
-        if (n_category === 1)
-            throw new Error("There is only one category in the database");
-        const array_category = req.body.array
+        const array_category = req.body.types
         if (!array_category) return res.status(401).json({ error: "Missing body", refreshedTokenMessage: res.locals.message })
         //check categories
         for (let category of array_category) {
@@ -194,14 +191,22 @@ export const deleteCategory = async (req, res) => {
                 return res.status(400).json({ error: "You inserted an invalid category", refreshedTokenMessage: res.locals.message })
         }
 
+        let n_category = await categories.find({});
+        let defaultCat = {};
+        if (n_category.length == array_category.length)
+            defaultCat = await categories.findOne({ sort: { 'created_at': 1 } })
+        else
+            defaultCat = await categories.findOne({ type: { $nin: array_category } }).sort({ 'created_at': 1 })
 
         let data = { message: "Success", count: 0 }
         let counter = 0;
         //delete categories
         for (let category of array_category) {
-            let find_transaction = await transactions.updateMany({ type: category }, { type: "investement" })
-            counter += find_transaction.modifiedCount
-            let find_delete = await categories.findOneAndDelete({ type: category });
+            if (category != defaultCat.type) {
+                let find_transaction = await transactions.updateMany({ type: category }, { type: defaultCat.type })
+                counter += find_transaction.modifiedCount
+                let find_delete = await categories.findOneAndDelete({ type: category });
+            }
         }
         data.count = counter
 
@@ -285,7 +290,7 @@ export const createTransaction = async (req, res) => {
         if (!body_user)
             throw new Error("User given in body not found")
 
-        if(body_user._id.toString() != param_user._id.toString())
+        if (body_user._id.toString() != param_user._id.toString())
             throw new Error("User in parameters and User in body are different")
 
         const category = await categories.findOne({ type: type });
@@ -417,7 +422,7 @@ export const getTransactionsByUser = async (req, res) => {
         const objDate = handleDateFilterParams(req);
         const objAmount = handleAmountFilterParams(req);
 
-        if (!objGate.flag)
+        if (!objDate.flag)
             throw new Error(objAmount.error)
 
         if (!objAmount.flag)
