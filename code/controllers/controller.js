@@ -789,24 +789,24 @@ export const deleteTransactions = async (req, res) => {
         // /transactions
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         const info = { authType: "Admin", token: user ? user.refreshToken : 0 };
-        if (!req.body._ids)
+        if (!req.body._ids || !req.body._ids.length)
             throw new Error("Missing ids")
         const verify = verifyAuth(req, res, info)
         if (verify.flag === false)
             return res.status(401).json({ error: verify.cause })
 
         let ids = req.body._ids.map(element => {
-            const id = element.toString();
+            let id = element.toString();
 
-            if (!id.match(/[0-9a-fA-F]{24}$/))
+            if (!(/[0-9a-fA-F]{24}$/).test(id))
                 throw new Error("Invalid ID")
-            else if (id = "")
+            else if (id == "")
                 throw new Error("You inserted an empty string as Id")
-            else
-                return id;
+            
+            return id
         })
 
-        let selectedTransactions = await Promise.all(ids.map(async (element) => {
+        await Promise.all(ids.map(async (element) => {
             const el = await transactions.findById(element)
             if (!el)
                 throw new Error("One or more Transactions not found");
