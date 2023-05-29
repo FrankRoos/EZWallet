@@ -17,6 +17,7 @@ jest.mock("../models/User.js")
  */
 beforeEach(() => {
   User.find.mockClear()
+  User.findOne.mockClear()
 
   //additional `mockClear()` must be placed here
 });
@@ -30,6 +31,8 @@ describe("getUsers", () => {
     utils.verifyAuth = verify;
 
     jest.spyOn(User, "find").mockImplementation(() => [])
+ 
+
 
     const response = await request(app)
       .get("/api/users")
@@ -71,7 +74,34 @@ describe("getUsers", () => {
 
 
 
-describe("getUser", () => { })
+describe("getUser", () => {
+
+  test("Should return the user's data given by the parameter", async () => {
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const retrievedUser = {  email: 'test1@example.com', password: 'hashedPassword1', username: 'test1',}
+    const verify = jest.fn(()=> {return true});
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne").mockImplementation(() => {return retrievedUser})
+     
+    
+
+
+    const response = await request(app)
+      .get("/api/users/"+ retrievedUser.username)
+      
+
+    expect(response.status).toBe(200)
+    expect(response.body.data).toEqual(retrievedUser)
+
+  })
+
+
+
+
+
+
+ })
 
 describe("createGroup", () => { })
 
