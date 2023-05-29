@@ -749,21 +749,22 @@ export const deleteTransaction = async (req, res) => {
         const user = await User.findOne({ username: info.username });
         if (!user)
             throw new Error("User not found");
-        if (!req.body._id)
-            throw new Error("Missing id")
-        const idTransaction = req.body._id;
-        if (!id.match(/[0-9a-fA-F]{24}$/))
-            throw new Error("Invalid ID")
-        const transaction = await transactions.findOne({ _id: idTransaction });
-        if (!transaction)
-            throw new Error("Transaction not found");
 
         const verify = verifyAuth(req, res, info)
         if (verify.flag === false)
             return res.status(401).json({ error: verify.cause })
 
+        if (!req.body._id)
+            throw new Error("Missing id")
+        const idTransaction = req.body._id;
+        if (!idTransaction.match(/[0-9a-fA-F]{24}$/))
+            throw new Error("Invalid ID")
+        const transaction = await transactions.findOne({ _id: idTransaction });
+        if (!transaction)
+            throw new Error("Transaction not found");
+
         await transactions.deleteOne({ _id: req.body._id });
-        return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.message });
 
     } catch (error) {
         if (error.message === "Empty string: username")
@@ -788,24 +789,24 @@ export const deleteTransactions = async (req, res) => {
         // /transactions
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         const info = { authType: "Admin", token: user ? user.refreshToken : 0 };
-        if (!req.body._ids)
+        if (!req.body._ids || !req.body._ids.length)
             throw new Error("Missing ids")
         const verify = verifyAuth(req, res, info)
         if (verify.flag === false)
             return res.status(401).json({ error: verify.cause })
 
         let ids = req.body._ids.map(element => {
-            const id = element.toString();
+            let id = element.toString();
 
-            if (!id.match(/[0-9a-fA-F]{24}$/))
+            if (!(/[0-9a-fA-F]{24}$/).test(id))
                 throw new Error("Invalid ID")
-            else if (id = "")
+            else if (id == "")
                 throw new Error("You inserted an empty string as Id")
-            else
-                return id;
+            
+            return id
         })
 
-        let selectedTransactions = await Promise.all(ids.map(async (element) => {
+        await Promise.all(ids.map(async (element) => {
             const el = await transactions.findById(element)
             if (!el)
                 throw new Error("One or more Transactions not found");
