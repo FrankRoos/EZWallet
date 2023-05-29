@@ -874,7 +874,7 @@ export const deleteGroup = async (req, res) => {
       data: `Group ${name} has been deleted`,
       refreshedTokenMessage: res.locals.refreshedTokenMessage
     });
-    //res.status(200).json(`Group ${name} deleted`);
+    
 
   } catch (err) {
     res.status(400).json({
