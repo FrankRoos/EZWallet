@@ -749,6 +749,11 @@ export const deleteTransaction = async (req, res) => {
         const user = await User.findOne({ username: info.username });
         if (!user)
             throw new Error("User not found");
+
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
+
         if (!req.body._id)
             throw new Error("Missing id")
         const idTransaction = req.body._id;
@@ -757,10 +762,6 @@ export const deleteTransaction = async (req, res) => {
         const transaction = await transactions.findOne({ _id: idTransaction });
         if (!transaction)
             throw new Error("Transaction not found");
-
-        const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
 
         await transactions.deleteOne({ _id: req.body._id });
         return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.message });
