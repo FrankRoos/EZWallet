@@ -40,8 +40,10 @@ describe("getUsers", () => {
   })
 
   test("should return empty list if there are no users", (done) => {
+    
     request(app)
       .get("/api/users")
+      .set('Cookie', 'accessToken=validAccessToken;refreshToken=validRefreshToken')
       .then((response) => {
         expect(response.status).toBe(200)
         expect(response.body.data).toHaveLength(0)

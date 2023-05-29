@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../app';
 import { User } from '../models/User.js';
-
+import {  verifyAuth } from "../controllers/utils.js";
 /**
  * In order to correctly mock the calls to external modules it is necessary to mock them using the following line.
  * Without this operation, it is not possible to replace the actual implementation of the external functions with the one
@@ -10,6 +10,10 @@ import { User } from '../models/User.js';
  */
 jest.mock("../models/User.js")
 
+
+jest.mock("../controllers/utils.js", () => ({
+  verifyAuth: jest.fn( ()=>  {return true})
+}))
 /**
  * Defines code to be executed before each test case is launched
  * In this case the mock implementation of `User.find()` is cleared, allowing the definition of a new mock implementation.
@@ -17,6 +21,7 @@ jest.mock("../models/User.js")
  */
 beforeEach(() => {
   User.find.mockClear()
+
   //additional `mockClear()` must be placed here
 });
 
@@ -24,6 +29,7 @@ describe("getUsers", () => {
   test("should return empty list if there are no users", async () => {
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     jest.spyOn(User, "find").mockImplementation(() => [])
+
     const response = await request(app)
       .get("/api/users")
 
@@ -34,6 +40,7 @@ describe("getUsers", () => {
   test("should retrieve list of all users", async () => {
     const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2' }]
     jest.spyOn(User, "find").mockImplementation(() => retrievedUsers)
+    
     const response = await request(app)
       .get("/api/users")
 
