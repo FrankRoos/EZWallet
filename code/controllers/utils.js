@@ -38,7 +38,7 @@ export const handleDateFilterParams = (req, res) => {
              upTo=upTo.split("-");
             return { queryObj : {'date': { $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) }},'flag': true} }
     
-        return  { queryObj : {'date': {}},'flag': true};
+        return  { queryObj : {},'flag': true};
 
 
     } catch (error) {
@@ -77,7 +77,7 @@ export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken || !info.token) {
         //res.status(401).json({ message: "Unauthorized" });
-        return {flag: false, cause: "Missing Token"};
+        return {flag: false, cause: "Unauthorized: please add your token in the headers"};
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
@@ -176,7 +176,7 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req, res) => {
-    const { amount, min, max } = req.query
+    let { amount, min, max } = req.query
     try {
 
         if (amount && (min || max))
