@@ -5,6 +5,7 @@ import { transactions, categories } from '../models/model';
 import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
 
+
 /**
  * Necessary setup in order to create a new database for testing purposes before starting the execution of test cases.
  * Each test suite has its own database in order to avoid different tests accessing the same database at the same time and expecting different data.
@@ -43,27 +44,31 @@ describe("getUsers", () => {
       .get("/api/users")
       .then((response) => {
         expect(response.status).toBe(200)
-        expect(response.body).toHaveLength(0)
+        expect(response.body.data).toHaveLength(0)
         done()
       })
       .catch((err) => done(err))
   })
 
   test("should retrieve list of all users", (done) => {
+
     User.create({
       username: "tester",
       email: "test@test.com",
       password: "tester",
+      refreshToken:"blabbla",
+      role:"Regular"
+     
     }).then(() => {
       request(app)
         .get("/api/users")
         .then((response) => {
           expect(response.status).toBe(200)
-          expect(response.body).toHaveLength(1)
-          expect(response.body[0].username).toEqual("tester")
-          expect(response.body[0].email).toEqual("test@test.com")
-          expect(response.body[0].password).toEqual("tester")
-          expect(response.body[0].role).toEqual("Regular")
+          expect(response.body.data).toHaveLength(1)
+          expect(response.body.data[0].username).toEqual("tester")
+          expect(response.body.data[0].email).toEqual("test@test.com")
+          expect(response.body.data[0].password).toEqual("tester")
+          expect(response.body.data[0].role).toEqual("Regular")
           done() // Notify Jest that the test is complete
         })
         .catch((err) => done(err))
@@ -71,7 +76,7 @@ describe("getUsers", () => {
   })
 })
 
-describe("getUser", () => { })
+describe("getUser", () => { test("should retrieve list of all users", (done) =>{done()} ) }) 
 
 describe("createGroup", () => { })
 

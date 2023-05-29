@@ -28,7 +28,7 @@ describe("getUsers", () => {
       .get("/api/users")
 
     expect(response.status).toBe(200)
-    expect(response.body).toEqual([])
+    expect(response.body.data).toEqual([])
   })
 
   test("should retrieve list of all users", async () => {
@@ -38,7 +38,7 @@ describe("getUsers", () => {
       .get("/api/users")
 
     expect(response.status).toBe(200)
-    expect(response.body).toEqual(retrievedUsers)
+    expect(response.body.data).toEqual(retrievedUsers)
   })
 })
 
