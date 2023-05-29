@@ -752,7 +752,7 @@ export const deleteTransaction = async (req, res) => {
         if (!req.body._id)
             throw new Error("Missing id")
         const idTransaction = req.body._id;
-        if (!id.match(/[0-9a-fA-F]{24}$/))
+        if (!idTransaction.match(/[0-9a-fA-F]{24}$/))
             throw new Error("Invalid ID")
         const transaction = await transactions.findOne({ _id: idTransaction });
         if (!transaction)
@@ -763,7 +763,7 @@ export const deleteTransaction = async (req, res) => {
             return res.status(401).json({ error: verify.cause })
 
         await transactions.deleteOne({ _id: req.body._id });
-        return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.message });
 
     } catch (error) {
         if (error.message === "Empty string: username")
