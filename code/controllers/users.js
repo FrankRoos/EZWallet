@@ -15,7 +15,7 @@ export const getUsers = async (req, res) => {
 
     const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
 
-    const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
+   const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
     if (verify.flag === false)
       return res.status(401).json({
         error: verify.cause,
