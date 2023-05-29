@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../app';
 import { User } from '../models/User.js';
-import {  verifyAuth } from "../controllers/utils.js";
+import * as utils from "../controllers/utils.js";
 /**
  * In order to correctly mock the calls to external modules it is necessary to mock them using the following line.
  * Without this operation, it is not possible to replace the actual implementation of the external functions with the one
@@ -10,10 +10,6 @@ import {  verifyAuth } from "../controllers/utils.js";
  */
 jest.mock("../models/User.js")
 
-
-jest.mock("../controllers/utils.js", () => ({
-  verifyAuth: jest.fn( ()=>  {return true})
-}))
 /**
  * Defines code to be executed before each test case is launched
  * In this case the mock implementation of `User.find()` is cleared, allowing the definition of a new mock implementation.
@@ -21,26 +17,52 @@ jest.mock("../controllers/utils.js", () => ({
  */
 beforeEach(() => {
   User.find.mockClear()
+  User.findOne.mockClear()
 
   //additional `mockClear()` must be placed here
 });
 
 describe("getUsers", () => {
-  test("should return empty list if there are no users", async () => {
+
+  test("should return error 401 if  called by an authenticated user who is not an admin", async () => {
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    
+    const verify = jest.fn(()=> {return {flag:false}});
+    utils.verifyAuth = verify;
+
     jest.spyOn(User, "find").mockImplementation(() => [])
+ 
+
 
     const response = await request(app)
       .get("/api/users")
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(401)
+
+  })
+
+ test("should return empty list if there are no users", async () => {
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const verify = jest.fn(()=> {return true});
+    utils.verifyAuth = verify;
+    jest.spyOn(User, "find").mockImplementation(() => {return false})
+
+    const response = await request(app)
+      .get("/api/users")
+
+    expect(response.status).toBe(400)
     expect(response.body.data).toEqual([])
   })
 
   test("should retrieve list of all users", async () => {
     const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2' }]
     jest.spyOn(User, "find").mockImplementation(() => retrievedUsers)
-    
+    const veriFy = jest.fn(()=> {return true});
+    utils.verifyAuth = veriFy;
+
+
+  
+
     const response = await request(app)
       .get("/api/users")
 
@@ -49,7 +71,37 @@ describe("getUsers", () => {
   })
 })
 
-describe("getUser", () => { })
+
+
+
+describe("getUser", () => {
+
+  test("Should return the user's data given by the parameter", async () => {
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const retrievedUser = {  email: 'test1@example.com', password: 'hashedPassword1', username: 'test1',}
+    const verify = jest.fn(()=> {return true});
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne").mockImplementation(() => {return retrievedUser})
+     
+    
+
+
+    const response = await request(app)
+      .get("/api/users/"+ retrievedUser.username)
+      
+
+    expect(response.status).toBe(200)
+    expect(response.body.data).toEqual(retrievedUser)
+
+  })
+
+
+
+
+
+
+ })
 
 describe("createGroup", () => { })
 

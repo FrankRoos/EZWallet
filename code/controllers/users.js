@@ -24,11 +24,15 @@ export const getUsers = async (req, res) => {
 
     const users = await User.find();
     const emptyArray = [];
-    if (!users)
-      res.status(200).json({
+    if (!users) 
+      return res.status(400).json({
         data: emptyArray,
         refreshedTokenMessage: res.locals.message
+
+     
       })
+  
+    
     res.status(200).json({
       data: users,
       refreshedTokenMessage: res.locals.message
