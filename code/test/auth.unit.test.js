@@ -56,6 +56,120 @@ describe('login', () => {
         await auth.login(mockReq, mockRes)
         expect(mockRes.status).toHaveBeenCalledWith(200);
     });
+    
+      
+    test('Returns a error 400 if some req.body is absent', async () => {
+        const mockReq = {
+          body: { email:'ciao@gmail.com'
+          }
+        };
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn()
+        };
+    
+        await auth.login(mockReq, mockRes);
+    
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
+    });
+    test('email empty', async () => {
+        const mockReq = {
+          body: {
+            email:'',
+            password:"asdfasdfasdf"
+          }
+        };
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn()
+        };
+    
+        await auth.login(mockReq, mockRes);
+    
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: "Email empty" });
+    });
+    test('password empty', async () => {
+        const mockReq = {
+          body: {
+            email:'dddddd@gmail.com',
+            password:''
+          }
+        };
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn()
+        };
+    
+        await auth.login(mockReq, mockRes);
+    
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: "Password empty" });
+    });
+    test('Incorrect email format', async () => {
+        const mockReq = {
+          body: {
+            email: 'ccrcrrcrc',
+            password: '33dec4c4c4'
+          }
+        };
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn()
+        };
+      
+        await auth.login(mockReq, mockRes);
+      
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Email format is not correct' });
+    });
+      test('Supplied password does not match with the one in the database', async () => {
+        const existingUser = {
+            email: 'test@example.com',
+            password: 'hashedPassword',
+            _id: 'someId',
+            username: 'testUser',
+            save: jest.fn().mockResolvedValue({ refreshToken: 'refreshToken' }), 
+          };
+        const mockReq = {
+          body: {
+            email: 'existentemail@gmail.com',
+            password: 'wrongpassword'
+          }
+        };
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn()
+        };
+        jest.spyOn(User, 'findOne').mockResolvedValue(existingUser);
+        jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
+      
+        await auth.login(mockReq, mockRes);
+      
+        expect(User.findOne).toHaveBeenCalledWith({ email: mockReq.body.email });
+        expect(bcrypt.compare).toHaveBeenCalledWith(mockReq.body.password, existingUser.password);
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'wrong password' });
+      });
+    test('Email does not identify a user in the database', async () => {
+        const mockReq = {
+          body: {
+            email: 'nonexistent-email@gmail.com',
+            password: 'password123'
+          }
+        };
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn()
+        };
+        
+        jest.spyOn(User, 'findOne').mockResolvedValue(null);
+        await auth.login(mockReq, mockRes);
+        expect(User.findOne).toHaveBeenCalledWith({email: mockReq.body.email});
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'please you need to register' });
+    });      
 });
 
 describe('logout', () => { 
