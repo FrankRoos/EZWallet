@@ -147,14 +147,19 @@ export const login = async (req, res) => {
 
 /**
  * Perform logout
-  - Auth type: Simple
-  - Request Body Content: None
-  - Response `data` Content: A message confirming successful logout
-  - Optional behavior:
-    - error 400 is returned if the user does not exist
+  - Request Parameters: None
+- Request Body Content: None
+- Response `data` Content: A message confirming successful logout
+  - Example: `res.status(200).json({data: {message: "User logged out"}})`
+- Returns a 400 error if the request does not have a refresh token in the cookies
+- Returns a 400 error if the refresh token in the request's cookies does not represent a user in the database
+
  */
 export const logout = async (req, res) => {
     try {
+        if (!req.cookies.refreshToken) 
+            return res.status(400).json({ error: "Missing refresh token in cookies" });
+          
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
         if (!user) return res.status(400).json({error:'user not found'})
 
