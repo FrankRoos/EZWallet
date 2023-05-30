@@ -30,19 +30,30 @@ describe("getUsers", () => {
   });
 
   test("should return error 401 if  called by an authenticated user who is not an admin", async () => {
-    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
-    
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+      locals: {
+        message: ""
+      }
+    }
     const verify = jest.fn(()=> {return {flag:false}});
     utils.verifyAuth = verify;
 
     jest.spyOn(User, "find").mockImplementation(() => [])
  
+    await users.getUsers(mockReq, mockRes)
 
-
-    const response = await request(app)
-      .get("/api/users")
-
-    expect(response.status).toBe(401)
+    
+    expect(mockRes.status).toHaveBeenCalledWith(401)
 
   })
 
@@ -58,7 +69,7 @@ describe("getUsers", () => {
     const mockRes = {
       cookie: jest.fn(),
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+      json: jest.fn().mockResolvedValue(),
       locals: {
         message: ""
       }
@@ -81,6 +92,22 @@ describe("getUsers", () => {
 
 
   test("should retrieve list of all users", async () => {
+
+    
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+      locals: {
+        message: ""
+      }
+    }
     const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2' }]
     jest.spyOn(User, "find").mockImplementation(() => retrievedUsers)
     const veriFy = jest.fn(()=> {return true});
@@ -88,12 +115,11 @@ describe("getUsers", () => {
 
 
   
-
-    const response = await request(app)
-      .get("/api/users")
-
-    expect(response.status).toBe(200)
-    expect(response.body.data).toEqual(retrievedUsers)
+    await users.getUsers(mockReq, mockRes)
+    
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({data: retrievedUsers, refreshedTokenMessage: ""})
+    
   })
 })
 
