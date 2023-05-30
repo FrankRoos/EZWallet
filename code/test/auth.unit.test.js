@@ -243,7 +243,7 @@ describe('logout', () => {
     jest.spyOn(User, "findOne").mockImplementation(() => {
       throw new Error("User.findOne should not be called");
     });
-     // Clear all mock calls to reset the call count
+     // Clear all mock calls to reset the call count and for seeing if the function calls method(User.findOne) which is not supposed to call
     jest.clearAllMocks();
   
     await auth.logout(mockReq, mockRes);
