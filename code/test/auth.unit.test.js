@@ -56,8 +56,7 @@ describe('login', () => {
         await auth.login(mockReq, mockRes)
         expect(mockRes.status).toHaveBeenCalledWith(200);
     });
-    
-      
+
     test('Returns a error 400 if some req.body is absent', async () => {
         const mockReq = {
           body: { email:'ciao@gmail.com'
@@ -169,7 +168,35 @@ describe('login', () => {
         expect(User.findOne).toHaveBeenCalledWith({email: mockReq.body.email});
         expect(mockRes.status).toHaveBeenCalledWith(400);
         expect(mockRes.json).toHaveBeenCalledWith({ error: 'please you need to register' });
-    });      
+    });    
+    test('Returns a 400 error if an error occurs during password comparison', async () => {
+      const existingUser = {
+        email: 'test@example.com',
+        password: 'hashedPassword',
+        _id: 'someId',
+        username: 'testUser',
+        save: jest.fn().mockResolvedValue({ refreshToken: 'refreshToken' }),
+      };
+      const mockReq = {
+        body: {
+          email: 'existentemail@gmail.com',
+          password: 'password123',
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      jest.spyOn(User, 'findOne').mockResolvedValue(existingUser);
+      jest.spyOn(bcrypt, 'compare').mockRejectedValue(new Error('Password comparison failed')); // Mock bcrypt.compare to throw an error
+    
+      await auth.login(mockReq, mockRes);
+    
+      expect(User.findOne).toHaveBeenCalledWith({ email: mockReq.body.email });
+      expect(bcrypt.compare).toHaveBeenCalledWith(mockReq.body.password, existingUser.password);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Password comparison failed' });
+    });  
 });
 
 describe('logout', () => { 
