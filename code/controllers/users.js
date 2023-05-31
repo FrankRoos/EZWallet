@@ -232,7 +232,7 @@ export const getGroups = async (req, res) => {
     if (verify.flag === false)
       return res.status(401).json({
         error: verify.cause,
-        refreshedTokenMessage: res.locals.refreshedTokenMessage
+        refreshedTokenMessage: res.locals.message
       })
 
     const groups = await Group.find();
@@ -241,14 +241,14 @@ export const getGroups = async (req, res) => {
         name: group.name,
         members: group.members
       })),
-      refreshedTokenMessage: res.locals.refreshedTokenMessage
+      refreshedTokenMessage: res.locals.message
     };
 
-    return res.json(responseData);
+    return res.status(200).json(responseData);
   } catch (err) {
     res.status(400).json({
       error: err.message,
-      refreshedTokenMessage: res.locals.refreshedTokenMessage
+      refreshedTokenMessage: res.locals.message
     });
   }
 };
@@ -268,13 +268,13 @@ export const getGroups = async (req, res) => {
 export const getGroup = async (req, res) => {
   try {
     const cookie = req.cookies;
-    if (!cookie.refreshToken || cookie.accessToken) {
+    if (!cookie.refreshToken || !cookie.accessToken) {
       return res.status(401).json({
         error: "Unauthorized",
         refreshedTokenMessage: res.locals.message
       });
     }
-    const user = await User.findOne({ refreshToken: cookie.refreshToken });
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
     if (!user) {
       return res.status(401).json({
         error: "Unauthorized",
