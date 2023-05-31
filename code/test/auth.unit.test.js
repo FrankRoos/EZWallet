@@ -203,6 +203,12 @@ describe('login', () => {
 });
 
 describe('logout', () => {
+  beforeEach(() => {
+    User.find.mockClear()
+    User.findOne.mockClear()
+    User.prototype.save.mockClear()
+    //additional `mockClear()` must be placed here
+  });
   test("Simple logout", async () => {
     const mockReq = {
       cookies: {
@@ -243,8 +249,6 @@ describe('logout', () => {
     jest.spyOn(User, "findOne").mockImplementation(() => {
       throw new Error("User.findOne should not be called");
     });
-     // Clear all mock calls to reset the call count and for seeing if the function calls method(User.findOne) which is not supposed to call
-    jest.clearAllMocks();
   
     await auth.logout(mockReq, mockRes);
   
@@ -252,6 +256,69 @@ describe('logout', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Missing refresh token in cookies" });
   });
+  test("User not found=> Error 400", async () => {
+    const mockReq = {
+      cookies: {
+        refreshToken: 'validrefreshToken'
+      } 
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+    jest.spyOn(User, 'findOne').mockResolvedValue(null);
   
+    await auth.logout(mockReq, mockRes);
+    expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken});
+    expect(User.findOne).toHaveBeenCalledTimes(1);
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "user not found" });
+  });
+  test("Error 401 on verifyAuth", async () => {
+
+    const mockReq = {
+      cookies: {
+        refreshToken: "validRefreshToken"
+    }
+      }
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    }
+    const user = {
+      refreshToken: 'validRefreshToken',
+      save: jest.fn().mockResolvedValue({}),
+    };
+    const verify = jest.fn(() => ({ flag: false, cause: "Some error message" }));
+  utils.verifyAuth = verify;
+
+  jest.spyOn(User, "findOne").mockResolvedValue(user);
+
+  await auth.logout(mockReq, mockRes);
+
+  expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken });
+  expect(verify).toHaveBeenCalledWith(mockReq, mockRes, { token: user.refreshToken });
+  expect(mockRes.status).toHaveBeenCalledWith(401);
+  expect(mockRes.json).toHaveBeenCalledWith({ error: "Some error message" });
+  });
+  test("Return 400 of the catch", async () => {
+    const mockReq = {
+      cookies: {
+        refreshToken: "validRefreshToken"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+    const error = new Error("Some error message");
+    jest.spyOn(User, "findOne").mockRejectedValue(error);
+  
+    await auth.logout(mockReq, mockRes);
+  
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Some error message" });
+  });
+
 });
 
