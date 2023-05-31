@@ -4,6 +4,7 @@ import { User } from '../models/User.js';
 import { Group } from '../models/User.js';
 import * as utils from "../controllers/utils.js";
 import * as users from "../controllers/users.js"
+import { PromiseProvider } from 'mongoose';
 
 
 /**
@@ -714,27 +715,19 @@ describe("createGroup", () => {
     
      jest.spyOn(User, "findOne")
     .mockReturnValue(1)   //default
-    .mockReturnValueOnce(user2)
-    .mockReturnValueOnce(user1)
-    .mockReturnValueOnce(user2); //first call
+    .mockReturnValueOnce(Promise.resolve(user1))
+    .mockReturnValueOnce(Promise.resolve(user2))
+    .mockReturnValueOnce(Promise.resolve(user1)); //first call
    
      
-
-
     jest.spyOn(Group, "findOne")
     .mockReturnValue(1)//default
     .mockReturnValueOnce(false)  //first call
     .mockReturnValueOnce(false)  //first call
     .mockReturnValueOnce(false); //first call
 
-
-
-  
-
- 
     await users.createGroup(mockReq, mockRes)
 
-    
     expect(mockRes.status).toHaveBeenCalledWith(200)
     expect(mockRes.json).toHaveBeenCalledWith({error: "all the `memberEmails` either do not exist or are already in a group", refreshedTokenMessage: ""})
  
