@@ -1,8 +1,9 @@
 import { modelNames } from "mongoose";
-import { Group, User } from "../models/User.js";
+import { Group  } from "../models/User.js";
 import { transactions } from "../models/model.js";
 import { handleString, verifyAuth } from "./utils.js";
 import jwt from 'jsonwebtoken';
+import { User  } from "../models/User.js";
 /**
  * Return all the users
   - Request Body Content: None
@@ -88,7 +89,7 @@ export const getUser = async (req, res) => {
   }
 }
 
-/**
+   /**
  * Create a new group
   - Request Parameters: None
 - Request request body Content: An object having a string attribute for the `name` of the group and an array that lists all the `memberEmails`
@@ -129,7 +130,7 @@ export const createGroup = async (req, res) => {
       });
     }
 
-    const groupExists = await Group.findOne({"name": name });
+    const groupExists = await Group.findOne({name: name });
     if (groupExists) {
       return res.status(400).json({
         error: 'There is already an existing group with the same name',
@@ -209,7 +210,7 @@ export const createGroup = async (req, res) => {
   } catch (err) {
     res.status(400).json({
       error: err.message,
-      refreshedTokenMessage: res.locals.refreshedTokenMessage
+      refreshedTokenMessage: res.locals.message
     })
   }
 }

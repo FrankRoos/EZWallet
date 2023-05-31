@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../app';
-import { User } from '../models/User.js';
-import { Group } from '../models/User.js';
+import { Group, User }  from '../models/User.js';
+
 import * as utils from "../controllers/utils.js";
 import * as users from "../controllers/users.js"
 import { PromiseProvider } from 'mongoose';
@@ -15,6 +15,7 @@ import { PromiseProvider } from 'mongoose';
  */
 jest.mock("../models/User.js")
 jest.mock("../controllers/utils.js")
+
 // jest.mock("../controllers/users.js")
 
 /**
@@ -58,6 +59,36 @@ describe("getUsers", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(401)
+
+  })
+
+
+  test("Catch Block Test", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+      locals: {
+        message: ""
+      }
+    }
+    const verify = jest.fn(()=> {throw new Error("Catch Block Try")});
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "find").mockImplementation(() => [])
+ 
+    await users.getUsers(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({"error": "Catch Block Try", refreshedTokenMessage: ""})
 
   })
 
@@ -136,6 +167,7 @@ describe("getUser", () => {
     User.find.mockClear()
     User.findOne.mockClear()
     User.prototype.save.mockClear()
+
   
     //additional `mockClear()` must be placed here
   });
@@ -180,6 +212,47 @@ describe("getUser", () => {
     
     expect(mockRes.status).toHaveBeenCalledWith(200)
     expect(mockRes.json).toHaveBeenCalledWith({data: retrievedUser, refreshedTokenMessage: ""})
+
+  })
+
+   test("Catch Block Try", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    params:{username: 'michelangelo'}
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    }
+
+    const retrievedUser = {  email: 'test1@example.com', password: 'hashedPassword1', username: 'michelangelo' ,role: 'regular'}
+    const verify = jest.fn(()=> {throw new Error("Catch Block Try")});
+    utils.verifyAuth = verify;
+
+
+    const username = jest.fn((username)=> {return username});
+    utils.handleString = username;
+
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+    .mockReturnValueOnce(retrievedUser)  //second call
+ 
+    await users.getUser(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({"error": "Catch Block Try", refreshedTokenMessage: ""})
 
   })
 
@@ -321,8 +394,244 @@ describe("createGroup", () => {
     User.find.mockClear()
     User.findOne.mockClear()
     User.prototype.save.mockClear()
-    Group.findOne.mockClear()
+    Group.findOne.mockClear() 
+    jest.restoreAllMocks()
     
+  });
+
+  test("Should Returns a 400 error, and separately the list of all invalid emails ", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name: 'Test Group',
+      memberEmails: ['member1@example.com', 'member.example.com'],
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    };
+
+    const callingUser = {
+      _id: 'mockUserId',
+      refreshToken: "'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'",
+      username: 'mockUsername',
+    };
+    const existingUser1 = {
+      email: 'member1@example.com',
+      password: 'hashedPassword',
+      _id: 'someId',
+      username: 'testUser1',
+      
+    };
+    const existingUser2 = {
+      email: 'member2@example.com',
+      password: 'hashedPassword',
+      _id: 'someId',
+      username: 'testUser2',
+      
+    };
+
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+      
+    //jest.spyOn(User,"findOne").mockImplementationOnce(()=>(Promise.resolve(callingUser)))
+    //.mockImplementationOnce(()=>(Promise.resolve(existingUser1)))
+    //.mockImplementationOnce(()=>(Promise.resolve(existingUser2)))
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true) 
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true)
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true)
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)
+    
+  
+    
+    await users.createGroup(mockReq, mockRes)
+   
+
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken });
+    expect(Group.findOne).toHaveBeenCalledWith({ name: mockReq.body.name });
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith(
+     { "data": {"invalidEmails":["member.example.com"],
+      "message": "Invalid email format or email with empty string"},
+        "refreshedTokenMessage" : "" }  )
+
+ 
+  })
+
+  test("Catch Block Try", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name: 'Test Group',
+      memberEmails: ['member1@example.com', 'member.example.com'],
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    };
+
+    const callingUser = {
+      _id: 'mockUserId',
+      refreshToken: "'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'",
+      username: 'mockUsername',
+    };
+    const existingUser1 = {
+      email: 'member1@example.com',
+      password: 'hashedPassword',
+      _id: 'someId',
+      username: 'testUser1',
+      
+    };
+    const existingUser2 = {
+      email: 'member2@example.com',
+      password: 'hashedPassword',
+      _id: 'someId',
+      username: 'testUser2',
+      
+    };
+
+    const verify = jest.fn(()=> {throw new Error("Catch Block Try")});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+      
+    //jest.spyOn(User,"findOne").mockImplementationOnce(()=>(Promise.resolve(callingUser)))
+    //.mockImplementationOnce(()=>(Promise.resolve(existingUser1)))
+    //.mockImplementationOnce(()=>(Promise.resolve(existingUser2)))
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true) 
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true)
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true)
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)
+    
+  
+    
+    await users.createGroup(mockReq, mockRes)
+   
+
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({"error": "Catch Block Try", refreshedTokenMessage: ""})
+
+ 
+  })
+
+
+  test("Should Returns an group Object, and separately the emails that where already in a group or doesn't exists  ", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name: 'Test Group',
+      memberEmails: ['member1@example.com', 'member2@example.com'],
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    };
+
+    const callingUser = {
+      _id: 'mockUserId',
+      refreshToken: "'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'",
+      username: 'mockUsername',
+    };
+    const existingUser1 = {
+      email: 'member1@example.com',
+      password: 'hashedPassword',
+      _id: 'someId',
+      username: 'testUser1',
+      
+    };
+    const existingUser2 = {
+      email: 'member2@example.com',
+      password: 'hashedPassword',
+      _id: 'someId',
+      username: 'testUser2',
+      
+    };
+
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+      
+    //jest.spyOn(User,"findOne").mockImplementationOnce(()=>(Promise.resolve(callingUser)))
+    //.mockImplementationOnce(()=>(Promise.resolve(existingUser1)))
+    //.mockImplementationOnce(()=>(Promise.resolve(existingUser2)))
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true) 
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true)
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)
+    jest.spyOn(User, "findOne").mockReturnValueOnce(true)
+    jest.spyOn(Group, "findOne").mockReturnValueOnce(null)
+    
+  
+    
+    await users.createGroup(mockReq, mockRes)
+   
+
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken });
+    expect(Group.findOne).toHaveBeenCalledWith({ name: mockReq.body.name });
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith(
+     { "data":  {"alreadyInGroup": [],
+                 "group": { "members": [{"email": "member1@example.com",
+                            "user": undefined },{"email": "member2@example.com",
+                            "user": undefined }   ],
+                   "name": "Test Group"}, 
+          "membersNotFound": []
+        },
+        "refreshedTokenMessage" : "" }  )
+
+ 
   })
 
 
@@ -559,7 +868,8 @@ describe("createGroup", () => {
  
     await users.createGroup(mockReq, mockRes)
 
-    
+   
+
     expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({error: "You are already a member of a group", refreshedTokenMessage: ""})
  
@@ -659,7 +969,7 @@ describe("createGroup", () => {
     .mockReturnValueOnce(false)
      
 
-
+   
     jest.spyOn(Group, "findOne")
     .mockReturnValue(1)   //default
     .mockReturnValueOnce(false)  //first call
@@ -679,66 +989,17 @@ describe("createGroup", () => {
 
 
 
-  test("Should Returns an group Object, and separately the emails that where already in a group or doesn't exists  ", async () => {
-   
-    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
-    const mockReq = {
-      cookies: {
-        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-      
-    },
-    body: {
-      name :"mikimouse", 
-      memberEmails:["topolino@email.it","pippo@email.it"]
-
-    }
-      }
-    const mockRes = {
-      cookie: jest.fn(),
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-      locals: {
-        message: ""
-      }
-    }
-    const user1={email: "topolino@email.it", username: "topolino"}
-    const user2={email: "pippo@email.it", username: "pippo"}
-    const verify = jest.fn(()=> {return {flag:true}});
-    utils.verifyAuth = verify;
-
-
-    const name = jest.fn().mockImplementation((name)=> {return name});
-    utils.handleString = name;
-
-
-    
-     jest.spyOn(User, "findOne")
-    .mockReturnValue(1)   //default
-    .mockReturnValueOnce(Promise.resolve(user1))
-    .mockReturnValueOnce(Promise.resolve(user2))
-    .mockReturnValueOnce(Promise.resolve(user1)); //first call
-   
-     
-    jest.spyOn(Group, "findOne")
-    .mockReturnValue(1)//default
-    .mockReturnValueOnce(false)  //first call
-    .mockReturnValueOnce(false)  //first call
-    .mockReturnValueOnce(false); //first call
-
-    await users.createGroup(mockReq, mockRes)
-
-    expect(mockRes.status).toHaveBeenCalledWith(200)
-    expect(mockRes.json).toHaveBeenCalledWith(
-      { "data":  {"alreadyInGroup": [ "topolino@email.it" ],
-                   "group": { "members": [{"email": "pippo@email.it",
-                              "user": undefined, }],
-                    "name": "mikimouse"}, 
-           "membersNotFound": []
-         },
-         "refreshedTokenMessage" : "" } )})
+  
  
 
+
+
+
+
+      
+        
+        
+        afterEach(()=>{jest.restoreAllMocks();})
   })
 
 
