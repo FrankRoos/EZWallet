@@ -129,7 +129,7 @@ export const createGroup = async (req, res) => {
       });
     }
 
-    const groupExists = await Group.findOne({ name });
+    const groupExists = await Group.findOne({"name": name });
     if (groupExists) {
       return res.status(400).json({
         error: 'There is already an existing group with the same name',

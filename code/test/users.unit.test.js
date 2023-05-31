@@ -1,8 +1,11 @@
 import request from 'supertest';
 import { app } from '../app';
 import { User } from '../models/User.js';
+import { Group } from '../models/User.js';
 import * as utils from "../controllers/utils.js";
 import * as users from "../controllers/users.js"
+
+
 /**
  * In order to correctly mock the calls to external modules it is necessary to mock them using the following line.
  * Without this operation, it is not possible to replace the actual implementation of the external functions with the one
@@ -311,7 +314,433 @@ test("Return error 404 if the username param is empty", async () => {
 
 })
 
-describe("createGroup", () => { })
+describe("createGroup", () => {
+
+ beforeEach(() => {
+    User.find.mockClear()
+    User.findOne.mockClear()
+    User.prototype.save.mockClear()
+    Group.findOne.mockClear()
+    
+  })
+
+
+
+  test("Should Returns a 400 error if the request body does not contain all the necessary attributes", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      //name :"MikiMouse",  does not contains name
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        refreshedTokenMessage: ""
+      }
+    }
+
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn((name)=> {return name});
+    utils.handleString = name;
+
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({error: "Missing attributes in the request body", refreshedTokenMessage: ""})
+ 
+
+  })
+
+
+  test("Should Returns a 401 error if called by a user who is not authenticated", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      //name :"MikiMouse",  does not contains name
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        refreshedTokenMessage: ""
+      }
+    }
+
+    const verify = jest.fn(()=> {return {flag:false}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn((name)=> {return name});
+    utils.handleString = name;
+
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    
+ 
+
+  })
+
+
+  test("Should  Returns a 400 error if the group name passed in the request body is an empty string", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name :"", 
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        refreshedTokenMessage: ""
+      }
+    }
+
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation(()=> {throw new Error("Empty string: name")});
+    utils.handleString = name;
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({error: "Empty string: name", refreshedTokenMessage: ""})
+ 
+
+  })
+
+  test("Should Returns a 400 error if the group name passed in the request body represents an already existing group in the database", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name :"mikimouse", 
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        refreshedTokenMessage: ""
+      }
+    }
+
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+     
+
+
+    jest.spyOn(Group, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({error: "There is already an existing group with the same name", refreshedTokenMessage: ""})
+ 
+
+  })
+     
+
+
+  test("Should Returns a 400 error if the user who calls the API is already in a group", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name :"mikimouse", 
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        refreshedTokenMessage: ""
+      }
+    }
+
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+     
+
+
+    jest.spyOn(Group, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(false)  //first call
+    .mockReturnValueOnce(true)  //first call
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({error: "You are already a member of a group", refreshedTokenMessage: ""})
+ 
+
+  })
+
+
+
+  test("Should Returns a 400 error if all emails are already in group", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name :"mikimouse", 
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    }
+    
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+   
+     
+
+
+    jest.spyOn(Group, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(false)  //first call
+    .mockReturnValueOnce(false)  //first call
+    .mockReturnValueOnce("alredyingroup")  //first call
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({error: "all the `memberEmails` either do not exist or are already in a group", refreshedTokenMessage: ""})
+ 
+
+  })
+
+
+  test("Should Returns a 401 error if all member emails doensnt exists ", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name :"mikimouse", 
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    }
+
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+    .mockReturnValueOnce(false)
+     
+
+
+    jest.spyOn(Group, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(false)  //first call
+    .mockReturnValueOnce(false)  //first call
+    .mockReturnValueOnce(false)  //first call
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({error: "all the `memberEmails` either do not exist or are already in a group", refreshedTokenMessage: ""})
+ 
+
+  })
+
+
+
+
+  test("Should Returns an group Object, and separately the emails that where already in a group or doesn't exists  ", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    body: {
+      name :"mikimouse", 
+      memberEmails:["topolino@email.it","pippo@email.it"]
+
+    }
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    }
+    const user1={email: "topolino@email.it", username: "topolino"}
+    const user2={email: "pippo@email.it", username: "pippo"}
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+
+
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
+
+
+    
+     jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(user2)
+    .mockReturnValueOnce(user1)
+    .mockReturnValueOnce(user2); //first call
+   
+     
+
+
+    jest.spyOn(Group, "findOne")
+    .mockReturnValue(1)//default
+    .mockReturnValueOnce(false)  //first call
+    .mockReturnValueOnce(false)  //first call
+    .mockReturnValueOnce(false); //first call
+
+
+
+  
+
+ 
+    await users.createGroup(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({error: "all the `memberEmails` either do not exist or are already in a group", refreshedTokenMessage: ""})
+ 
+
+  })
+})
 
 describe("getGroups", () => { })
 
