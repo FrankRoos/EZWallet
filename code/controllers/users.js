@@ -203,7 +203,7 @@ export const createGroup = async (req, res) => {
         alreadyInGroup,
         membersNotFound
       },
-      refreshedTokenMessage: res.locals.refreshedTokenMessage
+      refreshedTokenMessage: res.locals.message
     });
 
   } catch (err) {

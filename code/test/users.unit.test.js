@@ -729,11 +729,18 @@ describe("createGroup", () => {
     await users.createGroup(mockReq, mockRes)
 
     expect(mockRes.status).toHaveBeenCalledWith(200)
-    expect(mockRes.json).toHaveBeenCalledWith({error: "all the `memberEmails` either do not exist or are already in a group", refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith(
+      { "data":  {"alreadyInGroup": [ "topolino@email.it" ],
+                   "group": { "members": [{"email": "pippo@email.it",
+                              "user": undefined, }],
+                    "name": "mikimouse"}, 
+           "membersNotFound": []
+         },
+         "refreshedTokenMessage" : "" } )})
  
 
   })
-})
+
 
 describe("getGroups", () => { })
 
