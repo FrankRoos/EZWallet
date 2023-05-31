@@ -66,7 +66,9 @@ export const getUser = async (req, res) => {
       })
 
     const usersearch = await User.findOne({ username: username })
-    if (!usersearch) return res.status(401).json({ message: "User not found" })
+    if (!usersearch) return res.status(400).json({ error: "User not found" ,refreshedTokenMessage: res.locals.message})
+
+
     res.status(200).json({
       data: usersearch,
       refreshedTokenMessage: res.locals.message

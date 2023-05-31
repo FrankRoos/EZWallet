@@ -92,7 +92,7 @@ describe("getUsers", () => {
 
 
   test("should retrieve list of all users", async () => {
-
+  
     
     const mockReq = {
       cookies: {
@@ -108,7 +108,7 @@ describe("getUsers", () => {
         message: ""
       }
     }
-    const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2' }]
+    const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1', role: 'regular' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2', role: 'regular' }]
     jest.spyOn(User, "find").mockImplementation(() => retrievedUsers)
     const veriFy = jest.fn(()=> {return true});
     utils.verifyAuth = veriFy;
@@ -127,33 +127,189 @@ describe("getUsers", () => {
 
 
 describe("getUser", () => {
+  
+  beforeEach(() => {
+    User.find.mockClear()
+    User.findOne.mockClear()
+    User.prototype.save.mockClear()
+  
+    //additional `mockClear()` must be placed here
+  });
+
+
 
   test("Should return the user's data given by the parameter", async () => {
+   
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
-    const retrievedUser = {  email: 'test1@example.com', password: 'hashedPassword1', username: 'test1',}
-    const verify = jest.fn(()=> {return true});
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    params:{username: 'michelangelo'}
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    }
+
+    const retrievedUser = {  email: 'test1@example.com', password: 'hashedPassword1', username: 'michelangelo' ,role: 'regular'}
+    const verify = jest.fn(()=> {return {flag:true}});
     utils.verifyAuth = verify;
 
-    jest.spyOn(User, "findOne").mockImplementation(() => {return retrievedUser})
-     
+
+    const username = jest.fn((username)=> {return username});
+    utils.handleString = username;
+
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+    .mockReturnValueOnce(retrievedUser)  //second call
+ 
+    await users.getUser(mockReq, mockRes)
+
     
-
-
-    const response = await request(app)
-      .get("/api/users/"+ retrievedUser.username)
-      
-
-    expect(response.status).toBe(200)
-    expect(response.body.data).toEqual(retrievedUser)
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({data: retrievedUser, refreshedTokenMessage: ""})
 
   })
 
+  test("Should return 400 error if the user not found", async () => {
+
+
+   //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+   const mockReq = {
+    cookies: {
+      accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+    
+  },
+  params:{username: 'michelangelo'}
+    }
+  const mockRes = {
+    cookie: jest.fn(),
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+    locals: {
+      message: ""
+    }
+  }
+
+  const retrievedUser = []
+  const verify = jest.fn(()=> {return {flag:true}});
+  utils.verifyAuth = verify;
+
+
+  const username = jest.fn((username)=> {return username});
+  utils.handleString = username;
+
+  jest.spyOn(User, "findOne")
+  .mockReturnValue(1)   //default
+  .mockReturnValueOnce(true)  //first call
+  .mockReturnValueOnce(false)  //second call
+
+  await users.getUser(mockReq, mockRes)
+
+  
+  expect(mockRes.status).toHaveBeenCalledWith(400)
+  expect(mockRes.json).toHaveBeenCalledWith({error: "User not found" , refreshedTokenMessage: ""})
+
+})
+
+test("should return error 401 if  called by an authenticated user who is neither admin or the user to be found", async () => {
+
+
+  //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+  const mockReq = {
+   cookies: {
+     accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+     refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+   
+ },
+ params:{username: 'michelangelo'}
+   }
+ const mockRes = {
+   cookie: jest.fn(),
+   status: jest.fn().mockReturnThis(),
+   json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+   locals: {
+     message: ""
+   }
+ }
+
+ const retrievedUser = []
+ const verify = jest.fn(()=> {return {flag:false}});
+ utils.verifyAuth = verify;
+
+
+ const username = jest.fn((username)=> {return username});
+ utils.handleString = username;
+
+ jest.spyOn(User, "findOne")
+ .mockReturnValue(1)   //default
+ .mockReturnValueOnce(true)  //first call
+ .mockReturnValueOnce(false)  //second call
+
+ await users.getUser(mockReq, mockRes)
+
+ 
+ expect(mockRes.status).toHaveBeenCalledWith(401)
+ 
+ 
+
+})
+
+test("Return error 404 if the username param is empty", async () => {
+
+
+  //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+  const mockReq = {
+   cookies: {
+     accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+     refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+   
+ },
+ params:{username: 'michelangelo'}
+   }
+ const mockRes = {
+   cookie: jest.fn(),
+   status: jest.fn().mockReturnThis(),
+   json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+   locals: {
+     message: ""
+   }
+ }
+
+ const retrievedUser = []
+ const verify = jest.fn(()=> {return {flag:false}});
+ utils.verifyAuth = verify;
+
+
+ const username = jest.fn().mockImplementation(()=> {throw new Error("Empty string: username")});
+ utils.handleString = username;
+
+ jest.spyOn(User, "findOne")
+ .mockReturnValue(1)   //default
+ .mockReturnValueOnce(true)  //first call
+ .mockReturnValueOnce(false)  //second call
+
+ await users.getUser(mockReq, mockRes)
+
+
+ expect(mockRes.status).toHaveBeenCalledWith(404)
+ expect(mockRes.json).toHaveBeenCalledWith({error: "Service Not Found. Reason: Empty string: username", refreshedTokenMessage: ""})
+ 
+
+})
 
 
 
-
-
- })
+})
 
 describe("createGroup", () => { })
 
