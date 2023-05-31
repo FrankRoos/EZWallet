@@ -1233,18 +1233,20 @@ test("Should returns error 401 if is not called by an admin ", async () => {
        
         
         
-        const group= [ {name: 'Test Group', members: ['member1@example.com', 'member2@example.com' ] },
-        {           name: 'Test Group2', members: ['member3@example.com', 'member4@example.com' ] }  ];
+        const group= [ {name: 'Test Group', members: [ {email:'member1@example.com'}, {email: 'member2@example.com' } ] },
+        {           name: 'Test Group2', members: [{email:'member3@example.com'}, {email: 'member4@example.com' }  ] }  ];
     
     
         const verify = jest.fn(()=> {return {flag:true}});
         utils.verifyAuth = verify;
-    
+         
+        const groupname = jest.fn((groupname)=> {return groupname});
+         utils.handleString = groupname;
     
      
         
-        jest.spyOn(User, "findOne").mockReturnValue(User.create(user)) 
-        //jest.spyOn(Group, "findOne").mockReturnValue(group) 
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(user)
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce(group) 
        
       
         
