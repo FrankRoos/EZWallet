@@ -39,6 +39,8 @@ describe('register', () => {
     });
     const verify = jest.fn(() => ({ flag: false, cause: "Some error message" }));
     utils.verifyAuth = verify;
+    const name = jest.fn().mockImplementation((name)=> {return name});
+    utils.handleString = name;
 
     await auth.register(mockReq, mockRes);
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -46,6 +48,63 @@ describe('register', () => {
       data: { message: "User added succesfully" },
     });
   });
+  test("Should return 400 if missing parameters in the body", async()=>{
+    const mockReq = {
+      body: {
+        email: 'ciao@gmail.com'
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await auth.register(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
+
+  })
+  test("Should return 400 if missing a parameter is empty", async()=>{
+    const mockReq = {
+      body: {
+        username:"",
+        email: 'ciao@gmail.com',
+        password:"comevvvv"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await auth.register(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'A parameter is empty' });
+
+  })
+  test.skip("Should return 400 on the catch", async()=>{
+    const mockReq = {
+      body: {
+        username:"",
+        email: 'ciao@gmail.com',
+        password:"comevvvv"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+    const error = new Error("Some error message");
+
+
+    await auth.register(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Some error message" });
+
+  })
 });
 
 describe("registerAdmin", () => {
