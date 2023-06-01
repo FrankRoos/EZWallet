@@ -34,7 +34,8 @@ export const register = async (req, res) => {
         if (existingUser_username)
             return res.status(400).json({ error: "Username already taken" });
 
-        if (req.body.password.length < 8) return res.status(400).json({ error: "Password doesn't match constraints,requires at least 8 characters" });
+        if (req.body.password.length < 8) 
+            return res.status(400).json({ error: "Password doesn't match constraints,requires at least 8 characters" });
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,

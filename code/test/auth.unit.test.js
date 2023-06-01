@@ -153,6 +153,29 @@ describe('register', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Username already taken' });
   });
+  test('Password < 8 ', async () => {
+    const mockReq = {
+      body: {
+        username: 'existinguser',
+        email: 'testuser@example.com',
+        password: 'passwor'
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    jest.spyOn(User, "findOne")
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(false);
+
+    await auth.register(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Password doesn't match constraints,requires at least 8 characters" });
+  });
+
 
 
 
@@ -233,6 +256,25 @@ describe("registerAdmin", () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
+  test("Should return 400 if missing a parameter is empty", async () => {
+    const mockReq = {
+      body: {
+        username: "",
+        email: 'ciao@gmail.com',
+        password: "comevvvv"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+  
+    await auth.registerAdmin(mockReq, mockRes);
+  
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'A parameter is empty' });
+  
+  });
   test("Register - Email already taken", async () => {
     const mockReq = {
       body: {
@@ -303,9 +345,28 @@ describe("registerAdmin", () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Username already taken' });
   });
+  test('Password < 8 ', async () => {
+    const mockReq = {
+      body: {
+        username: 'existinguser',
+        email: 'testuser@example.com',
+        password: 'passwor'
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
 
+    jest.spyOn(User, "findOne")
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(false);
 
+    await auth.registerAdmin(mockReq, mockRes);
 
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Password doesn't match constraints,requires at least 8 characters" });
+  });
   test("Should return 400 on the catch", async () => {
     const mockReq = {
       body: {
@@ -329,25 +390,7 @@ describe("registerAdmin", () => {
   })
 });
 
-test("Should return 400 if missing a parameter is empty", async () => {
-  const mockReq = {
-    body: {
-      username: "",
-      email: 'ciao@gmail.com',
-      password: "comevvvv"
-    }
-  };
-  const mockRes = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn()
-  };
 
-  await auth.registerAdmin(mockReq, mockRes);
-
-  expect(mockRes.status).toHaveBeenCalledWith(400);
-  expect(mockRes.json).toHaveBeenCalledWith({ error: 'A parameter is empty' });
-
-});
 
 
 describe('login', () => {
