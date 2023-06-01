@@ -126,7 +126,7 @@ export const createGroup = async (req, res) => {
     if (!name || !memberEmails) {
       return res.status(400).json({
         error: 'Missing attributes in the request body',
-        refreshedTokenMessage: res.locals.refreshedTokenMessage
+        refreshedTokenMessage: res.locals.message
       });
     }
 
