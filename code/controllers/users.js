@@ -126,7 +126,7 @@ export const createGroup = async (req, res) => {
     if (!name || !memberEmails) {
       return res.status(400).json({
         error: 'Missing attributes in the request body',
-        refreshedTokenMessage: res.locals.refreshedTokenMessage
+        refreshedTokenMessage: res.locals.message
       });
     }
 
@@ -284,7 +284,7 @@ export const getGroup = async (req, res) => {
 
     if (user.role === "Admin") {
       const authAdmin = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 });
-      if (!authAdmin) {
+      if (authAdmin.flag === false) {
         return res.status(401).json({
           error: "Unauthorized as Admin",
           refreshedTokenMessage: res.locals.message
@@ -305,7 +305,7 @@ export const getGroup = async (req, res) => {
       };
       return res.status(200).json({
         data: groupInfo,
-        refreshedTokenMessage: res.locals.refreshedTokenMessage
+        refreshedTokenMessage: res.locals.message
       });
     }
 
@@ -324,7 +324,7 @@ export const getGroup = async (req, res) => {
       const verify = verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email), token: user ? user.refreshToken : 0 })
       if (verify.flag === false)
         return res.status(401).json({ 
-          rror: verify.cause, 
+          error: verify.cause, 
           refreshedTokenMessage: res.locals.message 
         })
 
@@ -333,9 +333,9 @@ export const getGroup = async (req, res) => {
         members: group.members.map(member => member.email)
       };
       return res.status(200).json({
-        data: {
+        data: 
           groupInfo
-        }, message: res.locals.message
+        , refreshedTokenMessage: res.locals.message
       });
 
     }
