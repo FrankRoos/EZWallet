@@ -28,9 +28,11 @@ export const register = async (req, res) => {
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ error: "Email already taken" });
         var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
-        if (!myRegEx.test(req.body.email)) return res.status(400).json({ error: "Email format is not correct" });
+        if (!myRegEx.test(req.body.email))
+            return res.status(400).json({ error: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
-        if (existingUser_username) return res.status(400).json({ error: "Username already taken" });
+        if (existingUser_username) 
+            return res.status(400).json({ error: "Username already taken" });
 
         if (req.body.password.length < 8) return res.status(400).json({ error: "Password doesn't match constraints,requires at least 8 characters" });
         const hashedPassword = await bcrypt.hash(password, 12);
@@ -70,7 +72,8 @@ export const registerAdmin = async (req, res) => {
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ error: "Email already taken" });
         var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
-        if (!myRegEx.test(req.body.email)) return res.status(400).json({ error: "Email format is not correct" });
+        if (!myRegEx.test(req.body.email)) 
+            return res.status(400).json({ error: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ error: "Username already taken" });
 
@@ -116,7 +119,8 @@ export const login = async (req, res) => {
     if (password === "")
         return res.status(400).json({ error: "Password empty" });
     var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
-    if (!myRegEx.test(req.body.email)) return res.status(400).json({ error: "Email format is not correct" });
+    if (!myRegEx.test(req.body.email)) 
+        return res.status(400).json({ error: "Email format is not correct" });
     const existingUser = await User.findOne({ email: email })
     if (!existingUser) return res.status(400).json({ error: 'please you need to register' })
     try {

@@ -29,17 +29,16 @@ describe('register', () => {
       json: jest.fn(),
     };
     jest.spyOn(User, "findOne")
-      .mockReturnValueOnce(false) // Mocking first findOne call for email check
-      .mockReturnValueOnce(false); // Mocking second findOne call for username check
-    jest.spyOn(bcrypt, "hash").mockResolvedValue("43h438b4387jb8v57v7tyhuh7gbs5a34"); // Mocking the bcrypt hash function
+      .mockReturnValueOnce(false) 
+      .mockReturnValueOnce(false);
+    jest.spyOn(bcrypt, "hash").mockResolvedValue("43h438b4387jb8v57v7tyhuh7gbs5a34"); 
     jest.spyOn(User, "create").mockResolvedValue({
       username: 'testuser',
       email: 'testuser@example.com',
       password: 'hashedpassword'
     });
-    const verify = jest.fn(() => ({ flag: false, cause: "Some error message" }));
-    utils.verifyAuth = verify;
-    const name = jest.fn().mockImplementation((name)=> {return name});
+
+    const name = jest.fn().mockImplementation((name) => { return name });
     utils.handleString = name;
 
     await auth.register(mockReq, mockRes);
@@ -48,7 +47,7 @@ describe('register', () => {
       data: { message: "User added succesfully" },
     });
   });
-  test("Should return 400 if missing parameters in the body", async()=>{
+  test("Should return 400 if missing parameters in the body", async () => {
     const mockReq = {
       body: {
         email: 'ciao@gmail.com'
@@ -65,12 +64,12 @@ describe('register', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
-  test("Should return 400 if missing a parameter is empty", async()=>{
+  test("Should return 400 if missing a parameter is empty", async () => {
     const mockReq = {
       body: {
-        username:"",
+        username: "",
         email: 'ciao@gmail.com',
-        password:"comevvvv"
+        password: "comevvvv"
       }
     };
     const mockRes = {
@@ -84,23 +83,96 @@ describe('register', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'A parameter is empty' });
 
   })
-  test.skip("Should return 400 on the catch", async()=>{
+  test("Register - Email already taken", async () => {
     const mockReq = {
       body: {
-        username:"",
-        email: 'ciao@gmail.com',
-        password:"comevvvv"
+        username: 'testuser',
+        email: 'testuser@example.com',
+        password: 'password123'
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const existingUser = {
+      username: 'gedudeh',
+      email: 'testuser@example.com',
+      password: 'hashedpassword'
+    };
+    jest.spyOn(User, "findOne").mockImplementation(() => existingUser);
+    const name = jest.fn().mockImplementation((name) => { return name });
+    utils.handleString = name;
+
+    await auth.register(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Email already taken",
+    });
+  });
+
+
+  test('Incorrect email format', async () => {
+    const mockReq = {
+      body: {
+        email: 'invalidemail',
+        password: '33dec4c4c4',
+        username: 'ciccio'
       }
     };
     const mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn()
     };
-    const error = new Error("Some error message");
+    jest.spyOn(User, "findOne").mockImplementation(false);
+    await auth.register(mockReq, mockRes);
 
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Email format is not correct' });
+  });
+  test('Username already taken', async () => {
+    const mockReq = {
+      body: {
+        username: 'existinguser',
+        email: 'testuser@example.com',
+        password: 'password123'
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    jest.spyOn(User, "findOne")
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce({ username: 'existinguser' });
 
     await auth.register(mockReq, mockRes);
 
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Username already taken' });
+  });
+
+
+
+  test("Should return 400 on the catch", async () => {
+    const mockReq = {
+      body: {
+        username: "testuser",
+        email: 'ciao@gmail.com',
+        password: "comevvvv"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+    jest.spyOn(User, "findOne").mockResolvedValue(false);
+    jest.spyOn(User, "create").mockRejectedValue(new Error('Some error message'));
+    jest.spyOn(bcrypt, "hash").mockResolvedValue("43h438b4387jb8v57v7tyhuh7gbs5a34");
+    await auth.register(mockReq, mockRes);
+    
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Some error message" });
 
