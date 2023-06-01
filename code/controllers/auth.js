@@ -20,9 +20,9 @@ import { verifyAuth, handleString, isJsonString } from './utils.js';
 export const register = async (req, res) => {
     try {
         let { username, email, password } = req.body;
-        if ((!email && email !== "") || (!password && password !== "") ||(!username && username!==""))
+        if ((!email && email !== "") || (!password && password !== "") || (!username && username !== ""))
             return res.status(400).json({ error: "Missing Parameters" });
-        if(username ==="" || password===""|| email==='')
+        if (username === "" || password === "" || email === '')
             return res.status(400).json({ error: "A parameter is empty" });
         username = handleString(username, "username");
         const existingUser_email = await User.findOne({ email: req.body.email });
@@ -31,7 +31,7 @@ export const register = async (req, res) => {
         if (!myRegEx.test(req.body.email))
             return res.status(400).json({ error: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
-        if (existingUser_username) 
+        if (existingUser_username)
             return res.status(400).json({ error: "Username already taken" });
 
         if (req.body.password.length < 8) return res.status(400).json({ error: "Password doesn't match constraints,requires at least 8 characters" });
@@ -53,26 +53,29 @@ export const register = async (req, res) => {
 
 /**
  * Register a new user in the system with an Admin role
-  - Request Body Content: An object having attributes `username`, `email` and `password`
-  - Response `data` Content: A message confirming successful insertion
-  - Optional behavior:
-    - error 400 is returned if there is already a user with the same username and/or email
- */
+- Request Parameters: None
+- Request Body Content: An object having attributes `username`, `email` and `password`
+  - Example: `{username: "admin", email: "admin@email.com", password: "securePass"}`
+- Response `data` Content: A message confirming successful insertion
+  - Example: `res.status(200).json({data: {message: "User added successfully"}})`
+- Returns a 400 error if the request body does not contain all the necessary attributes
+- Returns a 400 error if at least one of the parameters in the request body is an empty string
+- Returns a 400 error if the email in the request body is not in a valid email format
+- Returns a 400 error if the username in the request body identifies an already existing user
+- Returns a 400 error if the email in the request body identifies an already existing user  
+*/
 export const registerAdmin = async (req, res) => {
     try {
         let { username, email, password } = req.body;
-
-        if (!email || !username || !password)
+        if ((!email && email !== "") || (!password && password !== "") || (!username && username !== ""))
             return res.status(400).json({ error: "Missing Parameters" });
+        if (username === "" || password === "" || email === '')
+            return res.status(400).json({ error: "A parameter is empty" });
         username = handleString(username, "username");
-        if (email === "")
-            return res.status(400).json({ error: "Email empty" });
-        if (password === "")
-            return res.status(400).json({ error: "Password empty" });
         const existingUser_email = await User.findOne({ email: req.body.email });
         if (existingUser_email) return res.status(400).json({ error: "Email already taken" });
         var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
-        if (!myRegEx.test(req.body.email)) 
+        if (!myRegEx.test(req.body.email))
             return res.status(400).json({ error: "Email format is not correct" });
         const existingUser_username = await User.findOne({ username: req.body.username });
         if (existingUser_username) return res.status(400).json({ error: "Username already taken" });
@@ -119,7 +122,7 @@ export const login = async (req, res) => {
     if (password === "")
         return res.status(400).json({ error: "Password empty" });
     var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
-    if (!myRegEx.test(req.body.email)) 
+    if (!myRegEx.test(req.body.email))
         return res.status(400).json({ error: "Email format is not correct" });
     const existingUser = await User.findOne({ email: email })
     if (!existingUser) return res.status(400).json({ error: 'please you need to register' })
