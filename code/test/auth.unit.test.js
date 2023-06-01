@@ -64,6 +64,43 @@ describe('register', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
+  test("Should return 400 if missing parameters in the body", async () => {
+    const mockReq = {
+      body: {
+        email: 'ciao@gmail.com',
+        password:"skskkskskskssk"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await auth.register(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
+
+  })
+  test("Should return 400 if missing parameters in the body", async () => {
+    const mockReq = {
+      body: {
+        
+        password:"ddedeedeed",
+        username:"ddedeedede"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await auth.register(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
+
+  })
   test("Should return 400 if missing a parameter is empty", async () => {
     const mockReq = {
       body: {
@@ -243,6 +280,43 @@ describe("registerAdmin", () => {
     const mockReq = {
       body: {
         email: 'ciao@gmail.com'
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await auth.registerAdmin(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
+
+  })
+  test("Should return 400 if missing parameters in the body", async () => {
+    const mockReq = {
+      body: {
+        email: 'ciao@gmail.com',
+        password:"skskkskskskssk"
+      }
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await auth.registerAdmin(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
+
+  })
+  test("Should return 400 if missing parameters in the body", async () => {
+    const mockReq = {
+      body: {
+        
+        password:"ddedeedeed",
+        username:"ddedeedede"
       }
     };
     const mockRes = {
