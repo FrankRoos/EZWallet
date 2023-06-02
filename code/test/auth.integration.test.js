@@ -47,6 +47,14 @@ describe('register', () => {
     expect(user.email).toBe(requestBody.email);
 
   });
+  test('returns 40 error when any parameter is missing', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email: 'ciao@gmail.com' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Missing Parameters' });
+  });
 })
 
 
@@ -71,7 +79,14 @@ describe("registerAdmin", () => {
     expect(user).toBeDefined();
     expect(user.username).toBe(requestBody.username);
     expect(user.email).toBe(requestBody.email);
+  });
+  test('returns 40 error when any parameter is missing', async () => {
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ email: 'ciao@gmail.com' });
 
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
 })
 
@@ -133,7 +148,6 @@ describe('logout', () => {
     { expiresIn: '1h' }
   );
 
-  // Create a user with the assigned refresh token and access token
   const user = await User.create({
     username: 'test',
     email: 'test@example.com',
@@ -145,7 +159,7 @@ describe('logout', () => {
   const response = await request(app)
     .get('/api/logout')
     .set('Cookie', `refreshToken=${refreshToken}`)
-    .set('Authorization', `Bearer ${accessToken}`); // Include the access token in the headers
+    .set('Authorization', `Bearer ${accessToken}`); 
 
   console.log('Response Status:', response.status);
   console.log('Response Body:', response.body);
