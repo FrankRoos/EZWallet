@@ -18,15 +18,19 @@ export const createCategory = async (req, res) => {
                 refreshedTokenMessage: res.locals.message
             })
 
-        let { type, color } = req.body;
+        
+        //const jsonObject = JSON.parse(req.body);
+        //const keysArray = Object.keys(jsonObject);
+        let {type, color} = req.body;
 
-        if (!type || !color)
-            return res.status(401).json({
+        if ((type === undefined) || (color === undefined))
+            return res.status(400).json({
                 error: "Missing attributes in the body",
                 refreshedTokenMessage: res.locals.message
             })
         /*if (color === "") return res.status(401).json({ message: "Missing Color" })
         if (type === "") return res.status(401).json({ message: "Missing Type" })*/
+        
         type = handleString(type, "type")
         color = handleString(color, "color")
 
@@ -44,13 +48,14 @@ export const createCategory = async (req, res) => {
             refreshedTokenMessage: res.locals.message
         })
 
-        const new_categories = new categories({ type, color });
-        new_categories.save()
+        const new_categories = new categories({ type, color });  // da rivedere
+        const new_categories_saved = await new_categories.save()
             .catch(err => { throw err })
         return res.status(200).json({
-            data: new_categories,
-            message: res.locals.message
+            data: new_categories_saved,
+            refreshedTokenMessage: res.locals.message
         });
+
     } catch (error) {
         res.status(400).json({
             error: error.message,
@@ -69,7 +74,6 @@ export const createCategory = async (req, res) => {
  */
 export const updateCategory = async (req, res) => {
     try {
-        //{type:new color:new}
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
@@ -78,32 +82,34 @@ export const updateCategory = async (req, res) => {
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
             })
+        
+        let { type, color } = req.body;
 
-        let old_type = handleString(req.params.type, "type");
-        let old_color_find = await categories.find({ type: old_type });
-        if (!old_color_find.length)
-            return res.status(401).json({
-                error: "Category type does not exist in the database",
+        if ((type === undefined) || (color===undefined))
+            return res.status(400).json({
+                error: "Missing attributes in the body",
                 refreshedTokenMessage: res.locals.message
             })
 
-        let { type, color } = req.body;
+        let old_type = handleString(req.params.type, "type");
 
-        if (!type || !color)
-            return res.status(401).json({
-                error: "Missing attributes in the body",
+        let old_type_find = await categories.find({ type: old_type });
+        let old_type_found = old_type_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
+        if (!old_type_find.length)
+            return res.status(400).json({
+                error: "Category type does not exist in the database",
                 refreshedTokenMessage: res.locals.message
             })
 
         type = handleString(type, "type")
         color = handleString(color, "color")
 
-
+        let old_color = old_type_found[0].color;
         let find_bycolor = await categories.find({ color: color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (color_found[0] && old_type === type && color_found[0].type !== type)
-            return res.status(401).json({
-                error: "Color already used",
+        if ((color_found[0] && old_type === type && color_found[0].type !== type) || (color_found[0] && old_color != color && old_type != type))
+            return res.status(400).json({
+                error: "Color already used by another catecory",
                 refreshedTokenMessage: res.locals.message
             })
 
@@ -111,26 +117,15 @@ export const updateCategory = async (req, res) => {
             let find_bytype = await categories.find({ type: type });
             let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
             if (category_found[0])
-                return res.status(401).json({
-                    error: "Category type already exists",
+                return res.status(400).json({
+                    error: "Category type in the body request already exists",
                     refreshedTokenMessage: res.locals.message
                 })
-            //check sul colore nuovo 
-            let find_bycolor = await categories.find({ color: color });
-            let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-
-            let old_color_found = old_color_find.map(v => Object.assign({}, { type: v.type, color: v.color }))
-            let old_color = old_color_found[0].color;
-            if (color_found[0] && old_color != color)
-                return res.status(401).json({
-                    error: "Color already used",
-                    refreshedTokenMessage: res.locals.message
-                })
-
         }
+
         //found by type 
         let update = await categories.findOneAndUpdate({ type: old_type }, { type: type, color: color })
-        let data = { message: "Category updated successfully" };
+        let data = { message: "Category edited successfully" };
 
         //da sistemare count-->> vedi descrizione funzione
         if (old_type != type) {
@@ -149,7 +144,7 @@ export const updateCategory = async (req, res) => {
 
     } catch (error) {
         if (error.message === "Empty string: type")
-            res.status(404).json({
+            res.status(400).json({
                 error: "Service Not Found. Reason: " + error.message,
                 refreshedTokenMessage: res.locals.message
             })
@@ -181,24 +176,26 @@ export const deleteCategory = async (req, res) => {
             })
 
         const array_category = req.body.types
-        if (!array_category) return res.status(401).json({ error: "Missing body", refreshedTokenMessage: res.locals.message })
+        //console.log(array_category)
+        if (!array_category) return res.status(400).json({ error: "Missing attributes in the body", refreshedTokenMessage: res.locals.message })
         //check categories
         for (let category of array_category) {
             if (category === "")
-                return res.status(400).json({ error: "Category is an empty string ", refreshedTokenMessage: res.locals.message })
+                return res.status(400).json({ error: "There is an empty string in the category list", refreshedTokenMessage: res.locals.message })
             let check_exist = await categories.findOne({ type: category });
             if (!check_exist)
                 return res.status(400).json({ error: "You inserted an invalid category", refreshedTokenMessage: res.locals.message })
         }
 
-        let n_category = await categories.find({});
+        const n_category = await categories.find({});
         let defaultCat = {};
+
         if (n_category.length == array_category.length)
             defaultCat = await categories.findOne({ sort: { 'created_at': 1 } })
         else
-            defaultCat = await categories.findOne({ type: { $nin: array_category } }).sort({ 'created_at': 1 })
+            defaultCat = await categories.findOne({ type: { $nin: array_category } })//.sort({ 'created_at': 1 })
 
-        let data = { message: "Success", count: 0 }
+        let data = { message: "Categories deleted"}
         let counter = 0;
         //delete categories
         for (let category of array_category) {
@@ -208,11 +205,11 @@ export const deleteCategory = async (req, res) => {
                 let find_delete = await categories.findOneAndDelete({ type: category });
             }
         }
+
         data.count = counter
 
         //da sistemare la parte sulle transaction 
-
-        res.json({ data: data, refreshedTokenMessage: res.locals.message })
+        res.status(200).json({ data: data, refreshedTokenMessage: res.locals.message })
 
     } catch (error) {
         res.status(400).json({ error: error.message, refreshedTokenMessage: res.locals.message })
@@ -238,9 +235,9 @@ export const getCategories = async (req, res) => {
             })
 
         let data = await categories.find({})
-
-        if (!data)
-            return res.json([])  //if no categories
+      
+        if(!data.length || !data)
+            return res.status(400).json({error: "There are no categories", refreshedTokenMessage: res.locals.message})
 
         let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
@@ -265,6 +262,7 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+
         let info = { authType: "User/Admin", username: req.params.username, token: user ? user.refreshToken : 0 }
         info.username = handleString(info.username, "param-username")
 
@@ -277,38 +275,35 @@ export const createTransaction = async (req, res) => {
 
         let param_user = await User.findOne({ username: info.username })
         if (!param_user)
-            throw new Error("User given in param  not found")
+            throw new Error("User given as route request parameter not found")
 
         let { username, amount, type } = req.body;
-        if (!username || !amount || !type)
+        if (username === undefined || amount === undefined  || type === undefined )
             throw new Error("Body does not contains all requested attributes")
-        username = handleString(username, "username")
+
+        username = handleString(username, "username")      
         type = handleString(type, "type")
         amount = handleNumber(amount, "amount")
-
+      
         let body_user = await User.findOne({ username: username })
+   
         if (!body_user)
-            throw new Error("User given in body not found")
+            throw new Error("User given in body not found in the database")
 
         if (body_user._id.toString() != param_user._id.toString())
             throw new Error("User in parameters and User in body are different")
 
         const category = await categories.findOne({ type: type });
-        // const user = await User.findOne({ username });
 
-        if (!category && !username)
-            throw new Error("Category and Username Not Found")
-        else if (!category)
-            throw new Error("Category Not Found")
-        else if (!user)
-            throw new Error("Username Not Found")
+        if (!category)
+            throw new Error("Category Not Found in the Database")
 
         const newTransaction = new transactions({ username, amount, type: category.type });
         const transactionSaved = await newTransaction
             .save()
             .catch((err) => { throw err; })
 
-        res.json({
+        res.status(200).json({
             data: {
                 username: transactionSaved.username,
                 amount: transactionSaved.amount,
@@ -321,7 +316,7 @@ export const createTransaction = async (req, res) => {
     }
     catch (error) {
         if (error.message === "Empty string: param-username")
-            res.status(404).json({
+            res.status(400).json({
                 error: "Service Not Found. Reason: " + error.message,
                 refreshedTokenMessage: res.locals.message
             })
