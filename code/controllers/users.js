@@ -609,8 +609,8 @@ export const removeFromGroup = async (req, res) => {
     });
     let groupName = req.params.name;
     if (!groupName) {
-      return res.status(400).json({
-        error: 'Missing attributes in the request body',
+      return res.status(404).json({
+        error: 'Missing attributes in the params',
         refreshedTokenMessage: res.locals.message
       });
     }
@@ -635,7 +635,6 @@ export const removeFromGroup = async (req, res) => {
       const notInGroup = [];
       const removedMembers = [];
       const invalidEmails = [];
-      const remaining = [];
       const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
       for (const email of emails) {
         if (!myRegEx.test(email) || email === '') {
@@ -649,10 +648,6 @@ export const removeFromGroup = async (req, res) => {
           } else if (existingGroup.members.some((groupMember) => groupMember.email === email)) {
             removedMembers.push(email);
             existingGroup.members = existingGroup.members.filter((groupMember) => groupMember.email !== email)
-          }
-          else {
-            remaining.push(email);
-
           }
         }
       }
@@ -678,16 +673,16 @@ export const removeFromGroup = async (req, res) => {
 
       await existingGroup.save();
       const responseData = {
-        data: {
+        
           group: {
             name: existingGroup.name,
             members: existingGroup.members
           },
           membersNotFound,
           notInGroup
-        },
-        refreshedTokenMessage: res.locals.refreshedTokenMessage
-      }
+        }
+        
+     
       return res.status(200).json({
         data: responseData,
         refreshedTokenMessage: res.locals.message
@@ -715,7 +710,6 @@ export const removeFromGroup = async (req, res) => {
       const notInGroup = [];
       const removedMembers = [];
       const invalidEmails = [];
-      const remaining = [];
       const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
       for (const email of emails) {
         if (!myRegEx.test(email) || email === '') {
@@ -729,10 +723,6 @@ export const removeFromGroup = async (req, res) => {
           } else if (existingGroup.members.some((groupMember) => groupMember.email === email)) {
             removedMembers.push(email);
             existingGroup.members = existingGroup.members.filter((groupMember) => groupMember.email !== email)
-          }
-          else {
-            remaining.push(email);
-
           }
         }
       }
@@ -764,15 +754,14 @@ export const removeFromGroup = async (req, res) => {
 
       await existingGroup.save();
       const responseData = {
-        data: {
+        
           group: {
             name: existingGroup.name,
             members: existingGroup.members
           },
           membersNotFound,
           notInGroup
-        },
-        refreshedTokenMessage: res.locals.refreshedTokenMessage
+        
       }
       return res.status(200).json({
         data: responseData,
@@ -781,12 +770,6 @@ export const removeFromGroup = async (req, res) => {
     }
 
   } catch (error) {
-    if (error.message === "Empty string: groupName")
-      res.status(404).json({
-        error: "Service Not Found. Reason: " + error.message,
-        refreshedTokenMessage: res.locals.message
-      })
-    else
       res.status(400).json({
         error: error.message,
         refreshedTokenMessage: res.locals.message
