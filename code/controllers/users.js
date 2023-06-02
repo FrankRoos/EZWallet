@@ -399,14 +399,14 @@ export const addToGroup = async (req, res) => {
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(401).json({
-          message: "Group does not exist",
+          error: "Group does not exist",
           refreshedTokenMessage: res.locals.message
         });
       }
 
       if (memberEmails.length === 0) {
         return res.status(401).json({
-          message: "No member emails provided",
+          error: "No member emails provided",
           refreshedTokenMessage: res.locals.message
         });
       }
@@ -452,7 +452,7 @@ export const addToGroup = async (req, res) => {
 
       if (alreadyInGroup.length + membersNotFound.length === memberEmails.length) {
         return res.status(400).json({
-          message: "The member emails you provided either don't exist or are already in other groups",
+          error: "The member emails you provided either don't exist or are already in other groups",
           refreshedTokenMessage: res.locals.message
         });
       }
@@ -460,26 +460,27 @@ export const addToGroup = async (req, res) => {
       await group.save();
 
       const responseData = {
-        data: {
+       
           group: {
             name: group.name,
             members: group.members.map(member => member.email),
           },
           alreadyInGroup,
           membersNotFound,
-        }, refreshedTokenMessage: res.locals.refreshedTokenMessage
-      };
-      return res.json({
-        data: responseData,
+        }
+     
+      return res.status(200).json({
+        data : responseData,
         refreshedTokenMessage: res.locals.message
       });
     }
 
     if (user.role === "Regular") {
       //console.log("1");
-      if (req.url.indexOf("insert") > 0)
+      
+      if (req.url.indexOf("insert")> 0)
         return res.status(401).json({
-          message: "You are trying to use an Admin route while still a Regular",
+          error: "You are trying to use an Admin route while still a Regular",
           refreshedTokenMessage: res.locals.message
         });
       //User things   
@@ -487,7 +488,7 @@ export const addToGroup = async (req, res) => {
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
-        return res.status(401).json({ message: "Group does not exist" });
+        return res.status(401).json({ error: "Group does not exist" ,refreshedTokenMessage: res.locals.message});
       }
       const verify = verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email), token: user ? user.refreshToken : 0 })
       if (verify.flag === false)
@@ -534,7 +535,10 @@ export const addToGroup = async (req, res) => {
       }
       if (invalidEmails.length > 0) {
         return res.status(400).json({
-          error: "Invalid email format or email with empty string: " + invalidEmails.toString(),
+          data: {
+            message: "Invalid email format or email with empty string",
+            invalidEmails
+          },
           refreshedTokenMessage: res.locals.message
         });
       }
@@ -546,18 +550,18 @@ export const addToGroup = async (req, res) => {
       }
 
       const responseData = {
-        data: {
+       
           group: {
             name: group.name,
             members: group.members.map(member => member.email),
           },
           alreadyInGroup,
           membersNotFound,
-        }, refreshedTokenMessage: res.locals.refreshedTokenMessage
-      };
+        }
+     
       await group.save();
       return res.status(200).json({
-        data: responseData,
+        data : responseData,
         refreshedTokenMessage: res.locals.message
       });
 
