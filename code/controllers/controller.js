@@ -423,7 +423,7 @@ export const getTransactionsByUser = async (req, res) => {
         const objAmount = handleAmountFilterParams(req);
 
         if (!objDate.flag)
-            throw new Error(objAmount.error)
+            throw new Error(objDate.error)
 
         if (!objAmount.flag)
             throw new Error(objAmount.error)
