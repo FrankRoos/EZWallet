@@ -31,7 +31,7 @@ describe('register', () => {
     jest.spyOn(User, "findOne")
       .mockReturnValueOnce(false) 
       .mockReturnValueOnce(false);
-    jest.spyOn(bcrypt, "hash").mockResolvedValue("43h438b4387jb8v57v7tyhuh7gbs5a34"); 
+    jest.spyOn(bcrypt, "hash").mockResolvedValue("ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f"); 
     jest.spyOn(User, "create").mockResolvedValue({
       username: 'testuser',
       email: 'testuser@example.com',
@@ -250,7 +250,7 @@ describe("registerAdmin", () => {
       body: {
         username: 'testadmin',
         email: 'testadmin@example.com',
-        password: 'testadminpassword'
+        password: 'password123'
       }
     };
     const mockRes = {
@@ -260,7 +260,7 @@ describe("registerAdmin", () => {
     jest.spyOn(User, "findOne")
       .mockReturnValueOnce(false)
       .mockReturnValueOnce(false);
-    jest.spyOn(bcrypt, "hash").mockResolvedValue("43h438b4387jb8v57v7tyhuh7gbs5a34");
+    jest.spyOn(bcrypt, "hash").mockResolvedValue("ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f");
     jest.spyOn(User, "create").mockResolvedValue({
       username: 'testadmin',
       email: 'testadmin@example.com',
@@ -446,7 +446,7 @@ describe("registerAdmin", () => {
       body: {
         username: "testuser",
         email: 'ciao@gmail.com',
-        password: "comevvvv"
+        password: "password123"
       }
     };
     const mockRes = {
@@ -455,7 +455,7 @@ describe("registerAdmin", () => {
     };
     jest.spyOn(User, "findOne").mockResolvedValue(false);
     jest.spyOn(User, "create").mockRejectedValue(new Error('Some error message'));
-    jest.spyOn(bcrypt, "hash").mockResolvedValue("43h438b4387jb8v57v7tyhuh7gbs5a34");
+    jest.spyOn(bcrypt, "hash").mockResolvedValue("ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f");
     await auth.registerAdmin(mockReq, mockRes);
     
     expect(mockRes.status).toHaveBeenCalledWith(400);
