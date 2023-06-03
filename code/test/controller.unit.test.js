@@ -1830,7 +1830,7 @@ describe("getTransactionsByGroupByCategory", () => {
       },
       body: body,
       params: {
-        group: "group",
+        name: "group",
         category: "example"
       },
       url: '/groups/group/transactions/category/example'
@@ -1883,7 +1883,7 @@ describe("getTransactionsByGroupByCategory", () => {
       },
       body: body,
       params: {
-        group: "group",
+        name: "group",
         category: "example"
       },
       url: '/groups/group/transactions/category/example'
@@ -1936,7 +1936,7 @@ describe("getTransactionsByGroupByCategory", () => {
       },
       body: body,
       params: {
-        group: "group",
+        name: "group",
         category: "example"
       },
       url: '/groups/group/transactions/category/example'
@@ -1989,7 +1989,7 @@ describe("getTransactionsByGroupByCategory", () => {
       },
       body: body,
       params: {
-        group: "group",
+        name: "group",
         category: "example"
       },
       url: '/groups/group/transactions/category/example'
@@ -2049,7 +2049,7 @@ describe("getTransactionsByGroupByCategory", () => {
       },
       body: body,
       params: {
-        group: "group",
+        name: "group",
         category: "example"
       },
       url: '/transactions/groups/group/category/example'
@@ -2093,6 +2093,226 @@ describe("getTransactionsByGroupByCategory", () => {
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({
       error: "You are not an Admin",
+      refreshedTokenMessage: undefined
+    })
+  });
+
+  test("Name of category is empty", async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c8"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        name: "group",
+        category: "example"
+      },
+      url: '/groups/group/transactions/category/example'
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+    const listTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+    }]
+    const listExpTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+    }]
+
+    jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return Promise.resolve(user) }) 
+    jest.spyOn(Group, 'findOne').mockImplementation(() => { return Promise.resolve({ members: [user] }) })
+    jest.spyOn(categories, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'aggregate').mockImplementation(() => { return Promise.resolve(listTransact) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn()
+      .mockImplementationOnce((string) => { return string })
+      .mockImplementationOnce((string, nameVar) => { throw new Error("Empty string: " + nameVar) })
+
+    await controller.getTransactionsByGroupByCategory(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(404);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Service Not Found. Reason: Empty string: category",
+      refreshedTokenMessage: undefined
+    })
+  });
+
+  test("Name of group is empty", async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c8"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        name: "group",
+        category: "example"
+      },
+      url: '/groups/group/transactions/category/example'
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+    const listTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+    }]
+    const listExpTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+    }]
+
+    jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return Promise.resolve(user) }) 
+    jest.spyOn(Group, 'findOne').mockImplementation(() => { return Promise.resolve({ members: [user] }) })
+    jest.spyOn(categories, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'aggregate').mockImplementation(() => { return Promise.resolve(listTransact) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn()
+      .mockImplementationOnce((string, nameVar) => { throw new Error("Empty string: " + nameVar) })
+      .mockImplementationOnce((string) => { return string })
+
+    await controller.getTransactionsByGroupByCategory(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(404);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Service Not Found. Reason: Empty string: name",
+      refreshedTokenMessage: undefined
+    })
+  });
+
+  test("Name of group has invalid format", async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c8"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        name: "group",
+        category: "example"
+      },
+      url: '/groups/group/transactions/category/example'
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+    const listTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+    }]
+    const listExpTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+    }]
+
+    jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return Promise.resolve(user) }) 
+    jest.spyOn(Group, 'findOne').mockImplementation(() => { return Promise.resolve({ members: [user] }) })
+    jest.spyOn(categories, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'aggregate').mockImplementation(() => { return Promise.resolve(listTransact) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn()
+      .mockImplementationOnce((string, nameVar) => { throw new Error("Invalid format of " + nameVar) })
+      .mockImplementationOnce((string) => { return string })
+
+    await controller.getTransactionsByGroupByCategory(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Invalid format of name",
+      refreshedTokenMessage: undefined
+    })
+  });
+
+  test("Category has invalid format", async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c8"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        name: "group",
+        category: "example"
+      },
+      url: '/groups/group/transactions/category/example'
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+    const listTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+    }]
+    const listExpTransact = [{
+      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+    }]
+
+    jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return Promise.resolve(user) }) 
+    jest.spyOn(Group, 'findOne').mockImplementation(() => { return Promise.resolve({ members: [user] }) })
+    jest.spyOn(categories, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'aggregate').mockImplementation(() => { return Promise.resolve(listTransact) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn()
+      .mockImplementationOnce((string) => { return string })
+      .mockImplementationOnce((string, nameVar) => { throw new Error("Invalid format of " + nameVar) })
+
+    await controller.getTransactionsByGroupByCategory(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Invalid format of category",
       refreshedTokenMessage: undefined
     })
   });
