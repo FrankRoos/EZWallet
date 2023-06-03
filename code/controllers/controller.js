@@ -48,13 +48,21 @@ export const createCategory = async (req, res) => {
             refreshedTokenMessage: res.locals.message
         })
 
-        const new_categories = new categories({ type, color });  // da rivedere
-        const new_categories_saved = await new_categories.save()
-            .catch(err => { throw err })
-        return res.status(200).json({
-            data: new_categories_saved,
-            refreshedTokenMessage: res.locals.message
-        });
+        const new_category = new categories({ type, color });  // da rivedere
+        await new_category.save()
+        .then((result) =>{
+             res.status(200).json({
+                data: {
+                    _id: result._id,
+                    type: result.type, 
+                    color: result.color,              
+                    date: result.date
+                },
+                refreshedTokenMessage: res.locals.message
+            });
+        })
+        .catch((err) => { throw err; })
+
 
     } catch (error) {
         res.status(400).json({
@@ -299,19 +307,19 @@ export const createTransaction = async (req, res) => {
             throw new Error("Category Not Found in the Database")
 
         const newTransaction = new transactions({ username, amount, type: category.type });
-        const transactionSaved = await newTransaction
-            .save()
+        await newTransaction.save()
+            .then((result) =>{
+                 res.status(200).json({
+                    data: {
+                        username: result.username,
+                        amount: result.amount,
+                        type: result.type,
+                        date: result.date
+                    },
+                    refreshedTokenMessage: res.locals.message
+                })
+            })
             .catch((err) => { throw err; })
-
-        res.status(200).json({
-            data: {
-                username: transactionSaved.username,
-                amount: transactionSaved.amount,
-                type: transactionSaved.type,
-                date: transactionSaved.date
-            },
-            refreshedTokenMessage: res.locals.message
-        })
 
     }
     catch (error) {
@@ -351,7 +359,7 @@ export const getAllTransactions = async (req, res) => {
         /**
          * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
          */
-        transactions.aggregate([
+        await transactions.aggregate([
             {
                 $lookup: {
                     from: "categories",
@@ -363,7 +371,7 @@ export const getAllTransactions = async (req, res) => {
             { $unwind: "$categories_info" }
         ]).then((result) => {
             let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
-            res.json({
+            res.status(200).json({
                 data: data,
                 refreshedTokenMessage: res.locals.message
             });
