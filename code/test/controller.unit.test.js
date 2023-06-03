@@ -238,7 +238,7 @@ describe("createCategory", () => {
     
       })
 
-      test("Should create a new category and return the saved data'", async () => {
+      test("Should create a new category and return the saved data and a 200 success code", async () => {
  
         const category= 
           {
@@ -246,7 +246,6 @@ describe("createCategory", () => {
             type: "food",
             color: "blue",
             date: "2023-06-01T12:01:38.709Z",
-            __v: 0
           }
         
         const mockReq = {
@@ -284,16 +283,13 @@ describe("createCategory", () => {
         .mockReturnValue(1)   
         .mockReturnValueOnce([])
         .mockReturnValueOnce([])
-
         
-        const spyConstructor = jest.spyOn(categories.prototype, 'save');
-        spyConstructor.mockResolvedValueOnce(() => {return category})
-        .mockResolvedValue(1)
-
+        jest.spyOn(categories.prototype, "save").mockImplementation(()=>{return Promise.resolve(category)})
+        
         await controller.createCategory(mockReq, mockRes)
         expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
         expect(mockRes.status).toHaveBeenCalledWith(200)
-       // expect(mockRes.json).toHaveBeenCalledWith({data: category, refreshedTokenMessage: mockRes.locals.message})
+        expect(mockRes.json).toHaveBeenCalledWith({data: category, refreshedTokenMessage: mockRes.locals.message})
       })
 })
 
@@ -1439,9 +1435,9 @@ describe("createTransaction", () => {
         expect(mockRes.status).toHaveBeenCalledWith(400)
         expect(mockRes.json).toHaveBeenCalledWith({error: "Empty string: type", refreshedTokenMessage: mockRes.locals.message})
     
-      })
+    })
 
-      test("Should return a 400 error if the amount passed in the request body cannot be parsed as a floating value (negative numbers are accepted", async () => {  
+    test("Should return a 400 error if the amount passed in the request body cannot be parsed as a floating value (negative numbers are accepted", async () => {  
         
         const user = {
           username: "admin",
@@ -1637,7 +1633,7 @@ describe("createTransaction", () => {
       .mockResolvedValueOnce(mockReq.body.amount)
       utils.handleNumber = handle_num;
 
-      jest.spyOn(categories, "find")
+      jest.spyOn(categories, "findOne")
       .mockReturnValueOnce(null)  
       .mockReturnValue(1)
 
@@ -1648,13 +1644,157 @@ describe("createTransaction", () => {
       expect(mockRes.json).toHaveBeenCalledWith({error: "Category Not Found in the Database", refreshedTokenMessage: mockRes.locals.message})
   
     })
+
+    test("Should create a new transaction and return the saved data and a 200 success code", async () => {  
+        
+      const user = {
+        username: "admin",
+        email: "admin@admin.cm",
+        password:"adminadmin",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+        role: "Admin"
+      }
+      const category= 
+          {
+            _id: "647888a2e87ff1b64165609d",
+            type: "food",
+            color: "blue",
+            date: "2023-06-01T12:01:38.709Z",
+            __v: 0
+          }
+      const transaction = {username: "Mario", amount: 100, type: "food", date: "2023-06-01T12:01:38.709Z", }
+      const mockReq = {
+        cookies: {
+          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+          },
+          body: {username: "Mario", amount: 100, type: "food" },
+          params: {username: "Mario"}
+      }
+      const mockRes = {
+        cookie: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        locals: jest.fn()
+      }
+       const verify = jest.fn(()=> {return {flag:true}});
+        utils.verifyAuth = verify;
+  
+      jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)  
+      .mockReturnValueOnce({_id: 123})
+      .mockReturnValueOnce({_id: 123})   
+      .mockReturnValue(1)
+
+      const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockResolvedValueOnce(mockReq.body.type)
+      utils.handleString = handle_string;
+        
+      const handle_num = jest.fn()
+      .mockResolvedValueOnce(mockReq.body.amount)
+      utils.handleNumber = handle_num;
+
+      jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(category)  
+      .mockReturnValue(1)
+
+      jest.spyOn(transactions.prototype, "save").mockImplementation(()=>{return Promise.resolve(transaction)})
+
+      await controller.createTransaction(mockReq, mockRes)
+      expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({data: transaction, refreshedTokenMessage: mockRes.locals.message})
+  
+    })
       
 })
 
 describe("getAllTransactions", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
+  beforeEach(() => {
+    jest.restoreAllMocks()
+  });
+      test("Should return a 401 error if called by an authenticated user who is not the same user as the one in the route parameter", async () => {
+        const user = {
+          username: "admin",
+          email: "admin@admin.cm",
+          password:"adminadmin",
+          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+          role: "Admin"
+        }
+        const mockReq = {
+          cookies: {
+            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+            },
+        }
+        const mockRes = {
+          cookie: jest.fn(),
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+          locals: jest.fn()
+        }
+
+        jest.spyOn(User, "findOne")
+        .mockReturnValueOnce(user)  
+        .mockReturnValue(1)
+
+        const verify = jest.fn(()=> {return {flag:false}});
+        utils.verifyAuth = verify;
+
+        await controller.getAllTransactions(mockReq, mockRes)
+        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
+        expect(mockRes.status).toHaveBeenCalledWith(401)
+        expect(mockRes.json).toHaveBeenCalledWith({error: verify.cause, refreshedTokenMessage: mockRes.locals.message})
+
+      })
+
+      test("Should return a 200 code and all Transaction", async () => {
+        const user = {
+          username: "admin",
+          email: "admin@admin.cm",
+          password:"adminadmin",
+          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+          role: "Admin"
+        }
+
+        const all_transactions = [{_id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info:{color: "red"}}, 
+        {_id: 2,username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info:{color: "green"}}, 
+        {_id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info:{color: "red"}}]
+
+        const all_transactions2 = [{_id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"}, 
+        {_id: 2,username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green"}, 
+        {_id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red"}]
+        const mockReq = {
+          cookies: {
+            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+            },
+        }
+        const mockRes = {
+          cookie: jest.fn(),
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+          locals: jest.fn()
+        }
+
+        jest.spyOn(User, "findOne")
+        .mockReturnValueOnce(user)  
+        .mockReturnValue(1)
+
+        const verify = jest.fn(()=> {return {flag:true}});
+        utils.verifyAuth = verify;
+
+        jest.spyOn(transactions, "aggregate").mockImplementation(()=>{return Promise.resolve(all_transactions)})
+
+        await controller.getAllTransactions(mockReq, mockRes)
+        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
+        expect(mockRes.status).toHaveBeenCalledWith(200)
+        expect(mockRes.json).toHaveBeenCalledWith({data: all_transactions2, refreshedTokenMessage: mockRes.locals.message})
+
+      })
 })
 
 describe("getTransactionsByUser", () => { 
