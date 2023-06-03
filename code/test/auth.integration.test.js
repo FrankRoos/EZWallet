@@ -257,11 +257,10 @@ describe('logout', () => {
   beforeEach(async () => {
     await User.deleteMany();
   })
-  test.skip('Should return status 200 OK on successful logout', async () => {
+  test('Should return status 200 OK on successful logout', async () => {
     const refreshToken = jwt.sign(
       {
         email: 'test@example.com',
-        id: 'user-id',
         username: 'test',
         role: 'Regular',
       },
@@ -272,7 +271,6 @@ describe('logout', () => {
     const accessToken = jwt.sign(
       {
         email: 'test@example.com',
-        id: 'user-id',
         username: 'test',
         role: 'Regular',
       },
@@ -290,8 +288,7 @@ describe('logout', () => {
 
     const response = await request(app)
       .get('/api/logout')
-      .set('Cookie', `refreshToken=${refreshToken}`)
-      .set('Authorization', `Bearer ${accessToken}`);
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`);
 
     console.log('Response Status:', response.status);
     console.log('Response Body:', response.body);
@@ -299,14 +296,15 @@ describe('logout', () => {
     expect(response.status).toBe(200);
     expect(response.body.data.message).toBe('User logged out');
   });
-  test('returns 400 error when refresh token is missing in cookies', async () => {
+  
+  test('returns error 400 when refresh token is missing in cookies', async () => {
     const response = await request(app)
       .get('/api/logout')
   
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing refresh token in cookies' });
   });
-  test('returns 400 error when user is not found', async () => {
+  test('returns error 400 when user is not found', async () => {
     
     const cookies = { refreshToken: 'token_not_valid' };
   
@@ -317,25 +315,39 @@ describe('logout', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'user not found' });
   });
-  test.skip('returns 401 error when verifyAuth returns false', async () => {
-    
+  test('returns error 401 when verifyAuth returns false', async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
     const user = await User.create({
       username: 'test',
       email: 'test@example.com',
       password: await bcrypt.hash('password123', 12),
-      refreshToken: null,
-      accessToken: null
+      refreshToken: refreshToken,
+      accessToken: accessToken,
     });
-    await user.save();
   
     const response = await request(app)
       .get('/api/logout')
-      .set('Cookie', `accessToken=${user.accessToken}; refreshToken=${user.refreshToken}`);
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`);
   
     expect(response.status).toBe(401);
-    expect(response.body).toEqual({ error: 'Unauthorized' });
-  });
-  
+    expect(response.body).toEqual({ error: 'Token is missing information' });
+  }); 
   
 
 });
