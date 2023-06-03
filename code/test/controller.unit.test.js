@@ -56,7 +56,7 @@ describe("createCategory", () => {
 
   })
 
-  test("Should return a 400 error if the group name passed in the request body is an empty string", async () => {
+  test("Should return a 400 error if at least one of the parameters in the request body is an empty string", async () => {
 
     const mockReq = {
       cookies: {
