@@ -178,12 +178,12 @@ describe("createCategory", () => {
     await controller.createCategory(mockReq, mockRes)
     expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
     expect(categories.find).toHaveBeenCalledWith({ type: mockReq.body.type })
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Category type already exists", refreshedTokenMessage: mockRes.locals.message })
 
   })
 
-  test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
+  test("Should return a 400 error if the color of category passed in the request body represents an already existing category in the database by color search", async () => {
     const category = [
       {
         _id: "647888a2e87ff1b64165609d",
@@ -235,7 +235,7 @@ describe("createCategory", () => {
     await controller.createCategory(mockReq, mockRes)
     expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
     expect(categories.find).toHaveBeenCalledWith({ color: mockReq.body.color })
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Color already used", refreshedTokenMessage: mockRes.locals.message })
 
   })
