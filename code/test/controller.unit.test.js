@@ -2028,6 +2028,44 @@ describe("deleteTransactions", () => {
     })
   })
 
-  
+  test("Ids have a wrong format", async () => {
+    const body = {
+      "_ids": ["647221a3bbae6d3b8b0d21", "64721f4d45fc5a2060f6b3c8"]
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NTc5MTMwM30.S48LU8cLrF1kiELJ2aL5qGvvWFmEom4rq0D6UHuSob0',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk'
+      },
+      body: body
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "admin",
+      email: "admin@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk",
+      role: "Admin"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findById')
+      .mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteMany').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+
+    await controller.deleteTransactions(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Invalid ID",
+      refreshedTokenMessage: undefined
+    })
+  })
 
 })
