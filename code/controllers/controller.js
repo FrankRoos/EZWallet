@@ -801,10 +801,10 @@ export const deleteTransactions = async (req, res) => {
         let ids = req.body._ids.map(element => {
             let id = element.toString();
 
-            if (!(/[0-9a-fA-F]{24}$/).test(id))
-                throw new Error("Invalid ID")
-            else if (id == "")
+            if (id == "")
                 throw new Error("You inserted an empty string as Id")
+            else if (!(/[0-9a-fA-F]{24}$/).test(id))
+                throw new Error("Invalid ID")
             
             return id
         })
@@ -819,7 +819,7 @@ export const deleteTransactions = async (req, res) => {
 
         await transactions.deleteMany({ _id: { $in: ids } })
 
-        return res.json({
+        return res.status(200).json({
             data: { message: "Transactions deleted" },
             refreshedTokenMessage: res.locals.message
         });
