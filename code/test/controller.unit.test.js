@@ -17,1226 +17,55 @@ beforeEach(() => {
   transactions.prototype.save.mockClear();
 });
 
-describe("createCategory", () => { 
+describe("createCategory", () => {
   beforeEach(() => {
     jest.restoreAllMocks()
   });
-    test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
 
-        const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: { 
-                type: "food"
-            }
-        }
-
-        const mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-        };
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)
-        
-
-        await controller.createCategory(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Missing attributes in the body", refreshedTokenMessage: mockRes.locals.message});
-    
-    })
-
-    test("Should return a 400 error if the group name passed in the request body is an empty string", async () => {
-  
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            
-            },
-            body: {
-                type: "food",
-                color: ""  
-            }
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-    
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-    
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)   
-        
-
-       const type = jest.fn().mockImplementation(()=> {throw new Error("Empty string: name")});
-        utils.handleString = type;
-       
-
-        await controller.createCategory(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(mockRes.status).toHaveBeenCalledWith(400)
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Empty string: name", refreshedTokenMessage: mockRes.locals.message})
-    
-      })
-
-      test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
-  
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            
-            },
-            body: {
-                type: "food",
-                color: "green"  
-            }
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-    
-        const verify = jest.fn(()=> {return {flag:false}});
-        utils.verifyAuth = verify;
-    
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true)  
-        .mockReturnValue(1) 
-
-        await controller.createCategory(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(mockRes.status).toHaveBeenCalledWith(401)
-        expect(mockRes.json).toHaveBeenCalledWith({error: verify.cause, refreshedTokenMessage: mockRes.locals.message})
-    
-      })
-
-      test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by type search", async () => {
-        const category = [
-            {
-              _id: "647888a2e87ff1b64165609d",
-              type: 'food',
-              color: 'blue',
-              date: "2023-06-01T12:01:38.709Z",
-              __v: 0
-            }
-          ]
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            
-            },
-            body: {
-                type: "food",
-                color: "green"  
-            }
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-    
-        jest.spyOn(User, "findOne")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce(true)
-        
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        const handle_string = jest.fn()
-        .mockReturnValue(1)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        utils.handleString = handle_string;
-
-        jest.spyOn(categories, "find")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce(category)
-        //.mockReturnValueOnce([])
-
-        await controller.createCategory(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(categories.find).toHaveBeenCalledWith({type: mockReq.body.type})
-        expect(mockRes.status).toHaveBeenCalledWith(401)
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Category type already exists", refreshedTokenMessage: mockRes.locals.message})
-    
-      })
-
-      test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
-        const category = [
-            {
-              _id: "647888a2e87ff1b64165609d",
-              type: 'food',
-              color: 'blue',
-              date: "2023-06-01T12:01:38.709Z",
-              __v: 0
-            }
-          ]
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            
-            },
-            body: {
-                type: "food",
-                color: "green"  
-            }
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-
-        //categories.prototype.save.mockResolvedValue(category);
-    
-        jest.spyOn(User, "findOne")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce(true)
-        
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        const type = jest.fn()
-        .mockReturnValue(1)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        utils.handleString = type;
-
-        jest.spyOn(categories, "find")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce([])
-        .mockReturnValueOnce(category)
-
-
-        await controller.createCategory(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(categories.find).toHaveBeenCalledWith({color: mockReq.body.color})
-        expect(mockRes.status).toHaveBeenCalledWith(401)
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Color already used", refreshedTokenMessage: mockRes.locals.message})
-    
-      })
-
-      test("Should create a new category and return the saved data and a 200 success code", async () => {
- 
-        const category= 
-          {
-            _id: "647888a2e87ff1b64165609d",
-            type: "food",
-            color: "blue",
-            date: "2023-06-01T12:01:38.709Z",
-          }
-        
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            
-            },
-            body: {
-                type: "travel",
-                color: "black"  
-            }
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce(true)
-        
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        const type = jest.fn()
-        .mockReturnValue(1)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        utils.handleString = type;
-
-        jest.spyOn(categories, "find")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce([])
-        .mockReturnValueOnce([])
-        
-        jest.spyOn(categories.prototype, "save").mockImplementation(()=>{return Promise.resolve(category)})
-        
-        await controller.createCategory(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(mockRes.status).toHaveBeenCalledWith(200)
-        expect(mockRes.json).toHaveBeenCalledWith({data: category, refreshedTokenMessage: mockRes.locals.message})
-      })
-})
-
-describe("updateCategory", () => { 
-  beforeEach(() => {
-    jest.restoreAllMocks()
-  });
-    
-          test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
-  
-            const mockReq = {
-              cookies: {
-                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-                
-                },
-                body: {
-                    type: "food",
-                    color: "green"  
-                },
-                params: {type: "food"}
-            }
-            const mockRes = {
-              cookie: jest.fn(),
-              status: jest.fn().mockReturnThis(),
-              json: jest.fn(),
-              locals: jest.fn()
-            }
-        
-            const verify = jest.fn(()=> {return {flag:false}});
-            utils.verifyAuth = verify;
-        
-            jest.spyOn(User, "findOne")
-            .mockReturnValueOnce(true)  
-            .mockReturnValue(1) 
-       
-            await controller.updateCategory(mockReq, mockRes)
-            expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-            expect(mockRes.status).toHaveBeenCalledWith(401)
-            expect(mockRes.json).toHaveBeenCalledWith({error: verify.cause, refreshedTokenMessage: mockRes.locals.message})
-        
-          })
-
-
-        test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
-
-            const mockReq = {
-                cookies: {
-                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-                },
-                body: { 
-                    type: "food"
-                },
-                params: {type: "food"}
-            }
-
-            const mockRes = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                locals: jest.fn()
-            };
-
-            const verify = jest.fn(()=> {return {flag:true}});
-            utils.verifyAuth = verify;
-
-            jest.spyOn(User, "findOne")
-            .mockReturnValueOnce(true) 
-            .mockReturnValue(1)
-            
-
-            await controller.updateCategory(mockReq, mockRes) 
-            expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-            expect(mockRes.status).toHaveBeenCalledWith(400);
-            expect(mockRes.json).toHaveBeenCalledWith({error: "Missing attributes in the body", refreshedTokenMessage: mockRes.locals.message});
-
-        })
-
-
-        test("should return a 400 error if at least one of the parameters in the request body is an empty string", async () => {
-
-          const mockReq = {
-              cookies: {
-                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              },
-              body: { 
-                  type: "food",
-                  color: "green" 
-              },
-              params: {type: ""}
-          }
-
-          const mockRes = {
-              status: jest.fn().mockReturnThis(),
-              json: jest.fn(),
-              locals: jest.fn()
-          };
-
-          const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true) 
-          .mockReturnValue(1)
-
-          const handle_string = jest.fn().mockImplementation(()=> {throw new Error("Empty string: type")});
-          utils.handleString = handle_string;
-
-          await controller.updateCategory(mockReq, mockRes) 
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-          expect(handle_string).toHaveBeenCalledWith(mockReq.params.type,"type")   
-          expect(mockRes.status).toHaveBeenCalledWith(400);
-          expect(mockRes.json).toHaveBeenCalledWith({error: "Service Not Found. Reason: Empty string: type", refreshedTokenMessage: mockRes.locals.message});
-
-      })
-
-      test("should return a 400 error if the type of category passed as a route parameter does not represent a category in the database", async () => {
-
-        const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: { 
-                type: "food",
-                color: "green" 
-            },
-            params: {type: "food"}
-        }
-
-        const mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-        };
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)
-
-        const handle_string= jest.fn()
-        .mockReturnValue(1)
-        .mockReturnValueOnce(mockReq.params.type)
-        utils.handleString = handle_string;
-
-        jest.spyOn(categories, "find")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce([])
-        
-
-        //const handle_string = jest.fn().mockImplementation(()=> {throw new Error("Empty string: type")});
-       // utils.handleString = handle_string;
-
-        await controller.updateCategory(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(categories.find).toHaveBeenCalledWith({type: mockReq.params.type}) 
-        expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Category type does not exist in the database", refreshedTokenMessage: mockRes.locals.message});
-
-    })
-
-
-    test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
-      const category_params = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "food",
-          color: "blue",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-      
-      const category_body = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "invest",
-          color: "blue",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-        const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: { 
-                type: "food",
-                color: "blue" 
-            },
-            params: {type: "food"}
-        }
-
-        const mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-        };
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)
-
-        const handle_string= jest.fn()        
-        .mockReturnValueOnce(mockReq.params.type)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        .mockReturnValue(1)
-        utils.handleString = handle_string;
-
-        jest.spyOn(categories, "find")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce(category_params)
-        .mockReturnValueOnce(category_body)
-
-        await controller.updateCategory(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(categories.find).toHaveBeenCalledWith({color: mockReq.body.color}) 
-        expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Color already used by another catecory", refreshedTokenMessage: mockRes.locals.message});
-
-    })
-
-    test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
-      const category_params = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "invest",
-          color: "blue",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-      const category_body = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "food",
-          color: "green",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-        const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: { 
-                type: "school",
-                color: "green" 
-            },
-            params: {type: "invest"}
-        }
-
-        const mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-        };
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)
-
-        const handle_string= jest.fn()        
-        .mockReturnValueOnce(mockReq.params.type)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        .mockReturnValue(1)
-        utils.handleString = handle_string;
-
-        jest.spyOn(categories, "find")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce(category_params)
-        .mockReturnValueOnce([])
-        .mockReturnValueOnce(category_body)
-     
-        await controller.updateCategory(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(categories.find).toHaveBeenCalledWith({type: mockReq.body.type}) 
-        expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Category type in the body request already exists", refreshedTokenMessage: mockRes.locals.message});
-
-    })
-
-
-    test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
-      const category_params = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "invest",
-          color: "blue",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-      const category_body = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "invest",
-          color: "blue",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-        const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: { 
-                type: "food",
-                color: "blue" 
-            },
-            params: {type: "invest"}
-        }
-
-        const mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-        };
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)
-
-        const handle_string= jest.fn()        
-        .mockReturnValueOnce(mockReq.params.type)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        .mockReturnValue(1)
-        utils.handleString = handle_string;
-
-        jest.spyOn(categories, "find")
-        .mockReturnValue(1)   
-        .mockReturnValueOnce(category_params)
-        .mockReturnValueOnce([])
-        .mockReturnValueOnce(category_body)
-     
-        await controller.updateCategory(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(categories.find).toHaveBeenCalledWith({type: mockReq.body.type}) 
-        expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Category type in the body request already exists", refreshedTokenMessage: mockRes.locals.message});
-
-    })
-
-
-    test("Should return a 200 code and a successful message for the edited category when body.type is different from the params.type", async () => {
-      const category_params = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "invest",
-          color: "blue",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-      
-        const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: { 
-                type: "food",
-                color: "blue" 
-            },
-            params: {type: "invest"}
-        }
-
-        const mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-        };
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)
-
-        const handle_string= jest.fn()        
-        .mockReturnValueOnce(mockReq.params.type)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        .mockReturnValue(1)
-        utils.handleString = handle_string;
-
-        jest.spyOn(categories, "find")   
-        .mockReturnValueOnce(category_params)
-        .mockReturnValueOnce([])
-        .mockReturnValueOnce([])
-        .mockReturnValue(1) 
-
-        jest.spyOn(categories, "findOneAndUpdate")  
-        .mockReturnValueOnce(true)
-        .mockReturnValue(1) 
-
-        jest.spyOn(transactions, "updateMany")  
-        .mockReturnValueOnce({modifiedCount: 2})
-        .mockReturnValue(1) 
-     
-        await controller.updateCategory(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(transactions.updateMany).toHaveBeenCalledWith({type: mockReq.params.type}, {type: mockReq.body.type}) 
-        expect(mockRes.status).toHaveBeenCalledWith(200);
-        expect(mockRes.json).toHaveBeenCalledWith({data: {message: "Category edited successfully", count: 2}, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage});
-
-    })
-
-    test("Should return a 200 code and a successful message for the edited category when body.type is equal to params.type", async () => {
-      const category_params = [
-        {
-          _id: "647888a2e87ff1b64165609d",
-          type: "invest",
-          color: "blue",
-          date: "2023-06-01T12:01:38.709Z",
-          __v: 0
-        }
-      ]
-     
-        const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: { 
-                type: "invest",
-                color: "green" 
-            },
-            params: {type: "invest"}
-        }
-
-        const mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-        };
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(true) 
-        .mockReturnValue(1)
-
-        const handle_string= jest.fn()        
-        .mockReturnValueOnce(mockReq.params.type)
-        .mockReturnValueOnce(mockReq.body.type)
-        .mockReturnValueOnce(mockReq.body.color)
-        .mockReturnValue(1)
-        utils.handleString = handle_string;
-
-        jest.spyOn(categories, "find")   
-        .mockReturnValueOnce(category_params)
-        .mockReturnValueOnce([])
-        .mockReturnValueOnce([])
-        .mockReturnValue(1) 
-
-        jest.spyOn(categories, "findOneAndUpdate")  
-        .mockReturnValueOnce(true)
-        .mockReturnValue(1) 
-
-        jest.spyOn(transactions, "count")  
-        .mockReturnValueOnce(2)
-        .mockReturnValue(1) 
-
-        await controller.updateCategory(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(transactions.count).toHaveBeenCalledWith({type: mockReq.params.type}) 
-        expect(mockRes.status).toHaveBeenCalledWith(200);
-        expect(mockRes.json).toHaveBeenCalledWith({data: {message: "Category edited successfully", count: 2}, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage});
-
-    })
-
-    test("Should return a 400 error whether there are another error", async () => {
-  
-      const mockReq = {
-        cookies: {
-          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-          
-          },
-          body: {
-              type: "food",
-              color: "green"  
-          },
-          params: {type: 2}
-      }
-      const mockRes = {
-        cookie: jest.fn(),
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-        locals: jest.fn()
-      }
-  
-      const verify = jest.fn(()=> {return {flag:true}});
-      utils.verifyAuth = verify;
-  
-      jest.spyOn(User, "findOne")
-      .mockReturnValueOnce(true)  
-      .mockReturnValue(1) 
-
-      const handle_string = jest.fn().mockImplementation(()=> {throw new Error("Invalid format of: type")});
-      utils.handleString = handle_string;
- 
-      await controller.updateCategory(mockReq, mockRes)
-      expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-      expect(handle_string).toHaveBeenCalledWith(mockReq.params.type, "type")
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({error: "Invalid format of: type", refreshedTokenMessage: mockRes.locals.message})
-  
-    })
-
-
-})
-
-describe("deleteCategory", () => { 
-  beforeEach(() => {
-    jest.restoreAllMocks()
-  });
-        test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
-        
-          const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              
-              },
-              body: {types: ["health", "food"]},
-          }
-          const mockRes = {
-            cookie: jest.fn(),
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-          }
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true)  
-          .mockReturnValue(1) 
-
-          const verify = jest.fn(()=> {return {flag:false}});
-          utils.verifyAuth = verify;
-
-          await controller.deleteCategory(mockReq, mockRes)
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-          expect(mockRes.status).toHaveBeenCalledWith(401)
-          expect(mockRes.json).toHaveBeenCalledWith({error: verify.cause, refreshedTokenMessage: mockRes.locals.message})
-
-        })
-
-        test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
-
-          const mockReq = {
-              cookies: {
-                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              },
-              body: {}
-          }
-
-          const mockRes = {
-              status: jest.fn().mockReturnThis(),
-              json: jest.fn(),
-              locals: jest.fn()
-          };
-
-          const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true) 
-          .mockReturnValue(1)
-          
-
-          await controller.deleteCategory(mockReq, mockRes) 
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-          expect(mockRes.status).toHaveBeenCalledWith(400);
-          expect(mockRes.json).toHaveBeenCalledWith({error: "Missing attributes in the body", refreshedTokenMessage: mockRes.locals.message});
-
-        })
-
-
-        test("Should return a 400 error if at least one of the types in the array is an empty string", async () => {
-
-          const mockReq = {
-              cookies: {
-                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              },
-              body: {types: ["healt",""]}
-          }
-
-          const mockRes = {
-              status: jest.fn().mockReturnThis(),
-              json: jest.fn(),
-              locals: jest.fn()
-          };
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true) 
-          .mockReturnValue(1)
-
-          const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-
-          jest.spyOn(categories, "findOne")
-          .mockReturnValueOnce(true) 
-          .mockReturnValueOnce(true) 
-          .mockReturnValue(1)
-
-          await controller.deleteCategory(mockReq, mockRes) 
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-          expect(categories.findOne).toHaveBeenCalled()       
-          expect(mockRes.status).toHaveBeenCalledWith(400);
-          expect(mockRes.json).toHaveBeenCalledWith({error: "There is an empty string in the category list", refreshedTokenMessage: mockRes.locals.message});
-
-         })
-
-
-        test("Should return a 400 error if at least one of the types in the array does not represent a category in the database", async () => {
-
-            const mockReq = {
-                cookies: {
-                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-                },
-                body: {types: ["healt",2]}
-            }
-
-            const mockRes = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                locals: jest.fn()
-            };
-
-            jest.spyOn(User, "findOne")
-            .mockReturnValueOnce(true) 
-            .mockReturnValue(1)
-
-            const verify = jest.fn(()=> {return {flag:true}});
-            utils.verifyAuth = verify;
-
-            jest.spyOn(categories, "findOne")
-            .mockReturnValueOnce(true) 
-            .mockReturnValueOnce(false) 
-            .mockReturnValue(1)
-
-            await controller.deleteCategory(mockReq, mockRes) 
-            expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-            expect(categories.findOne).toHaveBeenCalledWith({ type: 2 })    
-            expect(mockRes.status).toHaveBeenCalledWith(400);
-            expect(mockRes.json).toHaveBeenCalledWith({error: "You inserted an invalid category", refreshedTokenMessage: mockRes.locals.message});
-
-        })
-
-        test("Should return a 200 successful code and a confirmsation of a successful deletion and an attribute `count` that specifies the number of transactions that have had their category type changed when N = T", async () => {
-            const categor = [{type: "food", color: "red"}, {type: "health", color: "green"}]
-            const mockReq = {
-                cookies: {
-                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-                },
-              body: {types: ["health", "food"]}
-            }
-
-            const mockRes = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                locals: jest.fn()
-            };
-
-            jest.spyOn(User, "findOne")
-            .mockReturnValueOnce(true) 
-            .mockReturnValue(1)
-
-            const verify = jest.fn(()=> {return {flag:true}});
-            utils.verifyAuth = verify;
-
-            jest.spyOn(categories, "findOne")
-            .mockReturnValueOnce(true) 
-            .mockReturnValueOnce(true) 
-            .mockReturnValueOnce(categor[0]) 
-           
-            .mockReturnValue(1)
-
-            jest.spyOn(categories, "find")
-            .mockImplementation(() => {return categor}) 
-            
-
-            jest.spyOn(transactions, "updateMany")
-            .mockReturnValueOnce({modifiedCount: 2}) 
-            .mockReturnValue(1)
-
-            jest.spyOn(categories, "findOneAndDelete")
-            .mockReturnValueOnce(true) 
-            .mockReturnValue(1)
-
-            await controller.deleteCategory(mockReq, mockRes) 
-            expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken}) 
-            expect(categories.find).toHaveBeenCalledWith({})  
-            expect(mockRes.status).toHaveBeenCalledWith(200);
-            expect(mockRes.json).toHaveBeenCalledWith({data: {message: "Categories deleted", count: 2}, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage});
-
-        })
-
-        test("Should return a 200 successful code and a confirmsation of a successful deletion and an attribute `count` that specifies the number of transactions that have had their category type changed when N > T", async () => {
-          const categor = [{type: "food", color: "red"}, {type: "health", color: "green"}, {type: "school", color: "black"}]
-          const mockReq = {
-              cookies: {
-                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-                refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              },
-            body: {types: ["health", "food"]}
-          }
-
-          const mockRes = {
-              status: jest.fn().mockReturnThis(),
-              json: jest.fn(),
-              locals: jest.fn()
-          };
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true) 
-          .mockReturnValue(1)
-
-          const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-
-          jest.spyOn(categories, "findOne")
-          .mockReturnValueOnce(true) 
-          .mockReturnValueOnce(true) 
-          .mockReturnValueOnce(categor[0]) 
-         
-          .mockReturnValue(1)
-
-          jest.spyOn(categories, "find")
-          .mockImplementation(() => {return categor}) 
-          
-
-          jest.spyOn(transactions, "updateMany")
-          .mockReturnValueOnce({modifiedCount: 2}) 
-          .mockReturnValue(1)
-
-          jest.spyOn(categories, "findOneAndDelete")
-          .mockReturnValueOnce(true) 
-          .mockReturnValue(1)
-
-          await controller.deleteCategory(mockReq, mockRes) 
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken}) 
-          expect(categories.find).toHaveBeenCalledWith({})  
-          expect(mockRes.status).toHaveBeenCalledWith(200);
-          expect(mockRes.json).toHaveBeenCalledWith({data: {message: "Categories deleted", count: 2}, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage});
-
-      })
-
-      test("Should return a 400 error whether there are another error", async () => {
-  
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            
-            },
-            body: {types: ["food"]}
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        } 
-   
-        await controller.deleteCategory(mockReq, mockRes)
-        expect(mockRes.status).toHaveBeenCalledWith(400)
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Operation `users.findOne()` buffering timed out after 10000ms", refreshedTokenMessage: mockRes.locals.message})
-    
-      })
-
-})
-
-describe("getCategories", () => { 
-  beforeEach(() => {
-    jest.restoreAllMocks()
-  });
-        test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
-        
-          const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              
-              }
-          }
-          const mockRes = {
-            cookie: jest.fn(),
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-          }
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true)  
-          .mockReturnValue(1) 
-
-          const verify = jest.fn(()=> {return {flag:false}});
-          utils.verifyAuth = verify;
-
-          await controller.getCategories(mockReq, mockRes)
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-          expect(mockRes.status).toHaveBeenCalledWith(401)
-          expect(mockRes.json).toHaveBeenCalledWith({error: verify.cause, refreshedTokenMessage: mockRes.locals.message})
-
-        })
-
-        test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
-          const categor = []
-          const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              
-              }
-          }
-          const mockRes = {
-            cookie: jest.fn(),
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-          }
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true)  
-          .mockReturnValue(1) 
-
-          const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-
-          jest.spyOn(categories, "find")
-          .mockReturnValueOnce(categor)  
-          .mockReturnValue(1) 
-
-          await controller.getCategories(mockReq, mockRes)
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-          expect(categories.find).toHaveBeenCalledWith({})
-          expect(mockRes.status).toHaveBeenCalledWith(400)
-          expect(mockRes.json).toHaveBeenCalledWith({error: "There are no categories", refreshedTokenMessage: mockRes.locals.message})
-
-        })
-
-
-        test("Should return all categories", async () => {
-          const categor = [{type: "food", color: "red"}, {type: "health", color: "green"}, {type: "school", color: "black"}]
-          const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              
-              }
-          }
-          const mockRes = {
-            cookie: jest.fn(),
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-          }
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(true)  
-          .mockReturnValue(1) 
-
-          const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-
-          jest.spyOn(categories, "find")
-          .mockReturnValueOnce(categor)  
-          .mockReturnValue(1) 
-
-          await controller.getCategories(mockReq, mockRes)
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-          expect(categories.find).toHaveBeenCalledWith({})
-          expect(mockRes.status).toHaveBeenCalledWith(200)
-          expect(mockRes.json).toHaveBeenCalledWith({data: categor, refreshedTokenMessage: mockRes.locals.message})
-
-        })
-
-        test("Should return a 400 error whether there are another error", async () => {
-  
-          const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              }         
-          }
-          const mockRes = {
-            cookie: jest.fn(),
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-          } 
-     
-          await controller.getCategories(mockReq, mockRes)
-          expect(mockRes.status).toHaveBeenCalledWith(400)
-          expect(mockRes.json).toHaveBeenCalledWith({error: "Operation `users.findOne()` buffering timed out after 10000ms", refreshedTokenMessage: mockRes.locals.message})
-      
-        })
-})
-
-describe("createTransaction", () => { 
-  beforeEach(() => {
-    jest.restoreAllMocks()
-  });
-
-    test("Should return a 400 error if the username passed as a route parameter is an empty string or is in an invalid format", async () => {
-    const user = {
-      username: "admin",
-      email: "admin@admin.cm",
-      password:"adminadmin",
-      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-      role: "Admin"
-    }
     const mockReq = {
       cookies: {
         accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
         refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-        },
-        body: {username: "Mario", amount: 100, type: "food"},
-        params: {username: ""}
+      },
+      body: {
+        type: "food"
+      }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+
+    await controller.createCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Missing attributes in the body", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+  test("Should return a 400 error if the group name passed in the request body is an empty string", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: {
+        type: "food",
+        color: ""
+      }
     }
     const mockRes = {
       cookie: jest.fn(),
@@ -1245,590 +74,1960 @@ describe("createTransaction", () => {
       locals: jest.fn()
     }
 
-     jest.spyOn(User, "findOne")
-    .mockReturnValueOnce(user)  
-    .mockReturnValue(1)
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+
+    const type = jest.fn().mockImplementation(() => { throw new Error("Empty string: name") });
+    utils.handleString = type;
+
+
+    await controller.createCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Empty string: name", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: {
+        type: "food",
+        color: "green"
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    const verify = jest.fn(() => { return { flag: false } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    await controller.createCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: verify.cause, refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by type search", async () => {
+    const category = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: 'food',
+        color: 'blue',
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: {
+        type: "food",
+        color: "green"
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValue(1)
+      .mockReturnValueOnce(true)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
 
     const handle_string = jest.fn()
-      .mockImplementation(() => {throw new Error("Empty string: param-username")})
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
     utils.handleString = handle_string;
 
-    await controller.createTransaction(mockReq, mockRes)
-    expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-    expect(handle_string).toHaveBeenCalledWith(mockReq.params.username, "param-username")
-    expect(mockRes.status).toHaveBeenCalledWith(400)
-    expect(mockRes.json).toHaveBeenCalledWith({error: "Service Not Found. Reason: Empty string: param-username", refreshedTokenMessage: mockRes.locals.message})
-
-    })
-
-    test("Should return a 401 error if called by an authenticated user who is not the same user as the one in the route parameter", async () => {
-      const user = {
-        username: "admin",
-        email: "admin@admin.cm",
-        password:"adminadmin",
-        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-        role: "Admin"
-      }
-      const mockReq = {
-        cookies: {
-          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-          },
-          body: {username: "Mario", amount: 100, type: "food"},
-          params: {username: "Mario"}
-      }
-      const mockRes = {
-        cookie: jest.fn(),
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-        locals: jest.fn()
-      }
-
-       jest.spyOn(User, "findOne")
-      .mockReturnValueOnce(user)  
+    jest.spyOn(categories, "find")
       .mockReturnValue(1)
+      .mockReturnValueOnce(category)
+    //.mockReturnValueOnce([])
 
-      const handle_string = jest.fn()
-        .mockReturnValue(1)
-        .mockReturnValueOnce(mockReq.body.username)
-        utils.handleString = handle_string;
+    await controller.createCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({ type: mockReq.body.type })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Category type already exists", refreshedTokenMessage: mockRes.locals.message })
 
-      const verify = jest.fn(()=> {return {flag:false}});
-      utils.verifyAuth = verify;
+  })
 
-      await controller.createTransaction(mockReq, mockRes)
-      expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({error: verify.cause, refreshedTokenMessage: mockRes.locals.message})
-
-    })
-
-    test("Should return a 400 error if the username passed as a route parameter does not represent a user in the database", async () => {
-          const user = {
-            username: "admin",
-            email: "admin@admin.cm",
-            password:"adminadmin",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-            role: "Admin"
-          }
-          const mockReq = {
-            cookies: {
-              accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-              },
-              body: {username: "Mario", amount: 100, type: "food"},
-              params: {username: "Mario"}
-          }
-          const mockRes = {
-            cookie: jest.fn(),
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: jest.fn()
-          }
-
-          jest.spyOn(User, "findOne")
-          .mockReturnValueOnce(user)  
-          .mockReturnValueOnce(null)  
-          .mockReturnValue(1)
-
-          const handle_string = jest.fn()
-            .mockReturnValue(1)
-            .mockReturnValueOnce(mockReq.params.username)
-            utils.handleString = handle_string;
-
-          const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-
-          await controller.createTransaction(mockReq, mockRes)
-          expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-          expect(mockRes.status).toHaveBeenCalledWith(400)
-          expect(mockRes.json).toHaveBeenCalledWith({error: "User given as route request parameter not found", refreshedTokenMessage: mockRes.locals.message})
-
-        })
-
-    test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
-
-        const user = {
-          username: "admin",
-          email: "admin@admin.cm",
-          password:"adminadmin",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-          role: "Admin"
-        }
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: {username: "Mario", amount: 100, },
-            params: {username: "Mario"}
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(user)  
-        .mockReturnValueOnce(mockReq.params.username)  
-        .mockReturnValue(1)
-
-        const handle_string = jest.fn()
-          .mockReturnValue(1)
-          .mockReturnValueOnce(mockReq.params.username)
-          utils.handleString = handle_string;
-
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-
-
-        await controller.createTransaction(mockReq, mockRes) 
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})   
-        expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Body does not contains all requested attributes", refreshedTokenMessage: mockRes.locals.message});
-    
-    })
-
-    test("Should return a 400 error if at least one of the parameters in the request body is an empty string", async () => {  
-        
-        const user = {
-          username: "admin",
-          email: "admin@admin.cm",
-          password:"adminadmin",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-          role: "Admin"
-        }
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: {username: "Mario", amount: 100, type: "" },
-            params: {username: "Mario"}
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-         const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-    
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(user)  
-        .mockReturnValueOnce(mockReq.params.username)  
-        .mockReturnValue(1)
-
-        const handle_string = jest.fn()
-          .mockReturnValue(1)
-          .mockReturnValueOnce(mockReq.params.username)
-          .mockReturnValueOnce(mockReq.body.username)
-          .mockImplementation(()=> {throw new Error("Empty string: type")})
-          utils.handleString = handle_string;
-
-        await controller.createTransaction(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(handle_string).toHaveBeenCalledWith(mockReq.body.type, "type")
-        expect(mockRes.status).toHaveBeenCalledWith(400)
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Empty string: type", refreshedTokenMessage: mockRes.locals.message})
-    
-    })
-
-    test("Should return a 400 error if the amount passed in the request body cannot be parsed as a floating value (negative numbers are accepted", async () => {  
-        
-        const user = {
-          username: "admin",
-          email: "admin@admin.cm",
-          password:"adminadmin",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-          role: "Admin"
-        }
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: {username: "Mario", amount: "10a", type: "food" },
-            params: {username: "Mario"}
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-         const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-    
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(user)  
-        .mockReturnValueOnce(mockReq.params.username)
-        .mockReturnValueOnce(mockReq.body.username)   
-        .mockReturnValue(1)
-
-        const handle_string = jest.fn()
-          .mockReturnValue(1)
-          .mockReturnValueOnce(mockReq.params.username)
-          .mockReturnValueOnce(mockReq.body.username)
-          .mockResolvedValueOnce(mockReq.body.type)
-          utils.handleString = handle_string;
-          
-          const handle_num = jest.fn()
-          .mockImplementation(() => { throw new Error("Invalid format of amount")})
-          utils.handleNumber = handle_num;
-
-        await controller.createTransaction(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(User.findOne).toHaveBeenCalledWith({username: mockReq.body.username})
-        expect(mockRes.status).toHaveBeenCalledWith(400)
-        expect(mockRes.json).toHaveBeenCalledWith({error: "Invalid format of amount", refreshedTokenMessage: mockRes.locals.message})
-    
-    })
-
-    test("Should return a 400 error if the username passed in the request body does not represent a user in the database", async () => {  
-        
-        const user = {
-          username: "admin",
-          email: "admin@admin.cm",
-          password:"adminadmin",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-          role: "Admin"
-        }
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-            body: {username: "Mario", amount: 100, type: "food" },
-            params: {username: "Mario"}
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
-         const verify = jest.fn(()=> {return {flag:true}});
-          utils.verifyAuth = verify;
-    
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(user)  
-        .mockReturnValueOnce(mockReq.params.username)
-        .mockReturnValueOnce(null)   
-        .mockReturnValue(1)
-
-        const handle_string = jest.fn()
-          .mockReturnValue(1)
-          .mockReturnValueOnce(mockReq.params.username)
-          .mockReturnValueOnce(mockReq.body.username)
-          .mockResolvedValueOnce(mockReq.body.type)
-          utils.handleString = handle_string;
-          
-          const handle_num = jest.fn()
-          .mockResolvedValueOnce(mockReq.body.amount)
-          utils.handleNumber = handle_num;
-
-        await controller.createTransaction(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(User.findOne).toHaveBeenCalledWith({username: mockReq.body.username})
-        expect(mockRes.status).toHaveBeenCalledWith(400)
-        expect(mockRes.json).toHaveBeenCalledWith({error: "User given in body not found in the database", refreshedTokenMessage: mockRes.locals.message})
-    
-    })
-
-    test("Should return a 400 error if the username passed in the request body is not equal to the one passed as a route parameter", async () => {  
-        
-      const user = {
-        username: "admin",
-        email: "admin@admin.cm",
-        password:"adminadmin",
-        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-        role: "Admin"
+  test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
+    const category = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: 'food',
+        color: 'blue',
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
       }
-      const mockReq = {
-        cookies: {
-          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-          },
-          body: {username: "Mario", amount: 100, type: "food" },
-          params: {username: "Mario"}
+    ]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: {
+        type: "food",
+        color: "green"
       }
-      const mockRes = {
-        cookie: jest.fn(),
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-        locals: jest.fn()
-      }
-       const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-  
-      jest.spyOn(User, "findOne")
-      .mockReturnValueOnce(user)  
-      .mockReturnValueOnce({_id: 124})
-      .mockReturnValueOnce({_id: 123})   
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    //categories.prototype.save.mockResolvedValue(category);
+
+    jest.spyOn(User, "findOne")
       .mockReturnValue(1)
+      .mockReturnValueOnce(true)
 
-      const handle_string = jest.fn()
-        .mockReturnValue(1)
-        .mockReturnValueOnce(mockReq.params.username)
-        .mockReturnValueOnce(mockReq.body.username)
-        .mockResolvedValueOnce(mockReq.body.type)
-        utils.handleString = handle_string;
-        
-        const handle_num = jest.fn()
-        .mockResolvedValueOnce(mockReq.body.amount)
-        utils.handleNumber = handle_num;
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
 
-      await controller.createTransaction(mockReq, mockRes)
-      expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-      expect(User.findOne).toHaveBeenCalledWith({username: mockReq.body.username})
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({error: "User in parameters and User in body are different", refreshedTokenMessage: mockRes.locals.message})
-  
-    })
-
-    test("Should return a 400 error if the type of category passed in the request body does not represent a category in the database", async () => {  
-        
-      const user = {
-        username: "admin",
-        email: "admin@admin.cm",
-        password:"adminadmin",
-        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-        role: "Admin"
-      }
-      const mockReq = {
-        cookies: {
-          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-          },
-          body: {username: "Mario", amount: 100, type: "food" },
-          params: {username: "Mario"}
-      }
-      const mockRes = {
-        cookie: jest.fn(),
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-        locals: jest.fn()
-      }
-       const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-  
-      jest.spyOn(User, "findOne")
-      .mockReturnValueOnce(user)  
-      .mockReturnValueOnce({_id: 123})
-      .mockReturnValueOnce({_id: 123})   
+    const type = jest.fn()
       .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
+    utils.handleString = type;
 
-      const handle_string = jest.fn()
+    jest.spyOn(categories, "find")
       .mockReturnValue(1)
-      .mockReturnValueOnce(mockReq.params.username)
-      .mockReturnValueOnce(mockReq.body.username)
-      .mockResolvedValueOnce(mockReq.body.type)
-      utils.handleString = handle_string;
-        
-      const handle_num = jest.fn()
-      .mockResolvedValueOnce(mockReq.body.amount)
-      utils.handleNumber = handle_num;
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce(category)
 
-      jest.spyOn(categories, "findOne")
-      .mockReturnValueOnce(null)  
-      .mockReturnValue(1)
 
-      await controller.createTransaction(mockReq, mockRes)
-      expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-      expect(categories.findOne).toHaveBeenCalled()
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({error: "Category Not Found in the Database", refreshedTokenMessage: mockRes.locals.message})
-  
-    })
+    await controller.createCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({ color: mockReq.body.color })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Color already used", refreshedTokenMessage: mockRes.locals.message })
 
-    test("Should create a new transaction and return the saved data and a 200 success code", async () => {  
-        
-      const user = {
-        username: "admin",
-        email: "admin@admin.cm",
-        password:"adminadmin",
-        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-        role: "Admin"
+  })
+
+  test("Should create a new category and return the saved data and a 200 success code", async () => {
+
+    const category =
+    {
+      _id: "647888a2e87ff1b64165609d",
+      type: "food",
+      color: "blue",
+      date: "2023-06-01T12:01:38.709Z",
+    }
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: {
+        type: "travel",
+        color: "black"
       }
-      const category= 
-          {
-            _id: "647888a2e87ff1b64165609d",
-            type: "food",
-            color: "blue",
-            date: "2023-06-01T12:01:38.709Z",
-            __v: 0
-          }
-      const transaction = {username: "Mario", amount: 100, type: "food", date: "2023-06-01T12:01:38.709Z", }
-      const mockReq = {
-        cookies: {
-          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-          },
-          body: {username: "Mario", amount: 100, type: "food" },
-          params: {username: "Mario"}
-      }
-      const mockRes = {
-        cookie: jest.fn(),
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-        locals: jest.fn()
-      }
-       const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
-  
-      jest.spyOn(User, "findOne")
-      .mockReturnValueOnce(user)  
-      .mockReturnValueOnce({_id: 123})
-      .mockReturnValueOnce({_id: 123})   
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
       .mockReturnValue(1)
+      .mockReturnValueOnce(true)
 
-      const handle_string = jest.fn()
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    const type = jest.fn()
       .mockReturnValue(1)
-      .mockReturnValueOnce(mockReq.params.username)
-      .mockReturnValueOnce(mockReq.body.username)
-      .mockResolvedValueOnce(mockReq.body.type)
-      utils.handleString = handle_string;
-        
-      const handle_num = jest.fn()
-      .mockResolvedValueOnce(mockReq.body.amount)
-      utils.handleNumber = handle_num;
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
+    utils.handleString = type;
 
-      jest.spyOn(categories, "findOne")
-      .mockReturnValueOnce(category)  
+    jest.spyOn(categories, "find")
       .mockReturnValue(1)
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([])
 
-      jest.spyOn(transactions.prototype, "save").mockImplementation(()=>{return Promise.resolve(transaction)})
+    jest.spyOn(categories.prototype, "save").mockImplementation(() => { return Promise.resolve(category) })
 
-      await controller.createTransaction(mockReq, mockRes)
-      expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-      expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith({data: transaction, refreshedTokenMessage: mockRes.locals.message})
-  
-    })
-      
+    await controller.createCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({ data: category, refreshedTokenMessage: mockRes.locals.message })
+  })
 })
 
-describe("getAllTransactions", () => { 
+describe("updateCategory", () => {
   beforeEach(() => {
     jest.restoreAllMocks()
   });
-      test("Should return a 401 error if called by an authenticated user who is not the same user as the one in the route parameter", async () => {
-        const user = {
-          username: "admin",
-          email: "admin@admin.cm",
-          password:"adminadmin",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-          role: "Admin"
-        }
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
 
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(user)  
-        .mockReturnValue(1)
+  test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
 
-        const verify = jest.fn(()=> {return {flag:false}});
-        utils.verifyAuth = verify;
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
 
-        await controller.getAllTransactions(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(mockRes.status).toHaveBeenCalledWith(401)
-        expect(mockRes.json).toHaveBeenCalledWith({error: verify.cause, refreshedTokenMessage: mockRes.locals.message})
+      },
+      body: {
+        type: "food",
+        color: "green"
+      },
+      params: { type: "food" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
 
-      })
+    const verify = jest.fn(() => { return { flag: false } });
+    utils.verifyAuth = verify;
 
-      test("Should return a 200 code and all Transaction", async () => {
-        const user = {
-          username: "admin",
-          email: "admin@admin.cm",
-          password:"adminadmin",
-          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
-          role: "Admin"
-        }
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
 
-        const all_transactions = [{_id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info:{color: "red"}}, 
-        {_id: 2,username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info:{color: "green"}}, 
-        {_id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info:{color: "red"}}]
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: verify.cause, refreshedTokenMessage: mockRes.locals.message })
 
-        const all_transactions2 = [{_id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"}, 
-        {_id: 2,username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green"}, 
-        {_id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red"}]
-        const mockReq = {
-          cookies: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
-            refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-            },
-        }
-        const mockRes = {
-          cookie: jest.fn(),
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: jest.fn()
-        }
+  })
 
-        jest.spyOn(User, "findOne")
-        .mockReturnValueOnce(user)  
-        .mockReturnValue(1)
 
-        const verify = jest.fn(()=> {return {flag:true}});
-        utils.verifyAuth = verify;
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
 
-        jest.spyOn(transactions, "aggregate").mockImplementation(()=>{return Promise.resolve(all_transactions)})
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "food"
+      },
+      params: { type: "food" }
+    }
 
-        await controller.getAllTransactions(mockReq, mockRes)
-        expect(User.findOne).toHaveBeenCalledWith({refreshToken: mockReq.cookies.refreshToken})
-        expect(mockRes.status).toHaveBeenCalledWith(200)
-        expect(mockRes.json).toHaveBeenCalledWith({data: all_transactions2, refreshedTokenMessage: mockRes.locals.message})
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
 
-      })
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Missing attributes in the body", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+
+  test("should return a 400 error if at least one of the parameters in the request body is an empty string", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "food",
+        color: "green"
+      },
+      params: { type: "" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn().mockImplementation(() => { throw new Error("Empty string: type") });
+    utils.handleString = handle_string;
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(handle_string).toHaveBeenCalledWith(mockReq.params.type, "type")
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Service Not Found. Reason: Empty string: type", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+  test("should return a 400 error if the type of category passed as a route parameter does not represent a category in the database", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "food",
+        color: "green"
+      },
+      params: { type: "food" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.type)
+    utils.handleString = handle_string;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValue(1)
+      .mockReturnValueOnce([])
+
+
+    //const handle_string = jest.fn().mockImplementation(()=> {throw new Error("Empty string: type")});
+    // utils.handleString = handle_string;
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({ type: mockReq.params.type })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Category type does not exist in the database", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+
+  test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
+    const category_params = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "food",
+        color: "blue",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+
+    const category_body = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "invest",
+        color: "blue",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "food",
+        color: "blue"
+      },
+      params: { type: "food" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValueOnce(mockReq.params.type)
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
+      .mockReturnValue(1)
+    utils.handleString = handle_string;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValue(1)
+      .mockReturnValueOnce(category_params)
+      .mockReturnValueOnce(category_body)
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({ color: mockReq.body.color })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Color already used by another catecory", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+  test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
+    const category_params = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "invest",
+        color: "blue",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+    const category_body = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "food",
+        color: "green",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "school",
+        color: "green"
+      },
+      params: { type: "invest" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValueOnce(mockReq.params.type)
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
+      .mockReturnValue(1)
+    utils.handleString = handle_string;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValue(1)
+      .mockReturnValueOnce(category_params)
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce(category_body)
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({ type: mockReq.body.type })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Category type in the body request already exists", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+
+  test("Should return a 400 error if the type of category passed in the request body represents an already existing category in the database by color search", async () => {
+    const category_params = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "invest",
+        color: "blue",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+    const category_body = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "invest",
+        color: "blue",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "food",
+        color: "blue"
+      },
+      params: { type: "invest" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValueOnce(mockReq.params.type)
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
+      .mockReturnValue(1)
+    utils.handleString = handle_string;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValue(1)
+      .mockReturnValueOnce(category_params)
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce(category_body)
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({ type: mockReq.body.type })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Category type in the body request already exists", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+
+  test("Should return a 200 code and a successful message for the edited category when body.type is different from the params.type", async () => {
+    const category_params = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "invest",
+        color: "blue",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "food",
+        color: "blue"
+      },
+      params: { type: "invest" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValueOnce(mockReq.params.type)
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
+      .mockReturnValue(1)
+    utils.handleString = handle_string;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValueOnce(category_params)
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([])
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "findOneAndUpdate")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    jest.spyOn(transactions, "updateMany")
+      .mockReturnValueOnce({ modifiedCount: 2 })
+      .mockReturnValue(1)
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(transactions.updateMany).toHaveBeenCalledWith({ type: mockReq.params.type }, { type: mockReq.body.type })
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({ data: { message: "Category edited successfully", count: 2 }, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage });
+
+  })
+
+  test("Should return a 200 code and a successful message for the edited category when body.type is equal to params.type", async () => {
+    const category_params = [
+      {
+        _id: "647888a2e87ff1b64165609d",
+        type: "invest",
+        color: "blue",
+        date: "2023-06-01T12:01:38.709Z",
+        __v: 0
+      }
+    ]
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "invest",
+        color: "green"
+      },
+      params: { type: "invest" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValueOnce(mockReq.params.type)
+      .mockReturnValueOnce(mockReq.body.type)
+      .mockReturnValueOnce(mockReq.body.color)
+      .mockReturnValue(1)
+    utils.handleString = handle_string;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValueOnce(category_params)
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([])
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "findOneAndUpdate")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    jest.spyOn(transactions, "count")
+      .mockReturnValueOnce(2)
+      .mockReturnValue(1)
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(transactions.count).toHaveBeenCalledWith({ type: mockReq.params.type })
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({ data: { message: "Category edited successfully", count: 2 }, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage });
+
+  })
+
+  test("Should return a 400 error whether there are another error", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: {
+        type: "food",
+        color: "green"
+      },
+      params: { type: 2 }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn().mockImplementation(() => { throw new Error("Invalid format of: type") });
+    utils.handleString = handle_string;
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(handle_string).toHaveBeenCalledWith(mockReq.params.type, "type")
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Invalid format of: type", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+
 })
 
-describe("getTransactionsByUser", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
+describe("deleteCategory", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks()
+  });
+  test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: { types: ["health", "food"] },
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: false } });
+    utils.verifyAuth = verify;
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: verify.cause, refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {}
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Missing attributes in the body", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+
+  test("Should return a 400 error if at least one of the types in the array is an empty string", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { types: ["healt", ""] }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.findOne).toHaveBeenCalled()
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "There is an empty string in the category list", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+
+  test("Should return a 400 error if at least one of the types in the array does not represent a category in the database", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { types: ["healt", 2] }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false)
+      .mockReturnValue(1)
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.findOne).toHaveBeenCalledWith({ type: 2 })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "You inserted an invalid category", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+  test("Should return a 200 successful code and a confirmsation of a successful deletion and an attribute `count` that specifies the number of transactions that have had their category type changed when N = T", async () => {
+    const categor = [{ type: "food", color: "red" }, { type: "health", color: "green" }]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { types: ["health", "food"] }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(categor[0])
+
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "find")
+      .mockImplementation(() => { return categor })
+
+
+    jest.spyOn(transactions, "updateMany")
+      .mockReturnValueOnce({ modifiedCount: 2 })
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "findOneAndDelete")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({})
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({ data: { message: "Categories deleted", count: 2 }, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage });
+
+  })
+
+  test("Should return a 200 successful code and a confirmsation of a successful deletion and an attribute `count` that specifies the number of transactions that have had their category type changed when N > T", async () => {
+    const categor = [{ type: "food", color: "red" }, { type: "health", color: "green" }, { type: "school", color: "black" }]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { types: ["health", "food"] }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(categor[0])
+
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "find")
+      .mockImplementation(() => { return categor })
+
+
+    jest.spyOn(transactions, "updateMany")
+      .mockReturnValueOnce({ modifiedCount: 2 })
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "findOneAndDelete")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({})
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({ data: { message: "Categories deleted", count: 2 }, refreshedTokenMessage: mockRes.locals.refreshedTokenMessage });
+
+  })
+
+  test("Should return a 400 error whether there are another error", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      },
+      body: { types: ["food"] }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Operation `users.findOne()` buffering timed out after 10000ms", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
 })
 
-describe("getTransactionsByUserByCategory", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
+describe("getCategories", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks()
+  });
+  test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: false } });
+    utils.verifyAuth = verify;
+
+    await controller.getCategories(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: verify.cause, refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+    const categor = []
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValueOnce(categor)
+      .mockReturnValue(1)
+
+    await controller.getCategories(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({})
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "There are no categories", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+
+  test("Should return all categories", async () => {
+    const categor = [{ type: "food", color: "red" }, { type: "health", color: "green" }, { type: "school", color: "black" }]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(categories, "find")
+      .mockReturnValueOnce(categor)
+      .mockReturnValue(1)
+
+    await controller.getCategories(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({})
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({ data: categor, refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 400 error whether there are another error", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    await controller.getCategories(mockReq, mockRes)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Operation `users.findOne()` buffering timed out after 10000ms", refreshedTokenMessage: mockRes.locals.message })
+
+  })
 })
 
-describe("getTransactionsByGroup", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
+describe("createTransaction", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks()
+  });
+
+  test("Should return a 400 error if the username passed as a route parameter is an empty string or is in an invalid format", async () => {
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "food" },
+      params: { username: "" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockImplementation(() => { throw new Error("Empty string: param-username") })
+    utils.handleString = handle_string;
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(handle_string).toHaveBeenCalledWith(mockReq.params.username, "param-username")
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Service Not Found. Reason: Empty string: param-username", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 401 error if called by an authenticated user who is not the same user as the one in the route parameter", async () => {
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "food" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.body.username)
+    utils.handleString = handle_string;
+
+    const verify = jest.fn(() => { return { flag: false } });
+    utils.verifyAuth = verify;
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: verify.cause, refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 400 error if the username passed as a route parameter does not represent a user in the database", async () => {
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "food" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce(null)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+    utils.handleString = handle_string;
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "User given as route request parameter not found", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
+
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+    utils.handleString = handle_string;
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Body does not contains all requested attributes", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+  test("Should return a 400 error if at least one of the parameters in the request body is an empty string", async () => {
+
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockImplementation(() => { throw new Error("Empty string: type") })
+    utils.handleString = handle_string;
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(handle_string).toHaveBeenCalledWith(mockReq.body.type, "type")
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Empty string: type", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 400 error if the amount passed in the request body cannot be parsed as a floating value (negative numbers are accepted", async () => {
+
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: "10a", type: "food" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockResolvedValueOnce(mockReq.body.type)
+    utils.handleString = handle_string;
+
+    const handle_num = jest.fn()
+      .mockImplementation(() => { throw new Error("Invalid format of amount") })
+    utils.handleNumber = handle_num;
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(User.findOne).toHaveBeenCalledWith({ username: mockReq.body.username })
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Invalid format of amount", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 400 error if the username passed in the request body does not represent a user in the database", async () => {
+
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "food" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(null)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockResolvedValueOnce(mockReq.body.type)
+    utils.handleString = handle_string;
+
+    const handle_num = jest.fn()
+      .mockResolvedValueOnce(mockReq.body.amount)
+    utils.handleNumber = handle_num;
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(User.findOne).toHaveBeenCalledWith({ username: mockReq.body.username })
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "User given in body not found in the database", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 400 error if the username passed in the request body is not equal to the one passed as a route parameter", async () => {
+
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "food" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce({ _id: 124 })
+      .mockReturnValueOnce({ _id: 123 })
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockResolvedValueOnce(mockReq.body.type)
+    utils.handleString = handle_string;
+
+    const handle_num = jest.fn()
+      .mockResolvedValueOnce(mockReq.body.amount)
+    utils.handleNumber = handle_num;
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(User.findOne).toHaveBeenCalledWith({ username: mockReq.body.username })
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "User in parameters and User in body are different", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 400 error if the type of category passed in the request body does not represent a category in the database", async () => {
+
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "food" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce({ _id: 123 })
+      .mockReturnValueOnce({ _id: 123 })
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockResolvedValueOnce(mockReq.body.type)
+    utils.handleString = handle_string;
+
+    const handle_num = jest.fn()
+      .mockResolvedValueOnce(mockReq.body.amount)
+    utils.handleNumber = handle_num;
+
+    jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(null)
+      .mockReturnValue(1)
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.findOne).toHaveBeenCalled()
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Category Not Found in the Database", refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should create a new transaction and return the saved data and a 200 success code", async () => {
+
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const category =
+    {
+      _id: "647888a2e87ff1b64165609d",
+      type: "food",
+      color: "blue",
+      date: "2023-06-01T12:01:38.709Z",
+      __v: 0
+    }
+    const transaction = { username: "Mario", amount: 100, type: "food", date: "2023-06-01T12:01:38.709Z", }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { username: "Mario", amount: 100, type: "food" },
+      params: { username: "Mario" }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce({ _id: 123 })
+      .mockReturnValueOnce({ _id: 123 })
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn()
+      .mockReturnValue(1)
+      .mockReturnValueOnce(mockReq.params.username)
+      .mockReturnValueOnce(mockReq.body.username)
+      .mockResolvedValueOnce(mockReq.body.type)
+    utils.handleString = handle_string;
+
+    const handle_num = jest.fn()
+      .mockResolvedValueOnce(mockReq.body.amount)
+    utils.handleNumber = handle_num;
+
+    jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(category)
+      .mockReturnValue(1)
+
+    jest.spyOn(transactions.prototype, "save").mockImplementation(() => { return Promise.resolve(transaction) })
+
+    await controller.createTransaction(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({ data: transaction, refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
 })
 
-describe("getTransactionsByGroupByCategory", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
+describe("getAllTransactions", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks()
+  });
+  test("Should return a 401 error if called by an authenticated user who is not the same user as the one in the route parameter", async () => {
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: false } });
+    utils.verifyAuth = verify;
+
+    await controller.getAllTransactions(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: verify.cause, refreshedTokenMessage: mockRes.locals.message })
+
+  })
+
+  test("Should return a 200 code and all Transaction", async () => {
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+
+    const all_transactions = [{ _id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: { color: "red" } },
+    { _id: 2, username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info: { color: "green" } },
+    { _id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info: { color: "red" } }]
+
+    const all_transactions2 = [{ _id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red" },
+    { _id: 2, username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green" },
+    { _id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red" }]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(transactions, "aggregate").mockImplementation(() => { return Promise.resolve(all_transactions) })
+
+    await controller.getAllTransactions(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({ data: all_transactions2, refreshedTokenMessage: mockRes.locals.message })
+
+  })
 })
 
-describe("deleteTransaction", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
+describe("getTransactionsByUser", () => {
+  test('Dummy test, change it', () => {
+    expect(true).toBe(true);
+  });
 })
 
-describe("deleteTransactions", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
+describe("getTransactionsByUserByCategory", () => {
+  test('Dummy test, change it', () => {
+    expect(true).toBe(true);
+  });
+})
+
+describe("getTransactionsByGroup", () => {
+  test('Dummy test, change it', () => {
+    expect(true).toBe(true);
+  });
+})
+
+describe("getTransactionsByGroupByCategory", () => {
+  test('Dummy test, change it', () => {
+    expect(true).toBe(true);
+  });
+})
+
+describe("deleteTransaction", () => {
+  test('Dummy test, change it', () => {
+    expect(true).toBe(true);
+  });
+})
+
+describe("deleteTransactions", () => {
+  test('Should return the list of transactions deleted successfully', async () => {
+
+    const body = {
+      "_ids": ["647221a3bbae6d3b8b0d2105", "64721f4d45fc5a2060f6b3c8"]
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NTc5MTMwM30.S48LU8cLrF1kiELJ2aL5qGvvWFmEom4rq0D6UHuSob0',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk'
+      },
+      body: body
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "admin",
+      email: "admin@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk",
+      role: "Admin"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findById').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteMany').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+
+    await controller.deleteTransactions(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      data: { message: "Transactions deleted" },
+      refreshedTokenMessage: undefined
+    })
+  });
+
+  test("The request body doesn't contain all attributes", async () => {
+    const body = {
+      // "_ids": ["647221a3bbae6d3b8b0d2105", "64721f4d45fc5a2060f6b3c8"]
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NTc5MTMwM30.S48LU8cLrF1kiELJ2aL5qGvvWFmEom4rq0D6UHuSob0',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk'
+      },
+      body: body
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "admin",
+      email: "admin@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk",
+      role: "Admin"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findById').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteMany').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+
+    await controller.deleteTransactions(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Missing ids",
+      refreshedTokenMessage: undefined
+    })
+  })
+
+  test("The request body contains at least one empty string", async () => {
+    const body = {
+      "_ids": ["", "64721f4d45fc5a2060f6b3c8"]
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NTc5MTMwM30.S48LU8cLrF1kiELJ2aL5qGvvWFmEom4rq0D6UHuSob0',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk'
+      },
+      body: body
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "admin",
+      email: "admin@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk",
+      role: "Admin"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findById').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteMany').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+
+    await controller.deleteTransactions(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "You inserted an empty string as Id",
+      refreshedTokenMessage: undefined
+    })
+  })
+
+  test("The request body contains at least one id that doesn't represent a transaction", async () => {
+    const body = {
+      "_ids": ["647221a3bbae6d3b8b0d2101", "64721f4d45fc5a2060f6b3c8"]
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NTc5MTMwM30.S48LU8cLrF1kiELJ2aL5qGvvWFmEom4rq0D6UHuSob0',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk'
+      },
+      body: body
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "admin",
+      email: "admin@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk",
+      role: "Admin"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findById')
+      .mockImplementationOnce(() => { return Promise.resolve(false) })
+      .mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteMany').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+
+    await controller.deleteTransactions(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "One or more Transactions not found",
+      refreshedTokenMessage: undefined
+    })
+  })
+
+  test("Not an admin", async () => {
+    const body = {
+      "_ids": ["647221a3bbae6d3b8b0d2101", "64721f4d45fc5a2060f6b3c8"]
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NTc5MTMwM30.S48LU8cLrF1kiELJ2aL5qGvvWFmEom4rq0D6UHuSob0',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk'
+      },
+      body: body
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "admin",
+      email: "admin@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NjM5MjUwM30.wKDfk71q1bciCZELPvxSDFh4NzY1KF_nIqN4SEcsDwk",
+      role: "Admin"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findById')
+      .mockImplementationOnce(() => { return Promise.resolve(false) })
+      .mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteMany').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue({flag: false, cause: "You are not an Admin"})
+
+    await controller.deleteTransactions(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "You are not an Admin",
+      refreshedTokenMessage: undefined
+    })
+  })
+
+  
+
 })
