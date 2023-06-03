@@ -2090,6 +2090,138 @@ describe("deleteTransaction", () => {
     })
   });
 
+  test('Username is an empty string', async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c8"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        username: "user"
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteOne').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn().mockImplementation((string, nameVar) => {  throw new Error("Empty string: " + nameVar) })
+
+    await controller.deleteTransaction(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(404);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Service Not Found. Reason: Empty string: username",
+      refreshedTokenMessage: undefined
+    })
+  });
+
+  test('Username invalid format', async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c8"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        username: "user"
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteOne').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn().mockImplementation((string, nameVar) => {  throw new Error("Invalid format of " + nameVar) })
+
+    await controller.deleteTransaction(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Invalid format of username",
+      refreshedTokenMessage: undefined
+    })
+  });
+
+  test('Wrong ID format', async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        username: "user"
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'deleteOne').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn().mockImplementation((string) => { return string })
+
+    await controller.deleteTransaction(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Invalid ID",
+      refreshedTokenMessage: undefined
+    })
+  });
+
 
 })
 
