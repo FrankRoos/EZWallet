@@ -47,7 +47,7 @@ describe('register', () => {
     expect(user.email).toBe(requestBody.email);
 
   });
-  test('returns 40 error when any parameter is missing', async () => {
+  test('returns error 400 when any parameter is missing', async () => {
     const response = await request(app)
       .post('/api/register')
       .send({ email: 'ciao@gmail.com' });
@@ -55,6 +55,47 @@ describe('register', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+
+  test('returns error 400 the email format is not correct', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email: 'ciao', username: 'ciaociao', password: 'password123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Email format is not correct' });
+  });
+  test('returns error 400 when the username is already taken', async () => {
+
+    await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+    });
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email: 'test200@example.com', username: 'test', password: 'password123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Username already taken' });
+  });
+  test('returns error 400 when the password lenght is < 8', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email: 'ciao@example.com', username: 'ciaociao', password: 'passw' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "Password doesn't match constraints,requires at least 8 characters" });
+  });
+  test.todo("returns 400 on the catch");
+
 })
 
 
@@ -80,7 +121,7 @@ describe("registerAdmin", () => {
     expect(user.username).toBe(requestBody.username);
     expect(user.email).toBe(requestBody.email);
   });
-  test('returns 40 error when any parameter is missing', async () => {
+  test('returns 400 error when any parameter is missing', async () => {
     const response = await request(app)
       .post('/api/admin')
       .send({ email: 'ciao@gmail.com' });
@@ -88,6 +129,46 @@ describe("registerAdmin", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+
+  test('returns error 400 the email format is not correct', async () => {
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ email: 'ciao', username: 'ciaociao', password: 'password123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Email format is not correct' });
+  });
+  test('returns error 400 when the username is already taken', async () => {
+
+    await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+    });
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ email: 'test200@example.com', username: 'test', password: 'password123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Username already taken' });
+  });
+  test('returns error 400 when the password lenght is < 8', async () => {
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ email: 'ciao@example.com', username: 'ciaociao', password: 'passw' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "Password doesn't match constraints,requires at least 8 characters" });
+  });
+  test.todo("returns 400 on the catch");
 })
 
 describe('login', () => {
@@ -118,6 +199,57 @@ describe('login', () => {
     const updatedUser = await User.findOne({ email: 'test@example.com' });
     expect(updatedUser.refreshToken).toEqual(response.body.data.refreshToken);
   });
+  test('returns 400 error when any parameter is missing', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({ email: 'ciao@gmail.com' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Missing Parameters' });
+  });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+  test('returns error 400 the email format is not correct', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({ email: 'ciao', username: 'ciaociao', password: 'password123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Email format is not correct' });
+  });
+  test('returns error 400 the email format is not correct', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: 'testtesttest' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'please you need to register' });
+  })
+  test('returns 400 error when the password is incorrect', async () => {
+    await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+    });
+    const response = await request(app)
+      .post('/api/login')
+      .send({
+        email: 'test@example.com',
+        password: 'wrongpassword',
+      });
+  
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'wrong password' });
+  });
+  
+  test.todo('cover the catch block');
+  
 
 });
 
@@ -126,46 +258,84 @@ describe('logout', () => {
     await User.deleteMany();
   })
   test.skip('Should return status 200 OK on successful logout', async () => {
-  const refreshToken = jwt.sign(
-    {
-      email: 'test@example.com',
-      id: 'user-id',
-      username: 'test',
-      role: 'Regular',
-    },
-    process.env.ACCESS_KEY,
-    { expiresIn: '7d' }
-  );
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        id: 'user-id',
+        username: 'test',
+        role: 'Regular',
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
 
-  const accessToken = jwt.sign(
-    {
-      email: 'test@example.com',
-      id: 'user-id',
-      username: 'test',
-      role: 'Regular',
-    },
-    process.env.ACCESS_KEY,
-    { expiresIn: '1h' }
-  );
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        id: 'user-id',
+        username: 'test',
+        role: 'Regular',
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
 
-  const user = await User.create({
-    username: 'test',
-    email: 'test@example.com',
-    password: await bcrypt.hash('password123', 12),
-    refreshToken: refreshToken,
-    accessToken: accessToken,
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+
+    const response = await request(app)
+      .get('/api/logout')
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Response Status:', response.status);
+    console.log('Response Body:', response.body);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.message).toBe('User logged out');
   });
-
-  const response = await request(app)
-    .get('/api/logout')
-    .set('Cookie', `refreshToken=${refreshToken}`)
-    .set('Authorization', `Bearer ${accessToken}`); 
-
-  console.log('Response Status:', response.status);
-  console.log('Response Body:', response.body);
-
-  expect(response.status).toBe(200);
-  expect(response.body.data.message).toBe('User logged out');
-});
+  test('returns 400 error when refresh token is missing in cookies', async () => {
+    const response = await request(app)
+      .get('/api/logout')
+  
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Missing refresh token in cookies' });
+  });
+  test('returns 400 error when user is not found', async () => {
+    
+    const cookies = { refreshToken: 'token_not_valid' };
+  
+    const response = await request(app)
+      .get('/api/logout')
+      .set('Cookie', `refreshToken=${cookies.refreshToken}`)
+  
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'user not found' });
+  });
+  test.skip('returns 401 error when verifyAuth returns false', async () => {
+    
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      refreshToken: null,
+      accessToken: null
+    });
+    await user.save();
+  
+    const response = await request(app)
+      .get('/api/logout')
+      .set('Cookie', `accessToken=${user.accessToken}; refreshToken=${user.refreshToken}`);
+  
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
+  });
+  
+  
 
 });

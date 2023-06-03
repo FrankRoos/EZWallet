@@ -34,7 +34,7 @@ export const register = async (req, res) => {
         if (existingUser_username)
             return res.status(400).json({ error: "Username already taken" });
 
-        if (req.body.password.length < 8) 
+        if (req.body.password.length < 8)
             return res.status(400).json({ error: "Password doesn't match constraints,requires at least 8 characters" });
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
@@ -118,10 +118,8 @@ export const login = async (req, res) => {
     const { email, password } = req.body
     if ((!email && email !== "") || (!password && password !== ""))
         return res.status(400).json({ error: "Missing Parameters" });
-    if (email === "")
-        return res.status(400).json({ error: "Email empty" });
-    if (password === "")
-        return res.status(400).json({ error: "Password empty" });
+    if (password === "" || email === '')
+        return res.status(400).json({ error: "A parameter is empty" });
     var myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
     if (!myRegEx.test(req.body.email))
         return res.status(400).json({ error: "Email format is not correct" });

@@ -540,7 +540,7 @@ describe('login', () => {
     await auth.login(mockReq, mockRes);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: "Email empty" });
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "A parameter is empty" });
   });
   test('password empty', async () => {
     const mockReq = {
@@ -557,7 +557,7 @@ describe('login', () => {
     await auth.login(mockReq, mockRes);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: "Password empty" });
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "A parameter is empty" });
   });
   test('Incorrect email format', async () => {
     const mockReq = {
