@@ -55,10 +55,34 @@ describe('register', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
+  test('returns error 400 when any parameter is missing2', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({ username:"asdfasdf",password:"asdfasdfasdf" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Missing Parameters' });
+  });
   test('returns error 400 when any parameter is empty', async () => {
     const response = await request(app)
       .post('/api/register')
       .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email: 'ciao@gmail.com', username: '', password: '3454421ddd' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email: '', username: 'ciaociao', password: 'rfgtyhyy' });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'A parameter is empty' });
@@ -129,10 +153,34 @@ describe("registerAdmin", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
+  test('returns error 400 when any parameter is missing2', async () => {
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ username:"asdfasdf",password:"asdfasdfasdf" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Missing Parameters' });
+  });
   test('returns error 400 when any parameter is empty', async () => {
     const response = await request(app)
       .post('/api/admin')
       .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ email: 'ciao@gmail.com', username: '', password: '3454421ddd' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/admin')
+      .send({ email: '', username: 'ciaociao', password: 'rfgtyhyy' });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'A parameter is empty' });
@@ -207,10 +255,26 @@ describe('login', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
+  test('returns error 400 when any parameter is missing2', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({ password:"asdfasdfasdf" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Missing Parameters' });
+  });
   test('returns error 400 when any parameter is empty', async () => {
     const response = await request(app)
       .post('/api/login')
-      .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: '' });
+      .send({ email: 'ciao@gmail.com', password: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'A parameter is empty' });
+  });
+  test('returns error 400 when any parameter is empty', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({ email: 'ciao@gmail.com', password: '' });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'A parameter is empty' });
