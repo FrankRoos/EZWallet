@@ -5,7 +5,6 @@ import { categories, transactions } from '../models/model.js';
 import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import { Group, User } from "../models/User.js";
 
 jest.mock('../models/model');
 
