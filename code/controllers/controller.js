@@ -36,14 +36,14 @@ export const createCategory = async (req, res) => {
 
         let find_bytype = await categories.find({ type: type });
         let category_found = find_bytype.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (category_found[0]) return res.status(401).json({
+        if (category_found[0]) return res.status(400).json({
             error: "Category type already exists",
             refreshedTokenMessage: res.locals.message
         })
 
         let find_bycolor = await categories.find({ color: color });
         let color_found = find_bycolor.map(v => Object.assign({}, { type: v.type, color: v.color }))
-        if (color_found[0]) return res.status(401).json({
+        if (color_found[0]) return res.status(400).json({
             error: "Color already used",
             refreshedTokenMessage: res.locals.message
         })
@@ -53,10 +53,10 @@ export const createCategory = async (req, res) => {
         .then((result) =>{
              res.status(200).json({
                 data: {
-                    _id: result._id,
+                    // _id: result._id,
                     type: result.type, 
                     color: result.color,              
-                    date: result.date
+                    // date: result.date
                 },
                 refreshedTokenMessage: res.locals.message
             });
