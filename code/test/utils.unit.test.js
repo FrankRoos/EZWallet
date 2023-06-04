@@ -1,11 +1,150 @@
 import * as utils from "../controllers/utils.js";
 import jwt from 'jsonwebtoken';
-describe("handleDateFilterParams", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
-})
+
 jest.mock('jsonwebtoken')
+describe("handleDateFilterParams", () => { 
+    test('Date Invalid Format', () => {
+        const mockReq = {
+        
+            query: {
+                date: "1",
+                from: "",
+                upTo: "",
+            
+          }}
+        
+
+    
+    
+    
+          
+
+
+        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Invalid format of date parameter"});
+    });
+    test('from Invalid Format', () => {
+        const mockReq = {
+        
+            query: {
+                date: "",
+                from: "1",
+                upTo: "",
+            
+          }}
+        
+
+    
+    
+    
+          
+
+
+        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Invalid format of from parameter"});
+    });
+    test('upto Invalid Format', () => {
+        const mockReq = {
+        
+            query: {
+                date: "",
+                from: "",
+                upTo: "1",
+            
+          }}
+        
+
+      
+    
+    
+          
+
+
+        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Invalid format of upTo parameter"});
+    });
+
+    test('Return object error if the query contains date from and upto all together', () => {
+        const mockReq = {
+        
+            query: {
+                date: "2023-04-30T00:00:00.000Z",
+                from: "2023-04-30T00:00:00.000Z",
+                upTo: "2023-04-30T00:00:00.000Z",
+            
+          }}
+        
+
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Cannot use 'date' together with 'from' or 'Upto"});
+    });
+
+    test('Return query with date information', () => {
+        const mockReq = {
+        
+            query: {
+                date: "2023-04-30",
+             
+            
+          }}
+        let sdate=mockReq.query.date.split("-")
+
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $eq : new Date(sdate[0], sdate[1]-1, sdate[2], 0, 0, 0) } } ,'flag': true});
+    });
+
+    test('Return query with from and upTo information', () => {
+        const mockReq = {
+        
+            query: {
+                from: "2023-04-30",
+                upTo: "2023-05-30"
+             
+            
+          }}
+        let sfrom=mockReq.query.from.split("-")
+        let sUpto=mockReq.query.upTo.split("-")
+
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $gte: new Date(sfrom[0], sfrom[1]-1, sfrom[2], 0, 0, 0), $lte: new Date(sUpto[0], sUpto[1]-1, sUpto[2], 23, 59, 59) } } ,'flag': true});
+    });
+    test('Return query with from  information', () => {
+        const mockReq = {
+        
+            query: {
+                from: "2023-04-30"
+               
+             
+            
+          }}
+        let sfrom=mockReq.query.from.split("-")
+        
+
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $gte: new Date(sfrom[0], sfrom[1]-1, sfrom[2], 0, 0, 0) } } ,'flag': true});
+    });
+
+    test('Return query with upTo information', () => {
+        const mockReq = {
+        
+            query: {
+               
+                upTo: "2023-05-30"
+             
+            
+          }}
+        let sUpto=mockReq.query.upTo.split("-")
+
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': {$lte: new Date(sUpto[0], sUpto[1]-1, sUpto[2], 23, 59, 59) } } ,'flag': true});
+    });
+
+    test('Return nothing is query is missing', () => {
+        const mockReq = {
+        
+            query: {
+               
+                }}
+      
+
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { }  ,'flag': true});
+    });
+
+  
+})
+
 describe("verifyAuth", () => { 
 
     beforeEach(() => {
@@ -497,7 +636,94 @@ describe("verifyAuth", () => {
 })
 
 describe("handleAmountFilterParams", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    
+    test('Return object error if the query contains date from and upto all together', () => {
+        const mockReq = {
+        
+            query: {
+                min: "1",
+                max: "2",
+                amount: "3",
+            
+          }}
+        
+
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Cannot use 'amount' together with 'min' or 'max"});
     });
+
+    test('Return query with amount information', () => {
+        const mockReq = {
+        
+            query: {
+                amount: "2",
+             
+            
+          }}
+          const number = jest.fn((n)=> {return n});
+          utils.handleNumber = number;
+        
+
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $eq: parseFloat(mockReq.query.amount) } }, 'flag': true });
+    });
+    test('Return query with min information', () => {
+        const mockReq = {
+        
+            query: {
+                min: "2",
+             
+            
+          }}
+          const number = jest.fn((n)=> {return n});
+          utils.handleNumber = number;
+        
+
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $gte: parseFloat(mockReq.query.min) } }, 'flag': true });
+    });
+
+    test('Return query with max information', () => {
+        const mockReq = {
+        
+            query: {
+                max: "2",
+             
+            
+          }}
+          const number = jest.fn((n)=> {return n});
+          utils.handleNumber = number;
+        
+
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $lte: parseFloat(mockReq.query.max) } }, 'flag': true });
+    });
+
+    test('Return query with max and min information', () => {
+        const mockReq = {
+        
+            query: {
+                max: "2",
+                min: "1"
+            
+          }}
+          const number = jest.fn((n)=> {return n});
+          utils.handleNumber = number;
+        
+
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $gte: parseFloat(mockReq.query.min) , $lte: parseFloat(mockReq.query.max) } }, 'flag': true });
+    });
+
+   
+  
+
+    test('Return nothing is query is missing', () => {
+        const mockReq = {
+        
+            query: {
+               
+                }}
+      
+
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({queryObj : { }  ,'flag': true});
+    });
+
+  
 })
+

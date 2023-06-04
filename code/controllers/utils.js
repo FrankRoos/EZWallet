@@ -9,8 +9,10 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req, res) => {
+    try {
     let { date, from, upTo } = req.query
     const regEx = /((?:19|20)[0-9][0-9])-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])/
+    
     if(date && !regEx.test(date))
         throw new Error("Invalid format of date parameter")
     if(from && !regEx.test(from))
@@ -18,7 +20,7 @@ export const handleDateFilterParams = (req, res) => {
     if(upTo && !regEx.test(upTo))
         throw new Error("Invalid format of upTo parameter")
 
-    try {
+   
 
         if (date && (from || upTo))
             throw new Error("Cannot use 'date' together with 'from' or 'Upto")
@@ -173,8 +175,9 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req, res) => {
-    let { amount, min, max } = req.query
     try {
+    let { amount, min, max } = req.query
+    
 
         if (amount && (min || max))
             throw new Error("Cannot use 'amount' together with 'min' or 'max")
