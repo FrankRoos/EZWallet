@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken'
 export const handleDateFilterParams = (req, res) => {
     let { date, from, upTo } = req.query
     const regEx = /((?:19|20)[0-9][0-9])-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])/
+    try {
     if(date && !regEx.test(date))
         throw new Error("Invalid format of date parameter")
     if(from && !regEx.test(from))
@@ -18,7 +19,7 @@ export const handleDateFilterParams = (req, res) => {
     if(upTo && !regEx.test(upTo))
         throw new Error("Invalid format of upTo parameter")
 
-    try {
+    
 
         if (date && (from || upTo))
             throw new Error("Cannot use 'date' together with 'from' or 'Upto")
@@ -73,14 +74,14 @@ export const handleDateFilterParams = (req, res) => {
  * @returns true if the user satisfies all the conditions of the specified `authType` and false if at least one condition is not satisfied
  *  Refreshes the accessToken if it has expired and the refreshToken is still valid
  */
-export const verifyAuth = (req, res, info) => {
+export const verifyAuth  =(req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken || !info.token) {
         //res.status(401).json({ message: "Unauthorized" });
         return {flag: false, cause: "Unauthorized: please add your token in the headers"};
     }
     try {
-        const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
+        const decodedAccessToken =  jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
             //res.status(401).json({ message: "Token is missing information" })
@@ -116,8 +117,12 @@ export const verifyAuth = (req, res, info) => {
         }
         return true
     } catch (err) {
+        let tokenrefresh=false
         if (err.name === "TokenExpiredError" || !cookie.accessToken) {
             try {
+                if(!tokenrefresh)
+                {
+                    tokenrefresh=true
                 const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
                 const newAccessToken = jwt.sign({
                     username: decodedRefreshToken.username,
@@ -127,6 +132,7 @@ export const verifyAuth = (req, res, info) => {
                 }, process.env.ACCESS_KEY, { expiresIn: '1h' })
                 res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
                 res.locals.message = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
+              
 
                 if (info.authType === "User" && decodedRefreshToken.username !== info.username) {
                     // res.status(401).json({ message: "Tokens have a different username from the requested one" });
@@ -150,8 +156,13 @@ export const verifyAuth = (req, res, info) => {
                 }
 
                 return true
+
+                
+            }
+            return false
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
+
                     // res.status(401).json({ message: "Perform login again" });
                     return {flag: false, cause: "Perform login again"}
                 } else {

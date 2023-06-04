@@ -150,9 +150,7 @@ describe("verifyAuth", () => {
     beforeEach(() => {
         jwt.verify.mockClear()
         jest.restoreAllMocks();
-    
-      
-      });
+    });
       test('Catch Block try', () => {
         const mockReq = {
         
@@ -201,7 +199,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test('Test verify with admin', () => {
+    test('Test verify with admin',async () => {
         const mockReq = {
         
             cookies: {
@@ -216,9 +214,12 @@ describe("verifyAuth", () => {
          const info={ authType: "Admin", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
        jest.spyOn(jwt, "verify").mockImplementation(() => { return decodedAccessToken })
           // utils.verifyAuth(mockReq,mockRes,info)
+    
+         
 
-        const result =  utils.verifyAuth(mockReq,mockRes,info)
-        expect(result).toStrictEqual(true);
+        
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toEqual(true);
+        
     });
      
 
@@ -401,7 +402,7 @@ describe("verifyAuth", () => {
 
 
     //accesstoken expired
-    test('Test verify with admin,access token expired', () => {
+    test('access token expired Test verify with admin', () => {
         const mockReq = {
         
             cookies: {
@@ -416,7 +417,7 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Admin"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Admin"}
          const info={ authType: "Admin", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
          jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
          jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
          
@@ -428,7 +429,7 @@ describe("verifyAuth", () => {
 
    
 
-    test('Test verify with Regular User,access token expired', () => {
+    test('access token expired Test verify with Regular User', () => {
         const mockReq = {
         
             cookies: {
@@ -443,7 +444,7 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "User",username:"pippo", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
          jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
          jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           
@@ -456,7 +457,7 @@ describe("verifyAuth", () => {
     
 
 
-    test('Return object error if the Tokens have a different username from the requested one,User control,access token expired', () => {
+    test('access token expired,Return object error if the Tokens have a different username from the requested one,User control', () => {
         const mockReq = {
         
             cookies: {
@@ -471,7 +472,7 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "User",username:"topolino", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
          jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
          jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           //utils.verifyAuth(mockReq,mockRes,info)
@@ -480,7 +481,7 @@ describe("verifyAuth", () => {
         expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: false, cause: "Tokens have a different username from the requested one"});
     });
 
-    test('Return object error if you are trying admin authorization without having the permissions,access token expired', () => {
+    test('access token expired,Return object error if you are trying admin authorization without having the permissions', () => {
         const mockReq = {
         
             cookies: {
@@ -495,7 +496,7 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "Admin",username:"topolino", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
          jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
          jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           //utils.verifyAuth(mockReq,mockRes,info)
@@ -505,7 +506,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test('Return object error if Tokens have a different username from the requested one, test User/admin,access token expired', () => {
+    test('access token expired,Return object error if Tokens have a different username from the requested one, test User/admin', () => {
         const mockReq = {
         
             cookies: {
@@ -520,7 +521,7 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "User/Admin",username:"topolino", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
          jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
          jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           //utils.verifyAuth(mockReq,mockRes,info)
@@ -530,7 +531,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test('Return object error if the email is not in the group,access token expired', () => {
+    test('access token expired,Return object error if the email is not in the group', () => {
         const mockReq = {
         
             cookies: {
@@ -545,7 +546,7 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "Group",username:"pippo", emailList: ["dottor@polito.it","mariolino@mariolone.it"], token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
          jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
          jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           //utils.verifyAuth(mockReq,mockRes,info)
@@ -556,7 +557,7 @@ describe("verifyAuth", () => {
 
   
 
-    test('Return true if the access is granted for group authorization,access token expired', () => {
+    test('access token expired,Return true if the access is granted for group authorization', () => {
         const mockReq = {
         
             cookies: {
@@ -571,7 +572,7 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "Group",username:"pippo", emailList: ["mario@polito.it","mariolino@mariolone.it"], token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-       jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
        jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
        jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           
@@ -595,8 +596,8 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "Group",username:"pippo", emailList: ["mario@polito.it","mariolino@mariolone.it"], token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-       jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
-       jest.spyOn(jwt, "verify").mockImplementationOnce(() => {throw new Error("TokenExpiredError")})
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
        jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           
 
@@ -605,7 +606,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test('Catch Block try if access token expire', () => {
+    test('access token expired,Catch Block try ', () => {
         const mockReq = {
         
             cookies: {
@@ -620,8 +621,8 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "Group",username:"pippo", emailList: ["mario@polito.it","mariolino@mariolone.it"], token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
-       jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("TokenExpiredError") })
-       jest.spyOn(jwt, "verify").mockImplementationOnce(() => {throw new Error("Catch_Block Try")})
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "TokenExpiredError"}) })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw ({name: "Catch_Block Try"}) })
        jest.spyOn(jwt, "sign").mockImplementationOnce(() => { return decodedAccessToken })
           
 
