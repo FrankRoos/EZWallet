@@ -60,11 +60,7 @@ export const createCategory = async (req, res) => {
                 },
                 refreshedTokenMessage: res.locals.message
             });
-        })
-        .catch((err) => { throw err; })
-
-
-    } catch (error) {
+        })  } catch (error) {
         res.status(400).json({
             error: error.message,
             refreshedTokenMessage: res.locals.message
@@ -318,10 +314,7 @@ export const createTransaction = async (req, res) => {
                     },
                     refreshedTokenMessage: res.locals.message
                 })
-            })
-            .catch((err) => { throw err; })
-
-    }
+            })}
     catch (error) {
         if (error.message === "Empty string: param-username")
             res.status(400).json({
@@ -374,10 +367,8 @@ export const getAllTransactions = async (req, res) => {
             res.status(200).json({
                 data: data,
                 refreshedTokenMessage: res.locals.message
-            });
-        }).catch(error => { throw (error) })
-
-    } catch (error) {
+            }); })
+        } catch (error) {
         res.status(400).json({
             error: error.message,
             refreshedTokenMessage: res.locals.message

@@ -145,6 +145,55 @@ describe("handleDateFilterParams", () => {
   
 })
 
+describe("handleNumber", () => { 
+
+
+ 
+  test('should return the number if valid', () => {
+    const result = utils.handleNumber(42, 'nameVar');
+    expect(result).toBe(42);
+  });
+
+  test('should parse and return the number from a valid string', () => {
+    const result = utils.handleNumber('3.14', 'nameVar');
+    expect(result).toBe(3.14);
+  });
+
+  test('should handle comma as decimal separator in string input', () => {
+    const result = utils.handleNumber('1000.25', 'nameVar');
+    expect(result).toBe(1000.25);
+  });
+
+  test('should throw an error if the number is missing', () => {
+    expect(() => {
+      utils.handleNumber(undefined, 'nameVar');
+    }).toThrow('Missing value: nameVar');
+  });
+
+  test('should throw an error if the input is not a number or string', () => {
+    expect(() => {
+      utils.handleNumber({}, 'nameVar');
+    }).toThrow('Invalid format of nameVar');
+  });
+
+  test('should throw an error if the string input is in an invalid format', () => {
+    expect(() => {
+      utils.handleNumber('abc', 'nameVar');
+    }).toThrow('Invalid format of nameVar');
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+})
 describe("verifyAuth", () => { 
 
     beforeEach(() => {
@@ -660,6 +709,23 @@ describe("verifyAuth", () => {
 
 })
 
+describe('isJsonString', () => {
+  test('should return true for valid JSON string', () => {
+    const jsonString = '{"key": "value"}';
+    expect(utils.isJsonString(jsonString)).toBe(true);
+  });
+
+  test('should return false for invalid JSON string', () => {
+    const invalidJsonString = '{"key": "value",}';
+    expect(utils.isJsonString(invalidJsonString)).toBe(false);
+  });
+
+
+});
+
+
+
+
 describe("handleAmountFilterParams", () => { 
     
     test('Return object error if the query contains date from and upto all together', () => {
@@ -775,53 +841,5 @@ describe("handleString", () => {
 })
 
 
-describe("handleNumber", () => { 
 
-
- 
-        test('should return the number if valid', () => {
-          const result = utils.handleNumber(42, 'nameVar');
-          expect(result).toBe(42);
-        });
-      
-        test('should parse and return the number from a valid string', () => {
-          const result = utils.handleNumber('3.14', 'nameVar');
-          expect(result).toBe(3.14);
-        });
-      
-        test('should handle comma as decimal separator in string input', () => {
-          const result = utils.handleNumber('1000.25', 'nameVar');
-          expect(result).toBe(1000.25);
-        });
-      
-        test('should throw an error if the number is missing', () => {
-          expect(() => {
-            utils.handleNumber(undefined, 'nameVar');
-          }).toThrow('Missing value: nameVar');
-        });
-      
-        test('should throw an error if the input is not a number or string', () => {
-          expect(() => {
-            utils.handleNumber({}, 'nameVar');
-          }).toThrow('Invalid format of nameVar');
-        });
-      
-        test('should throw an error if the string input is in an invalid format', () => {
-          expect(() => {
-            utils.handleNumber('abc', 'nameVar');
-          }).toThrow('Invalid format of nameVar');
-        });
-
-
-
-
-
-
-
-
-
-
-
-
-})
 

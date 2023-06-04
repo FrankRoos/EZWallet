@@ -1797,6 +1797,50 @@ describe("getAllTransactions", () => {
     expect(mockRes.json).toHaveBeenCalledWith({ data: all_transactions2, refreshedTokenMessage: mockRes.locals.message })
 
   })
+
+  test("Catch Block Try", async () => {
+    const user = {
+      username: "admin",
+      email: "admin@admin.cm",
+      password: "adminadmin",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Admin"
+    }
+
+    const all_transactions = [{ _id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: { color: "red" } },
+    { _id: 2, username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info: { color: "green" } },
+    { _id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info: { color: "red" } }]
+
+    const all_transactions2 = [{ _id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red" },
+    { _id: 2, username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green" },
+    { _id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red" }]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {message: ""}
+    }
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(user)
+      .mockReturnValue(1)
+
+      const verify = jest.fn(()=> {throw new Error("Catch Block Try")});
+      utils.verifyAuth = verify;
+
+    jest.spyOn(transactions, "aggregate").mockImplementation(() => { return Promise.resolve(all_transactions) })
+
+    await controller.getAllTransactions(mockReq, mockRes)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({"error": "Catch Block Try", refreshedTokenMessage: ""})
+
+  })
 })
 
 describe("getTransactionsByUser", () => {
