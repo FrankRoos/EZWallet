@@ -244,10 +244,10 @@ describe("createCategory", () => {
 
     const category =
     {
-      _id: "647888a2e87ff1b64165609d",
+      
       type: "food",
       color: "blue",
-      date: "2023-06-01T12:01:38.709Z",
+     
     }
 
     const mockReq = {

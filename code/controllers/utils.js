@@ -120,9 +120,8 @@ export const verifyAuth  =(req, res, info) => {
         let tokenrefresh=false
         if (err.name === "TokenExpiredError" || !cookie.accessToken) {
             try {
-                if(!tokenrefresh)
-                {
-                    tokenrefresh=true
+               
+                   
                 const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
                 const newAccessToken = jwt.sign({
                     username: decodedRefreshToken.username,
@@ -158,8 +157,8 @@ export const verifyAuth  =(req, res, info) => {
                 return true
 
                 
-            }
-            return false
+           
+         
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
 
@@ -224,33 +223,36 @@ export const handleAmountFilterParams = (req, res) => {
 }
 
 export const handleString = (string, nameVar) => {
+    if(typeof(string)==="string")
+    {
     string = string.trim();
-    if(!string)
+     if(!string)
+     {
         throw new Error("Empty string: " + nameVar)
+     }
+     else{
+             string=string.toLowerCase()
+            return string
+        }
+    }
     else if(typeof(string) !="string" ) 
         throw new Error("Invalid format of " + nameVar) 
-    else{
-        return string.toLowerCase()
+   
     }
 
-}
+
 
 export const handleNumber = (number, nameVar) => {
     
-
-    if(!number)
+     if(!number)
         throw new Error("Missing value: " + nameVar)
-    /*if(typeof(number)==="string" && isNaN(Number(number)) || (typeof(number)!=="number" && typeof(number)!=="string")) 
-        throw new Error("Invalid format of " + nameVar)
-    else{
-        return Number(number);
-    }*/
     if(typeof(number)!=="number" && typeof(number)!=="string")
         throw new Error("Invalid format of " + nameVar)
-    else if(typeof(number)==="string")
+    if(typeof(number)==="string")
         number = number.replace(",", ".")
     try{
         number = Number(number)
+        if (!number) {throw new Error("Invalid format of " + nameVar) }
         return number
     }
     catch{

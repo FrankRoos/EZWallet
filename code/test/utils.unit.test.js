@@ -223,7 +223,7 @@ describe("verifyAuth", () => {
     });
      
 
-    test('Return object error if the token are not associated with a user', () => {
+    test('Return object error if the acces token are not associated with a user', () => {
         const mockReq = {
         
             cookies: {
@@ -242,6 +242,30 @@ describe("verifyAuth", () => {
 
         expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: false, cause: "Token is missing information"});
     });
+    
+    test('Return object error if the refresh token are not associated with a user', () => {
+        const mockReq = {
+        
+            cookies: {
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+                refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+            
+          }}
+          const mockRes = {
+            cookie: jest.fn(),
+        }
+         const decodedAccessToken= {username:"aziz",email :"mario@polito.it" , role: "Admin"}
+         const decodedRefreshToken= {username:"",email :"mario@polito.it" , role: "Admin"}
+         const info={ authType: "Admin", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
+       jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedAccessToken })
+       jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedRefreshToken })
+         
+
+
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: false, cause: "Token is missing information"});
+    });
+
+
 
     test('Test verify with Regular User', () => {
         const mockReq = {
@@ -726,5 +750,78 @@ describe("handleAmountFilterParams", () => {
     });
 
   
+})
+
+describe("handleString", () => { 
+    
+   test('should return the trimmed lowercase string if valid', () => {
+        const result = utils.handleString('   Example String   ', 'nameVar');
+        expect(result).toBe('example string');
+      });
+
+      test('should throw an error if the input is not a string', () => {
+        expect(() => {
+          utils.handleString(123, 'nameVar');
+        }).toThrow('Invalid format of nameVar');
+      });
+
+      test('should throw an error if the string is empty', () => {
+        expect(() => {
+          utils.handleString('', 'nameVar');
+        }).toThrow('Empty string: nameVar');
+      });
+  
+  
+})
+
+
+describe("handleNumber", () => { 
+
+
+ 
+        test('should return the number if valid', () => {
+          const result = utils.handleNumber(42, 'nameVar');
+          expect(result).toBe(42);
+        });
+      
+        test('should parse and return the number from a valid string', () => {
+          const result = utils.handleNumber('3.14', 'nameVar');
+          expect(result).toBe(3.14);
+        });
+      
+        test('should handle comma as decimal separator in string input', () => {
+          const result = utils.handleNumber('1000.25', 'nameVar');
+          expect(result).toBe(1000.25);
+        });
+      
+        test('should throw an error if the number is missing', () => {
+          expect(() => {
+            utils.handleNumber(undefined, 'nameVar');
+          }).toThrow('Missing value: nameVar');
+        });
+      
+        test('should throw an error if the input is not a number or string', () => {
+          expect(() => {
+            utils.handleNumber({}, 'nameVar');
+          }).toThrow('Invalid format of nameVar');
+        });
+      
+        test('should throw an error if the string input is in an invalid format', () => {
+          expect(() => {
+            utils.handleNumber('abc', 'nameVar');
+          }).toThrow('Invalid format of nameVar');
+        });
+
+
+
+
+
+
+
+
+
+
+
+
 })
 
