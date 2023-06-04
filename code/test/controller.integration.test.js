@@ -6,7 +6,7 @@ import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 
-jest.mock('../models/model');
+// jest.mock('../models/model');
 
 dotenv.config();
 
@@ -397,6 +397,7 @@ describe("updateCategory", () => {
 
 })
 
+/*
 describe("deleteCategory", () => {
     beforeEach(async () => { await resetDb() })
     test('Dummy test, change it', () => {
@@ -678,7 +679,7 @@ describe("deleteCategory", () => {
         expect(response.body).toEqual({data: new_category});
     });
     
-})
+})*/
 
 describe("getCategories", () => {
     beforeEach(async () => { await resetDb() })

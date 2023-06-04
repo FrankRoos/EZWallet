@@ -171,7 +171,7 @@ describe("verifyAuth", () => {
          const decodedRefreshToken = {username:"pippo",email :"mario@polito.it" , role: "Regular"}
          const info={ authType: "Group",username:"pippo", emailList: ["mario@polito.it","mariolino@mariolone.it"], token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
          jest.spyOn(jwt, "verify").mockImplementationOnce(() => { return decodedAccessToken })
-         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw new Error("Catch_Block Try") })
+         jest.spyOn(jwt, "verify").mockImplementationOnce(() => { throw {name: "Catch_Block Try"} })
     
     
           
@@ -215,10 +215,10 @@ describe("verifyAuth", () => {
          const decodedAccessToken= {username:"pippo",email :"mario@polito.it" , role: "Admin"}
          const info={ authType: "Admin", token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"}
        jest.spyOn(jwt, "verify").mockImplementation(() => { return decodedAccessToken })
-          utils.verifyAuth(mockReq,mockRes,info)
+          // utils.verifyAuth(mockReq,mockRes,info)
 
-
-        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual(true);
+        const result =  utils.verifyAuth(mockReq,mockRes,info)
+        expect(result).toStrictEqual(true);
     });
      
 
