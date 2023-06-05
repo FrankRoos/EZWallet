@@ -402,6 +402,11 @@ export const getTransactionsByUser = async (req, res) => {
             info = { authType: "User", username: handleString(req.params.username, "username"), token: user ? user.refreshToken : 0 };
         }
 
+        // Verify if the user exists
+        const userByUsername = await User.findOne({ username: info.username });
+        if (!userByUsername)
+            throw new Error("User not found");
+
         // Verify the authentication
         const verify = verifyAuth(req, res, info)
         if (verify.flag === false)
@@ -409,11 +414,6 @@ export const getTransactionsByUser = async (req, res) => {
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
             })
-
-        // Verify if the user exists
-        const userByUsername = await User.findOne({ username: info.username });
-        if (!userByUsername)
-            throw new Error("User not found");
 
         // Do the query
         const objDate = handleDateFilterParams(req);
