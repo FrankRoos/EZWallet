@@ -145,7 +145,7 @@ describe("createCategory", () => {
 
         expect(response.status).toBe(200);
         expect(response.body.data).toEqual(body)
-    
+
     });
 
     test('The request does not contain all attributes', async () => {
@@ -161,7 +161,7 @@ describe("createCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Missing attributes in the body")
-    
+
     });
 
     test('At least one param is an empty string (type)', async () => {
@@ -177,7 +177,7 @@ describe("createCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Empty string: type")
-    
+
     });
 
     test('At least one param is an empty string (color)', async () => {
@@ -193,7 +193,7 @@ describe("createCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Empty string: color")
-    
+
     });
 
     test('Category already exists', async () => {
@@ -209,7 +209,7 @@ describe("createCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Category type already exists")
-    
+
     });
 
     test('Color already used', async () => {
@@ -225,7 +225,7 @@ describe("createCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Color already used")
-    
+
     });
 
     test('Not an admin', async () => {
@@ -241,9 +241,9 @@ describe("createCategory", () => {
 
         expect(response.status).toBe(401);
         expect(response.body.error).toEqual("You are not an Admin")
-    
+
     });
-    
+
 })
 
 describe("updateCategory", () => {
@@ -262,7 +262,7 @@ describe("updateCategory", () => {
         expect(response.status).toBe(200);
         expect(response.body.data.message).toEqual("Category edited successfully")
         expect(response.body.data.count).toEqual(3)
-    
+
     });
 
     test('Category updated successfully (change color)', async () => {
@@ -279,7 +279,7 @@ describe("updateCategory", () => {
         expect(response.status).toBe(200);
         expect(response.body.data.message).toEqual("Category edited successfully")
         expect(response.body.data.count).toEqual(3)
-    
+
     });
 
     test('Category updated successfully (change color and type)', async () => {
@@ -296,7 +296,7 @@ describe("updateCategory", () => {
         expect(response.status).toBe(200);
         expect(response.body.data.message).toEqual("Category edited successfully")
         expect(response.body.data.count).toEqual(3)
-    
+
     });
 
     test('Body does not contain all attributes', async () => {
@@ -312,7 +312,7 @@ describe("updateCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Missing attributes in the body")
-    
+
     });
 
     test('At least one param is empty (type)', async () => {
@@ -328,7 +328,7 @@ describe("updateCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Service Not Found. Reason: Empty string: type")
-    
+
     });
 
     test('At least one param is empty (color)', async () => {
@@ -344,7 +344,7 @@ describe("updateCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Empty string: color")
-    
+
     });
 
     test('Type parameter in route not exists', async () => {
@@ -360,7 +360,7 @@ describe("updateCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Category type does not exist in the database")
-    
+
     });
 
     test('Category in body already exists', async () => {
@@ -376,7 +376,7 @@ describe("updateCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Category type in the body request already exists")
-    
+
     });
 
     test('Not an admin', async () => {
@@ -392,7 +392,7 @@ describe("updateCategory", () => {
 
         expect(response.status).toBe(401);
         expect(response.body.error).toEqual("You are not an Admin")
-    
+
     });
 
 })
@@ -400,7 +400,7 @@ describe("updateCategory", () => {
 
 describe("deleteCategory", () => {
     beforeEach(async () => { await resetDb() })
-    
+
     test('Category is deleted successfully', async () => {
         const body = {
             types: ['bills']
@@ -414,7 +414,7 @@ describe("deleteCategory", () => {
         expect(response.status).toBe(200);
         expect(response.body.data.message).toEqual("Categories deleted")
         expect(response.body.data.count).toEqual(3)
-    
+
     });
 
     test('List of Categories is deleted successfully', async () => {
@@ -430,7 +430,7 @@ describe("deleteCategory", () => {
         expect(response.status).toBe(200);
         expect(response.body.data.message).toEqual("Categories deleted")
         expect(response.body.data.count).toEqual(5)
-    
+
     });
 
     test('All categories deleted (the oldest not, transactions are updated with it)', async () => {
@@ -446,7 +446,7 @@ describe("deleteCategory", () => {
         expect(response.status).toBe(200);
         expect(response.body.data.message).toEqual("Categories deleted")
         expect(response.body.data.count).toEqual(2)
-    
+
     });
 
     test('Body does not contain all attributes', async () => {
@@ -461,7 +461,7 @@ describe("deleteCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Missing attributes in the body")
-    
+
     });
 
     test('Try to delete the last category', async () => {
@@ -481,7 +481,7 @@ describe("deleteCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("There is only one category")
-    
+
     });
 
     test('At least one type empty', async () => {
@@ -496,7 +496,7 @@ describe("deleteCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("There is an empty string in the category list")
-    
+
     });
 
     test('One type not exists', async () => {
@@ -511,7 +511,7 @@ describe("deleteCategory", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("You inserted an invalid category")
-    
+
     });
 
     test('One type not exists', async () => {
@@ -526,40 +526,229 @@ describe("deleteCategory", () => {
 
         expect(response.status).toBe(401);
         expect(response.body.error).toEqual("You are not an Admin")
-    
+
     });
-    
+
 })
 
 describe("getCategories", () => {
     beforeEach(async () => { await resetDb() })
     test('A list of all categories returns', async () => {
-    
+
         const response = await request(app)
             .get('/api/categories')
             .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
 
         expect(response.status).toBe(200);
-        expect(response.body.data).toEqual(expect.arrayContaining([ {type: "bills", color: "orange"}, {type: "rent", color: "yellow"}, {type: "entertainment", color: "green"} ]))
-    
+        expect(response.body.data).toEqual(expect.arrayContaining([{ type: "bills", color: "orange" }, { type: "rent", color: "yellow" }, { type: "entertainment", color: "green" }]))
+
     });
 
     test('User not authenticated', async () => {
-    
+
         const response = await request(app)
             .get('/api/categories')
             .set("Cookie", `accessToken=; refreshToken=`)
 
         expect(response.status).toBe(401);
         expect(response.body.error).toEqual("Unauthorized: please add your token in the headers")
-    
+
     });
 })
 
 describe("createTransaction", () => {
     beforeEach(async () => { await resetDb() })
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+
+    test('Transaction created successfully', async () => {
+        const body = {
+            "username": "user1",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.objectContaining(body))
+    });
+
+    test('Body does not contain all attributes', async () => {
+        const body = {
+            "username": "user1",
+            // "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Body does not contains all requested attributes")
+    });
+
+    test('A param is an empty string (username)', async () => {
+        const body = {
+            "username": "",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Empty string: username")
+    });
+
+    test('A param is an empty string (amount)', async () => {
+        const body = {
+            "username": "user1",
+            "amount": '',
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Missing value: amount")
+    });
+
+    test('A param is an empty string (type)', async () => {
+        const body = {
+            "username": "user1",
+            "amount": 50,
+            "type": ""
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Empty string: type")
+    });
+
+    test('Category is not found', async () => {
+        const body = {
+            "username": "user1",
+            "amount": 50,
+            "type": "transports"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Category Not Found in the Database")
+    });
+
+    test('Username in body and username in route are different', async () => {
+        const body = {
+            "username": "user2",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("User in parameters and User in body are different")
+    });
+
+    test('Username in body does not exist', async () => {
+        const body = {
+            "username": "user5",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("User given in body not found in the database")
+    });
+
+    test('Username in route does not exist', async () => {
+        const body = {
+            "username": "user1",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user5/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("User given as route request parameter not found")
+    });
+
+    test('Amount is not a number', async () => {
+        const body = {
+            "username": "user1",
+            "amount": '50a',
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Invalid format of amount")
+    });
+
+    test('Different user', async () => {
+        const body = {
+            "username": "user2",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user2/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("Tokens have a different username from the requested one")
+    });
+
+    test('Added by admin on a user', async () => {
+        const body = {
+            "username": "user1",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.objectContaining(body))
     });
 })
 
