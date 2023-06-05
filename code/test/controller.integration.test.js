@@ -1455,7 +1455,92 @@ describe("deleteTransaction", () => {
 
 describe("deleteTransactions", () => {
     beforeEach(async () => { await resetDb() })
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Admin deletes transactions', async () => {
+        const newTransaction = new transactions({_id: '000ddc0d00a0a00b0c00a000', username: 'user2', type: 'rent', amount: 800})
+        await newTransaction.save()
+        const newTransaction2 = new transactions({_id: '000ddc0d00a0a00b0c00a001', username: 'user1', type: 'bills', amount: 800})
+        await newTransaction2.save()
+
+        const body = {
+            _ids: ['000ddc0d00a0a00b0c00a000', '000ddc0d00a0a00b0c00a001']
+        }
+
+        const response = await request(app)
+            .delete('/api/transactions')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.message).toEqual("Transactions deleted")
+    });
+
+    test('At least one id is empty', async () => {
+        const body = {
+            _ids: ['', '000ddc0d00a0a00b0c00a001']
+        }
+
+        const response = await request(app)
+            .delete('/api/transactions')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("You inserted an empty string as Id")
+    });
+
+    test('Missing ids in body', async () => {
+        const body = {
+            // _ids: ['', '000ddc0d00a0a00b0c00a001']
+        }
+
+        const response = await request(app)
+            .delete('/api/transactions')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Missing ids")
+    });
+
+    test('At least one transaction does not exist', async () => {
+        const body = {
+             _ids: ['000ddc0d00a0a00b0c00a001']
+        }
+
+        const response = await request(app)
+            .delete('/api/transactions')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("One or more Transactions not found")
+    });
+
+    test('Not admin', async () => {
+        const body = {
+             _ids: ['000ddc0d00a0a00b0c00a001']
+        }
+
+        const response = await request(app)
+            .delete('/api/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("You are not an Admin")
+    });
+
+    test('Id not valid', async () => {
+        const body = {
+             _ids: ['000ddc0d00a0a00b0c00']
+        }
+
+        const response = await request(app)
+            .delete('/api/transactions')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Invalid ID")
     });
 })
