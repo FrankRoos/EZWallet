@@ -192,6 +192,9 @@ export const deleteCategory = async (req, res) => {
         }
 
         const n_category = await categories.find({});
+        if(n_category.length == 1)
+            return res.status(400).json({ error: "There is only one category", refreshedTokenMessage: res.locals.message })
+
         let defaultCat = {};
 
         if (n_category.length == array_category.length)
