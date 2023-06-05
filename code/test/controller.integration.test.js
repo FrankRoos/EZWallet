@@ -395,6 +395,21 @@ describe("updateCategory", () => {
 
     });
 
+    test('Missing category parameter', async () => {
+        const body = {
+            type: 'bills',
+            color: 'orange'
+        }
+
+        const response = await request(app)
+            .patch('/api/categories/ ')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(404);
+
+    });
+
 })
 
 
@@ -749,6 +764,22 @@ describe("createTransaction", () => {
 
         expect(response.status).toBe(200);
         expect(response.body.data).toEqual(expect.objectContaining(body))
+    });
+
+    test('Username parameter is empty string', async () => {
+        const body = {
+            "username": "user1",
+            "amount": 50,
+            "type": "bills"
+        }
+
+        const response = await request(app)
+            .post('/api/users/ /transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(404);
+        expect(response.body.error).toEqual("Service Not Found. Reason: Empty string: param-username")
     });
 })
 
@@ -1107,6 +1138,16 @@ describe("getTransactionsByUser", () => {
         ]))
     });
 
+    test('Username parameter is missing', async () => {
+
+        const response = await request(app)
+            .get('/api/users/ /transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(404);
+        expect(response.body.error).toEqual("Service Not Found. Reason: Empty string: username")
+    });
+
 })
 
 describe("getTransactionsByUserByCategory", () => {
@@ -1337,6 +1378,25 @@ describe("getTransactionsByGroupByCategory", () => {
             expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
         ]))
     });
+
+    test('Group parameter is missing', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/groups/ /category/bills')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(404);
+        expect(response.body.error).toEqual("Service Not Found. Reason: Empty string: name")
+    });
+
+    test('Group parameter is missing', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/groups/group1/category/ ')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(404);
+    });
 })
 
 describe("deleteTransaction", () => {
@@ -1449,6 +1509,20 @@ describe("deleteTransaction", () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Invalid ID")
+    });
+
+    test('Username parameter is missing', async () => {
+        const body = {
+            _id: '000ddc0d00a0a00b0c00a000'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/ /transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(404);
+        expect(response.body.error).toEqual("Service Not Found. Reason: Empty string: username")
     });
 
 })

@@ -320,7 +320,7 @@ export const createTransaction = async (req, res) => {
             })}
     catch (error) {
         if (error.message === "Empty string: param-username")
-            res.status(400).json({
+            res.status(404).json({
                 error: "Service Not Found. Reason: " + error.message,
                 refreshedTokenMessage: res.locals.message
             })
