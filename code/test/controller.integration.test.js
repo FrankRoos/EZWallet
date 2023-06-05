@@ -754,8 +754,30 @@ describe("createTransaction", () => {
 
 describe("getAllTransactions", () => {
     beforeEach(async () => { await resetDb() })
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Return the list of transactions of all users', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 }),
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('User try to get all transactions', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("You are not an Admin")
     });
 })
 
