@@ -1111,8 +1111,81 @@ describe("getTransactionsByUser", () => {
 
 describe("getTransactionsByUserByCategory", () => {
     beforeEach(async () => { await resetDb() })
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('User gets all their transactions filtered by category', async () => {
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions/category/bills')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+    });
+
+    test('Category not exists', async () => {
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions/category/transports')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Category not found")
+    });
+
+    test('User passed as parameter not exists', async () => {
+
+        const response = await request(app)
+            .get('/api/users/user5/transactions/category/bills')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("User not found")
+    });
+
+    test('User authenticated and the requested one are different', async () => {
+
+        const response = await request(app)
+            .get('/api/users/user3/transactions/category/bills')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("Tokens have a different username from the requested one")
+    });
+
+    // /api/transactions/users/:user/category/:type
+    test('User tries to use admin api', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/users/user1/category/bills')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("You are not an Admin")
+    });
+
+    test('Admin gets transactions of user filtered by category', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/users/user1/category/bills')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
     });
 })
 
