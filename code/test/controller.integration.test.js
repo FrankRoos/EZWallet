@@ -1191,8 +1191,71 @@ describe("getTransactionsByUserByCategory", () => {
 
 describe("getTransactionsByGroup", () => {
     beforeEach(async () => { await resetDb() })
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('User gets transactions of their own group', async () => {
+
+        const response = await request(app)
+            .get('/api/groups/group1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 }),
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('Group does not exist', async () => {
+
+        const response = await request(app)
+            .get('/api/groups/group3/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual('Group not found')
+    });
+
+    test('User not in this group', async () => {
+
+        const response = await request(app)
+            .get('/api/groups/group2/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual('Your email is not in the group')
+    });
+
+    // /api/transactions/groups/:name
+    test('User tries to use admin api', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/groups/group1')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual('You are not an Admin')
+    });
+
+    test('Admin gets transactions of a group', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/groups/group1')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 }),
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
     });
 })
 
