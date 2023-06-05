@@ -9,7 +9,7 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth, handleNum
  */
 export const createCategory = async (req, res) => {
     try {
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
@@ -78,7 +78,7 @@ export const createCategory = async (req, res) => {
  */
 export const updateCategory = async (req, res) => {
     try {
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
@@ -170,7 +170,7 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
     try {
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
@@ -229,9 +229,9 @@ export const deleteCategory = async (req, res) => {
  */
 export const getCategories = async (req, res) => {
     try {
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        const verify = verifyAuth(req, res, { authType: "User/Admin", username: user.username, token: user ? user.refreshToken : 0 })
+        const verify = verifyAuth(req, res, { authType: "User/Admin", username: user ? user.username : 0, token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
             return res.status(401).json({
                 error: verify.cause,
@@ -265,7 +265,7 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
     try {
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
         let info = { authType: "User/Admin", username: req.params.username, token: user ? user.refreshToken : 0 }
         info.username = handleString(info.username, "param-username")
@@ -339,7 +339,7 @@ export const createTransaction = async (req, res) => {
 export const getAllTransactions = async (req, res) => {
     try {
 
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
         const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
         if (verify.flag === false)
@@ -389,7 +389,7 @@ export const getAllTransactions = async (req, res) => {
 export const getTransactionsByUser = async (req, res) => {
     try {
         let info = {};
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
@@ -479,7 +479,7 @@ export const getTransactionsByUser = async (req, res) => {
 export const getTransactionsByUserByCategory = async (req, res) => {
     try {
         let info = {};
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
@@ -561,7 +561,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 export const getTransactionsByGroup = async (req, res) => {
     try {
         let info = {};
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
@@ -645,7 +645,7 @@ export const getTransactionsByGroup = async (req, res) => {
 export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
         let info = {};
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
@@ -737,7 +737,7 @@ export const deleteTransaction = async (req, res) => {
     try {
         // /users/:username/transactions   
 
-        const token_user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const token_user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
         const info = { authType: "User/Admin", username: handleString(req.params.username, "username"), token: token_user ? token_user.refreshToken : 0 };
 
         const user = await User.findOne({ username: info.username });
@@ -781,7 +781,7 @@ export const deleteTransaction = async (req, res) => {
 export const deleteTransactions = async (req, res) => {
     try {
         // /transactions
-        const user = await User.findOne({ refreshToken: req.cookies.refreshToken })
+        const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
         const info = { authType: "Admin", token: user ? user.refreshToken : 0 };
         if (!req.body._ids || !req.body._ids.length)
             throw new Error("Missing ids")
