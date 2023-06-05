@@ -273,16 +273,16 @@ export const createTransaction = async (req, res) => {
         let info = { authType: "User/Admin", username: req.params.username, token: user ? user.refreshToken : 0 }
         info.username = handleString(info.username, "param-username")
 
+        let param_user = await User.findOne({ username: info.username })
+        if (!param_user)
+            throw new Error("User given as route request parameter not found")
+
         const verify = verifyAuth(req, res, info)
         if (verify.flag === false)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
             })
-
-        let param_user = await User.findOne({ username: info.username })
-        if (!param_user)
-            throw new Error("User given as route request parameter not found")
 
         let { username, amount, type } = req.body;
         if (username === undefined || amount === undefined  || type === undefined )
