@@ -3687,7 +3687,7 @@ describe("deleteTransaction", () => {
     }
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
-    jest.spyOn(transactions, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
+    jest.spyOn(transactions, 'findOne').mockImplementation(() => { return Promise.resolve({username: user.username}) })
     jest.spyOn(transactions, 'deleteOne').mockImplementation(() => { return Promise.resolve(true) })
     utils.verifyAuth = jest.fn().mockReturnValue(true)
     utils.handleString = jest.fn().mockImplementation((string) => { return string })
