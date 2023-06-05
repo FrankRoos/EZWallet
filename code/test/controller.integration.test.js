@@ -1341,9 +1341,116 @@ describe("getTransactionsByGroupByCategory", () => {
 
 describe("deleteTransaction", () => {
     beforeEach(async () => { await resetDb() })
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('User delete one of their transactions', async () => {
+        const newTransaction = new transactions({_id: '000ddc0d00a0a00b0c00a000', username: 'user1', type: 'rent', amount: 800})
+        await newTransaction.save()
+
+        const body = {
+            _id: '000ddc0d00a0a00b0c00a000'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.message).toEqual("Transaction deleted")
     });
+
+    test('Missing id in req body', async () => {
+        const newTransaction = new transactions({_id: '000ddc0d00a0a00b0c00a000', username: 'user1', type: 'rent', amount: 800})
+        await newTransaction.save()
+
+        const body = {
+            // _id: '000ddc0d00a0a00b0c00a000'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Missing id")
+    });
+
+    test('Missing id in req body', async () => {
+        const body = {
+            _id: '000ddc0d00a0a00b0c00a000'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/user5/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("User not found")
+    });
+
+    test('Transaction not exists', async () => {
+        const body = {
+            _id: '000ddc0d00a0a00b0c00a000'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Transaction not found")
+    });
+
+    test('Transaction of another user', async () => {
+        const newTransaction = new transactions({_id: '000ddc0d00a0a00b0c00a000', username: 'user2', type: 'rent', amount: 800})
+        await newTransaction.save()
+
+        const body = {
+            _id: '000ddc0d00a0a00b0c00a000'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("Not authorized: transaction of another user")
+    });
+
+    test('User authenticated and requested are different', async () => {
+        const newTransaction = new transactions({_id: '000ddc0d00a0a00b0c00a000', username: 'user2', type: 'rent', amount: 800})
+        await newTransaction.save()
+
+        const body = {
+            _id: '000ddc0d00a0a00b0c00a000'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/user2/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("Tokens have a different username from the requested one")
+    });
+
+    test('Id format invalid', async () => {
+        const body = {
+            _id: '000ddc0d00a0a00b0c0'
+        }
+
+        const response = await request(app)
+            .delete('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Invalid ID")
+    });
+
 })
 
 describe("deleteTransactions", () => {
