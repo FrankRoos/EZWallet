@@ -783,9 +783,330 @@ describe("getAllTransactions", () => {
 
 describe("getTransactionsByUser", () => {
     beforeEach(async () => { await resetDb() })
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('User tries to get all their transactions', async () => {
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
     });
+
+    test('User tries to get all their transactions filtered by date', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?date=2023-06-01')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+
+    });
+
+    test('User tries to get all their transactions filtered by date (from)', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2001, 9, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?from=2023-05-01')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('User tries to get all their transactions filtered by date (upTo)', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2050, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?upTo=2040-08-03')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('User tries to get all their transactions filtered by date (from & upTo)', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?from=2023-06-01&upTo=2023-06-03')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('Filters (on date) do not match any transaction', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?from=2025-06-01&upTo=2025-06-03')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual([])
+    
+    });
+
+    test('User tries to get all their transactions filtered by amount', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 600, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?amount=500')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 600 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('User tries to get all their transactions filtered by amount (min)', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 600, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?min=500')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 600 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('User tries to get all their transactions filtered by amount (max)', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 600, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?max=200')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 600 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('User tries to get all their transactions filtered by amount (min & max)', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?min=0&max=200')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 500 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+        
+    });
+
+    test('User tries to get all their transactions filtered by amount (min & max) and by date (from & upTo)', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 700, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?min=600&max=800&from=2023-06-01&upTo=2023-06-02')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 700 }),
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+        
+    });
+
+    test('User tries to get all their transactions filtered by amount and by date', async () => {
+
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 700, date: new Date(2023, 5, 1, 0, 0, 0) })
+        await newTransaction.save()
+
+        const response = await request(app)
+            .get('/api/users/user1/transactions?date=2023-06-01&amount=700')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 700 }),
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
+    test('User passed as parameter is not memorized in DB', async () => {
+
+        const response = await request(app)
+            .get('/api/users/user5/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("User not found")
+    });
+
+    test('User authenticated and the request one are different', async () => {
+
+        const response = await request(app)
+            .get('/api/users/user3/transactions')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("Tokens have a different username from the requested one")
+    });
+
+    // /api/transactions/users/:username
+    test('User tries to use admin api', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/users/user1')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("You are not an Admin")
+    });
+
+    test('Admin gets transactions of a User', async () => {
+
+        const response = await request(app)
+            .get('/api/transactions/users/user1')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expect.arrayContaining([
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 100 }),
+            expect.objectContaining({ username: 'user1', type: 'bills', amount: 200 }),
+            expect.objectContaining({ username: 'user1', type: 'rent', amount: 500 })
+        ]))
+        expect(response.body.data).toEqual(expect.not.arrayContaining([
+            expect.objectContaining({ username: 'user2', type: 'bills', amount: 50 }),
+            expect.objectContaining({ username: 'user3', type: 'rent', amount: 300 })
+        ]))
+    });
+
 })
 
 describe("getTransactionsByUserByCategory", () => {
