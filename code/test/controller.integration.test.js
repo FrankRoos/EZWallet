@@ -401,6 +401,133 @@ describe("updateCategory", () => {
 describe("deleteCategory", () => {
     beforeEach(async () => { await resetDb() })
     
+    test('Category is deleted successfully', async () => {
+        const body = {
+            types: ['bills']
+        }
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.message).toEqual("Categories deleted")
+        expect(response.body.data.count).toEqual(3)
+    
+    });
+
+    test('List of Categories is deleted successfully', async () => {
+        const body = {
+            types: ['bills', 'rent']
+        }
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.message).toEqual("Categories deleted")
+        expect(response.body.data.count).toEqual(5)
+    
+    });
+
+    test('All categories deleted (the oldest not, transactions are updated with it)', async () => {
+        const body = {
+            types: ['bills', 'rent', 'entertainment']
+        }
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.message).toEqual("Categories deleted")
+        expect(response.body.data.count).toEqual(2)
+    
+    });
+
+    test('Body does not contain all attributes', async () => {
+        const body = {
+            // types: ['bills', 'rent', 'entertainment']
+        }
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("Missing attributes in the body")
+    
+    });
+
+    test('Try to delete the last category', async () => {
+        const body = {
+            types: ['bills']
+        }
+
+        // Particular case, need to be only one type
+        await categories.deleteMany({})
+        const type = new categories({ type: 'bills', color: 'white' })
+        await type.save()
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("There is only one category")
+    
+    });
+
+    test('At least one type empty', async () => {
+        const body = {
+            types: ['', 'rent', 'entertainment']
+        }
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("There is an empty string in the category list")
+    
+    });
+
+    test('One type not exists', async () => {
+        const body = {
+            types: ['bills', 'transports', 'entertainment']
+        }
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toEqual("You inserted an invalid category")
+    
+    });
+
+    test('One type not exists', async () => {
+        const body = {
+            types: ['bills', 'entertainment']
+        }
+
+        const response = await request(app)
+            .delete('/api/categories')
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .send(body)
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual("You are not an Admin")
+    
+    });
     
 })
 
