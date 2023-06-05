@@ -85,7 +85,7 @@ describe("handleDateFilterParams", () => {
           }}
         let sdate=mockReq.query.date.split("-")
 
-      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $eq : new Date(sdate[0], sdate[1]-1, sdate[2], 0, 0, 0) } } ,'flag': true});
+        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $gte: new Date(sdate[0], sdate[1]-1, sdate[2], 0, 0, 0), $lte: new Date(sdate[0], sdate[1]-1, sdate[2], 23, 59, 59) } } ,'flag': true});
     });
 
     test('Return query with from and upTo information', () => {
