@@ -2586,7 +2586,9 @@ describe("getTransactionsByUserByCategory", () => {
       _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
-    jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return Promise.resolve(admin) })
+    jest.spyOn(User, 'findOne')
+      .mockImplementationOnce(() => { return Promise.resolve(admin) })
+      .mockImplementationOnce(() => { return Promise.resolve(true) })
     jest.spyOn(categories, 'findOne').mockImplementation(() => { return Promise.resolve(true) })
     jest.spyOn(transactions, 'aggregate').mockImplementation(() => { return Promise.resolve(false) })
     utils.verifyAuth = jest.fn().mockReturnValue({flag: false, cause: "You are not an Admin"})
