@@ -252,7 +252,7 @@ export const handleNumber = (number, nameVar) => {
         number = number.replace(",", ".")
     try{
         number = Number(number)
-        if (!number) {throw new Error("Invalid format of " + nameVar) }
+        if (!number && number!=0) {throw new Error("Invalid format of " + nameVar) }
         return number
     }
     catch{
