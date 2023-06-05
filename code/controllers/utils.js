@@ -27,7 +27,7 @@ export const handleDateFilterParams = (req, res) => {
         // Date constructor works with indexes, so months start from 0 
         if (date){
             date=date.split("-");
-             return {queryObj : { 'date': { $eq: new Date(date[0], date[1]-1, date[2], 0, 0, 0) } },'flag': true} }
+             return {queryObj : { 'date': { $gte: new Date(date[0], date[1]-1, date[2], 0, 0, 0), $lte: new Date(date[0], date[1]-1, date[2], 23, 59, 59) }} ,'flag': true} }
         if (from && upTo) {
             from=from.split("-");
             upTo=upTo.split("-");
