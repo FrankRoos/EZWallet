@@ -759,6 +759,8 @@ export const deleteTransaction = async (req, res) => {
         const transaction = await transactions.findOne({ _id: idTransaction });
         if (!transaction)
             throw new Error("Transaction not found");
+        if(transaction.username != info.username)
+            throw new Error("Not your transaction")
 
         await transactions.deleteOne({ _id: req.body._id });
         return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.message });
@@ -767,6 +769,11 @@ export const deleteTransaction = async (req, res) => {
         if (error.message === "Empty string: username")
             res.status(404).json({
                 error: "Service Not Found. Reason: " + error.message,
+                refreshedTokenMessage: res.locals.message
+            })
+        else if (error.message === "Not your transaction")
+            res.status(401).json({
+                error: "Not authorized: transaction of another user",
                 refreshedTokenMessage: res.locals.message
             })
         else
