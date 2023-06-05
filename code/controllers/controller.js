@@ -494,15 +494,15 @@ export const getTransactionsByUserByCategory = async (req, res) => {
             info = { authType: "User", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
         }
 
-        // Verify the authentication
-        const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
-            return res.status(401).json({ error: verify.cause })
-
         // Verify if the user exists
         const userByUsername = await User.findOne({ username: info.username });
         if (!userByUsername)
             throw new Error("User not found");
+
+        // Verify the authentication
+        const verify = verifyAuth(req, res, info)
+        if (verify.flag === false)
+            return res.status(401).json({ error: verify.cause })
 
         // Verify if the category exists
         const category = await categories.findOne({ type: info.category });
