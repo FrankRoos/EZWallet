@@ -89,7 +89,7 @@ export const updateCategory = async (req, res) => {
         
         let { type, color } = req.body;
 
-        if ((type === undefined) || (color===undefined))
+        if ((type === "") || (color==="")|| (type === undefined) || (color===undefined))
             return res.status(400).json({
                 error: "Missing attributes in the body",
                 refreshedTokenMessage: res.locals.message

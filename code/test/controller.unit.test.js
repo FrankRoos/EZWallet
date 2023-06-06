@@ -379,7 +379,7 @@ describe("updateCategory", () => {
         refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
       },
       body: {
-        type: "food",
+        type: "",
         color: "green"
       },
       params: { type: "" }
@@ -403,8 +403,44 @@ describe("updateCategory", () => {
 
     await controller.updateCategory(mockReq, mockRes)
     expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
-    expect(handle_string).toHaveBeenCalledWith(mockReq.params.type, "type")
     expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Missing attributes in the body", refreshedTokenMessage: mockRes.locals.message });
+
+  })
+
+  test("should return a 404 error if the parameter is empty", async () => {
+
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: {
+        type: "type",
+        color: "green"
+      },
+      params: { type: "" }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const handle_string = jest.fn().mockImplementation(() => { throw new Error("Empty string: type") });
+    utils.handleString = handle_string;
+
+    await controller.updateCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Service Not Found. Reason: Empty string: type", refreshedTokenMessage: mockRes.locals.message });
 
   })
@@ -1812,13 +1848,13 @@ describe("getAllTransactions", () => {
       role: "Admin"
     }
 
-    const all_transactions = [{ _id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: { color: "red" } },
-    { _id: 2, username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info: { color: "green" } },
-    { _id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info: { color: "red" } }]
+    const all_transactions = [{username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: { color: "red" } },
+    {  username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info: { color: "green" } },
+    { username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info: { color: "red" } }]
 
-    const all_transactions2 = [{ _id: 1, username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red" },
-    { _id: 2, username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green" },
-    { _id: 2, username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red" }]
+    const all_transactions2 = [{  username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red" },
+    {  username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green" },
+    {  username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red" }]
     const mockReq = {
       cookies: {
         accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
@@ -1925,10 +1961,10 @@ describe("getTransactionsByUser", () => {
       role: "Regular"
     }
     const listTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
     }]
     const listExpTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
@@ -1978,10 +2014,10 @@ describe("getTransactionsByUser", () => {
       role: "Regular"
     }
     const listTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
     }]
     const listExpTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
@@ -2031,10 +2067,10 @@ describe("getTransactionsByUser", () => {
       role: "Regular"
     }
     const listTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+      username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
     }]
     const listExpTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+      username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
@@ -2084,10 +2120,10 @@ describe("getTransactionsByUser", () => {
       role: "Regular"
     }
     const listTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+      username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
     }]
     const listExpTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
@@ -2467,10 +2503,10 @@ describe("getTransactionsByUserByCategory", () => {
       role: "Regular"
     }
     const listTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+      username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
     }]
     const listExpTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+      username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
@@ -2906,10 +2942,10 @@ describe("getTransactionsByGroup", () => {
       role: "Regular"
     }
     const listTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
     }]
     const listExpTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
@@ -3240,10 +3276,10 @@ describe("getTransactionsByGroupByCategory", () => {
       role: "Regular"
     }
     const listTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", categories_info: { color: "yellow" }, date: '2023-05-27T15:29:01.845+00:00'
     }]
     const listExpTransact = [{
-      _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
+       username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
     jest.spyOn(User, 'findOne').mockImplementation(() => { return user })

@@ -868,7 +868,7 @@ describe("deleteUser", () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toBe('The attribute in the request body is empty');
   });
-  test("Return 401 email format is not correct", async () => {
+  test("Return 400 email format is not correct", async () => {
     const refreshToken = jwt.sign(
       {
         email: 'test@example.com',
@@ -902,10 +902,10 @@ describe("deleteUser", () => {
       .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
       .send({ email: 'invalidemail' });
   
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
     expect(response.body.error).toBe('email format is not correct');
   });
-  test("Return 401 User not found", async () => {
+  test("Return 400 User not found", async () => {
     const refreshToken = jwt.sign(
       {
         email: 'test@example.com',
@@ -939,7 +939,7 @@ describe("deleteUser", () => {
       .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
       .send({ email: 'nonexistent@gmail.com' });
   
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
     expect(response.body.error).toBe('User not found');
   });
   
@@ -1149,7 +1149,7 @@ describe("deleteGroup", () => {
     expect(response.body.error).toBe('You are not an Admin');
   });
   
-  test('returns a 401 Group doesnt exist', async () => {
+  test('returns a 400 Group doesnt exist', async () => {
     const refreshToken = jwt.sign(
       {
         email: 'test@example.com',
@@ -1194,7 +1194,7 @@ describe("deleteGroup", () => {
       .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
       .send({name:not_a_group });
   
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
     expect(response.body.error).toBe(`Group ${not_a_group} does not exist`);
   });
 })

@@ -328,7 +328,7 @@ describe("updateCategory", () => {
             .send(body)
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toEqual("Service Not Found. Reason: Empty string: type")
+        expect(response.body.error).toEqual("Missing attributes in the body")
 
     });
 
@@ -344,7 +344,7 @@ describe("updateCategory", () => {
             .send(body)
 
         expect(response.status).toBe(400);
-        expect(response.body.error).toEqual("Empty string: color")
+        expect(response.body.error).toEqual("Missing attributes in the body")
 
     });
 
