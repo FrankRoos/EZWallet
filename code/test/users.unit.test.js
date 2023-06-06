@@ -2467,7 +2467,7 @@ describe("addToGroup", () => {
  
   })
 
-  test("Should returns error 400 if some email are invalid ,Regular", async () => {
+  test("Should returns error 400 if some email are invalid Regular", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2585,7 +2585,7 @@ describe("addToGroup", () => {
 
 
 
-  test("Should returns error 404 if the param  is empty,Regular User ", async () => {
+  test("Should returns error 404 if the param  is empty Regular User ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {

@@ -596,22 +596,108 @@ await usery.save()
 
 })
 
-describe("getGroups", () => {
-  beforeEach(async () => { await resetDb() })
+  describe("getGroups", () => {
+    beforeEach(async () => {
+      await User.deleteMany();
+      await Group.deleteMany();
+    })
+    afterAll(async () => {
+      
+      await User.deleteMany();
+      await Group.deleteMany();
+    });
+    
   
+    test('Should return 200 & the list of all the groups', async () => {
+      const refreshTokenUserA = jwt.sign({email: 'user1@gmail.com',username: 'user1',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '7d' });
+      const accessTokenUserA = jwt.sign({email: 'user1@gmail.com',username: 'user1',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '1h' });
+      const userA = await User.create({
+        username: 'user1',
+        email: 'user1@gmail.com',
+        password: await bcrypt.hash('password123', 12),
+        role: 'Regular',
+        refreshToken: refreshTokenUserA,
+        accessToken: accessTokenUserA,
+      });
+      const refreshTokenUserB = jwt.sign({email: 'user2@gmail.com',username: 'user2',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '7d' });  
+      const accessTokenUserB = jwt.sign({email: 'user2@gmail.com',username: 'user2',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '1h' });
+      const userB = await User.create({
+        username: 'user2',
+        email: 'user2@gmail.com',
+        password: await bcrypt.hash('password123', 12),
+        role: 'Regular',
+        refreshToken: refreshTokenUserB,
+        accessToken: accessTokenUserB,
+      });
+      const refreshTokenUserC = jwt.sign({email: 'user3@gmail.com',username: 'user3',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '7d' });
+      const accessTokenUserC = jwt.sign({email: 'user3@gmail.com',username: 'user3',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '1h' });
+      const userC = await User.create({
+        username: 'user3',
+        email: 'user3@gmail.com',
+        password: await bcrypt.hash('password123', 12),
+        role: 'Regular',
+        refreshToken: refreshTokenUserC,
+        accessToken: accessTokenUserC,
+      });
+      const refreshTokenUserAdmin = jwt.sign({email: 'adminadmin@gmail.com',username: 'adminadmin',role: 'Admin',},process.env.ACCESS_KEY,{ expiresIn: '7d' });
+      const accessTokenUserAdmin = jwt.sign({email: 'adminadmin@gmail.com',username: 'adminadmin',role: 'adminadmin',},process.env.ACCESS_KEY,{ expiresIn: '1h' });
+      const adminadmin = await User.create({
+        username: 'adminadmin',
+        email: 'adminadmin@gmail.com',
+        password: await bcrypt.hash('password123', 12),
+        role: 'Admin',
+        refreshToken: refreshTokenUserAdmin,
+        accessToken: accessTokenUserAdmin,
+      });
+      const groupA = new Group({
+        name: 'GroupA',
+        members: [{ email: userA.email, _id: userA._id }, { email: userB.email, _id: userB._id }],
+      });
+      const groupB = new Group({
+        name: 'GroupB',
+        members: [{ email: userC.email, _id: userC._id }],
+      });
+      await groupA.save(); 
+      await groupB.save(); 
+      const response = await request(app)
+        .get('/api/groups')
+        .set("Cookie", `accessToken=${refreshTokenUserAdmin}; refreshToken=${refreshTokenUserAdmin}`)
+  
+      
+      expect(response.status).toBe(200);
+      expect(response.body.data).toContainEqual({
+        name: 'GroupA',
+        members: [{ email: 'user1@gmail.com' }, { email: 'user2@gmail.com' }],
+      });
+      expect(response.body.data).toContainEqual({
+        name: 'GroupB',
+        members: [{ email: 'user3@gmail.com' }],
+      });
+    });
+    test('Should return 401 for the verifyAuth', async () => {
+      const refreshTokenUserA = jwt.sign({email: 'user1@gmail.com',username: 'user1',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '7d' });
+      const accessTokenUserA = jwt.sign({email: 'user1@gmail.com',username: 'user1',role: 'Regular',},process.env.ACCESS_KEY,{ expiresIn: '1h' });
+      const userA = await User.create({
+        username: 'user1',
+        email: 'user1@gmail.com',
+        password: await bcrypt.hash('password123', 12),
+        role: 'Regular',
+        refreshToken: refreshTokenUserA,
+        accessToken: accessTokenUserA,
+      });
+      const response = await request(app)
+        .get('/api/groups')
+        .set("Cookie", `accessToken=${accessTokenUserA}; refreshToken=${refreshTokenUserA}`)
+  
+      
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('You are not an Admin');
+      
+    });
+  
+  
+  })
 
-  test('Should returns the list of all the groups', async () => {
-
-    const response = await request(app)
-      .get('/api/groups')
-      .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
-
-    expect(response.status).toBe(200);
-    expect(response.body.data).toEqual([{"members": [{"email": "user1@gmail.com"}, {"email": "user2@gmail.com"}], "name": "group1"}, {"members": [{"email": "user3@gmail.com"}], "name": "group2"}])
-  });
-
-
-})
 
 describe("getGroup", () => {
   beforeEach(async () => { await resetDb() })
@@ -687,7 +773,1535 @@ describe("getGroup", () => {
 
 })
 
-describe("addToGroup", () => { })
+describe("addToGroup", () => { 
+
+  beforeEach(async () => { await resetDb() })
+  
+    
+  test("Should add members to the group and display if called by admin ", async () => {
+   
+
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuse1r',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+
+    const body = {
+      emails: ["testuser1@example.com"]}
+
+ 
+
+    const response = await request(app)
+    .patch('/api/groups/group1/insert')
+    .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+    .send(body)
+
+  expect(response.status).toBe(200);
+  expect(response.body.data).toEqual({"alreadyInGroup": [], "group": {"members": ["user1@gmail.com", "user2@gmail.com", "testuser1@example.com"], "name": "group1"}, "membersNotFound": []})
+});
+
+   
+ 
+  
+
+
+  test("Should return error 401 if a Regular user try the admin Route  ", async () => {
+     
+    
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuse1r',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+
+    const body = {
+      emails: ["testuser1@example.com"]}
+
+ 
+
+    const response = await request(app)
+    .patch('/api/groups/group1/insert')
+    .set("Cookie", `accessToken=${accessTokenuser1}; refreshToken=${refreshTokenuser1}`)
+    .send(body)
+
+  expect(response.status).toBe(401);
+  
+  })
+
+  test("Should add members to the group and display if called by Regular ", async () => {
+   await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["testuser3@example.com"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/add')
+    .set("Cookie", `accessToken=${accessTokenuser1}; refreshToken=${refreshTokenuser1}`)
+    .send(body)
+
+  expect(response.status).toBe(200);
+ 
+ 
+  })
+
+  test("Should returns error 401 if the  user is not authorized for that Group ", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["testuser3@example.com"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/add')
+    .set("Cookie", `accessToken=${accessTokenuser3}; refreshToken=${refreshTokenuser3}`)
+    .send(body)
+
+  expect(response.status).toBe(401);
+
+ 
+ 
+  })
+
+
+  test(" User...Should returns error 400 if the  group does not exists ", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["testuser3@example.com"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupxasd/add')
+    .set("Cookie", `accessToken=${accessTokenuser3}; refreshToken=${refreshTokenuser3}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+  
+
+ 
+  })
+
+  test(" Admin...Should returns error 400 if the  group does not exists ", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["testuser3@example.com"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupxasd/insert')
+    .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+  
+  
+
+ 
+  })
+
+
+
+
+
+
+  test("Should returns error 400 if the email array is missing ", async () => {
+     
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+     }
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/add')
+    .set("Cookie", `accessToken=${accessTokenuser3}; refreshToken=${refreshTokenuser3}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+
+
+ 
+
+ 
+  })
+
+  test("Regular User Should returns error 400 if the email array is empty ", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: []}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/add')
+    .set("Cookie", `accessToken=${accessTokenuser1}; refreshToken=${refreshTokenuser1}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+ 
+
+ 
+  })
+
+
+  test("Admin -- Should returns error 400 if the email array is empty ", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: []}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/insert')
+    .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+
+
+ 
+  })
+
+
+
+
+
+
+  test("Admin-Should returns error 400 if some email are invalid ", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["invalidemail.it"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/insert')
+    .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+
+
+
+ 
+  })
+
+  test("Regular-Should returns error 400 if some email are invalid ,Regular", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["invalidemail.it"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/add')
+    .set("Cookie", `accessToken=${accessTokenuser1}; refreshToken=${refreshTokenuser1}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+
+  })
+
+
+
+
+
+  test("Should returns error 404 if the param  is empty,Regular User ", async () => {
+     
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["invalid@email.it"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/add')
+    .set("Cookie", `accessToken=${accessTokenuser1}; refreshToken=${refreshTokenuser1}`)
+    .send(body)
+
+  expect(response.status).toBe(404);
+
+ 
+  })
+
+  test("AdminRouteShould returns error 404 if the param  is empty", async () => {
+     
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["invalid@email.it"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/insert')
+    .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+    .send(body)
+
+  expect(response.status).toBe(404);
+
+ 
+  })
+
+ 
+ 
+
+
+
+
+  test("Regular user Should returns error 400 if all email does not exists or are already in a group  ", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["invalid@email.it"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/add')
+    .set("Cookie", `accessToken=${accessTokenuser1}; refreshToken=${refreshTokenuser1}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+
+ 
+  })
+
+
+
+  test("Admin Route Should returns error 400 if all email does not exists or are already in a group", async () => {
+    await resetDb()
+    const refreshTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser1 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser1',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user1 = await User.create({
+      username: 'testuser1',
+      email: 'testuser1@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser1,
+      accessToken: accessTokenuser1,
+    });
+    await user1.save()
+    const refreshTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser2 = jwt.sign(
+      {
+        email: 'testuser2@example.com',
+        username: 'testuser2',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user2 = await User.create({
+      username: 'testuser2',
+      email: 'testuser2@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser2,
+      accessToken: accessTokenuser2,
+    });
+    await user2.save()
+    const refreshTokenuser3 = jwt.sign(
+      {
+        email: 'testuser3@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser3 = jwt.sign(
+      {
+        email: 'testuser1@example.com',
+        username: 'testuser3',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user3= await User.create({
+      username: 'testuser3',
+      email: 'testuser3@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser3,
+      accessToken: accessTokenuser3,
+    });
+    await user3.save()
+  
+
+    const body = {
+      emails: ["invalidemail.it"]}
+
+      const group_new = new Group({
+        name: 'groupx',
+        members: [{ email: "testuser1@example.com" },{ email: "testuser2@example.com" }]
+      })
+      await group_new.save()
+
+    const response = await request(app)
+    .patch('/api/groups/groupx/insert')
+    .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+    .send(body)
+
+  expect(response.status).toBe(400);
+
+ 
+  })
+
+})
 
 describe("removeFromGroup", () => { })
 
@@ -699,13 +2313,7 @@ describe("deleteUser", () => {
     await transactions.deleteMany();
     await categories.deleteMany();
   })
-  afterAll(async () => {
-    
-    await User.deleteMany();
-    await Group.deleteMany();
-    await transactions.deleteMany();
-    await categories.deleteMany();
-  });
+
   test("Return 200 OK", async()=>{
     const refreshToken = jwt.sign(
       {
