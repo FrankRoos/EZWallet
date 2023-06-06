@@ -1067,6 +1067,56 @@ describe("deleteCategory", () => {
 
   })
 
+  test("Should return a 400 error if there is only 1 category in the database", async () => {
+    const categor = [{ type: "food", color: "red" }]
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      },
+      body: { types: ["health", "food"] }
+    }
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: jest.fn()
+    };
+
+    jest.spyOn(User, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    const verify = jest.fn(() => { return { flag: true } });
+    utils.verifyAuth = verify;
+
+    jest.spyOn(categories, "findOne")
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(categor[0])
+
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "find")
+      .mockImplementation(() => { return categor })
+
+
+    jest.spyOn(transactions, "updateMany")
+      .mockReturnValueOnce({ modifiedCount: 2 })
+      .mockReturnValue(1)
+
+    jest.spyOn(categories, "findOneAndDelete")
+      .mockReturnValueOnce(true)
+      .mockReturnValue(1)
+
+    await controller.deleteCategory(mockReq, mockRes)
+    expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
+    expect(categories.find).toHaveBeenCalledWith({})
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "There is only one category", refreshedTokenMessage: mockRes.locals.refreshedTokenMessage });
+
+  })
+
   test("Should return a 400 error whether there are another error", async () => {
 
     const mockReq = {
@@ -3704,6 +3754,50 @@ describe("deleteTransaction", () => {
       refreshedTokenMessage: undefined
     })
   });
+
+  test('Should return a 400 error if you are trying to delete a category that is not yours', async () => {
+
+    const body = {
+      "_id": "64721f4d45fc5a2060f6b3c8"
+    }
+    const mockReq = {
+      cookies: {
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8',
+        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'
+      },
+      body: body,
+      params: {
+        username: "user"
+      }
+    }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: { message: undefined }
+    }
+    const user = {
+      username: "user",
+      email: "user@gmail.com",
+      password: "12345678",
+      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q",
+      role: "Regular"
+    }
+
+    jest.spyOn(User, 'findOne').mockImplementation(() => { return user })
+    jest.spyOn(transactions, 'findOne').mockImplementation(() => { return Promise.resolve({username: "not_user"}) })
+    jest.spyOn(transactions, 'deleteOne').mockImplementation(() => { return Promise.resolve(true) })
+    utils.verifyAuth = jest.fn().mockReturnValue(true)
+    utils.handleString = jest.fn().mockImplementation((string) => { return string })
+
+    await controller.deleteTransaction(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({error: "Not authorized: transaction of another user",
+      refreshedTokenMessage: undefined
+    })
+  });
+
 
   test("The request body doesn't contain all attributes", async () => {
 
