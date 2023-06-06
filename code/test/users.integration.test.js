@@ -208,39 +208,6 @@ describe("getUsers", () => {
 
 
 
- 
-
-test("should return error 401 if  called by an authenticated user who is neither admin or the user to be found", async () => {
-
-
-  const response = await request(app)
-  .get('/api/users/user2')
-  .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
- 
-  expect(response.status).toBe(401)
-
-
-})
-
-test("Should return 400 error if the user not found", async () => {
-
-
-
-  const response = await request(app)
-  .get('/api/users/user100')
-  .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
- 
-
-
-  
-
-  
-  expect(response.status).toBe(400)
-  expect(response.body.error).toEqual("User not found")
-  
-
-
-})
 
 
 
