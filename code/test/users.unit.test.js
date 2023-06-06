@@ -3916,7 +3916,7 @@ describe("deleteUser", () => {
     
   });
 
-  test("Should delete user  called by admin ", async () => {
+  test("Should delete user  called by admin and delete the group ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -3936,7 +3936,7 @@ describe("deleteUser", () => {
         message: ""
       }
     };
-    const user= {role :"Admin", username :"pinco"};
+    const user= {email:"member1@example.com",role :"Admin", username :"pinco"};
     const usertoadd= {email :"toyota@polito.it", _id : 1};
   
     let transaction_data ={deletedCount : 3}

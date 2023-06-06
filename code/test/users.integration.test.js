@@ -758,6 +758,204 @@ describe("deleteUser", () => {
     expect(response.body.data.deleteTransactions).toBe(1);
     expect(response.body.data.deletedFromGroup).toBe(true);
   })
+  test("Return 200 and delete the group if the user is the last in the group", async () => {
+    const refreshTokenuser = jwt.sign(
+      {
+        email: 'testuser@example.com',
+        username: 'testuser',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser = jwt.sign(
+      {
+        email: 'testuser@example.com',
+        username: 'testuser',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'testuser',
+      email: 'testuser@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser,
+      accessToken: accessTokenuser,
+    });
+    const refreshTokenAdmin = jwt.sign(
+      {
+        email: 'testadmin@example.com',
+        username: 'testadmin',
+        role: "Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenAdmin = jwt.sign(
+      {
+        email: 'testadmin@example.com',
+        username: 'testadmin',
+        role: "Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const admin = await User.create({
+      username: 'testadmin',
+      email: 'testadmin@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Admin",
+      refreshToken: refreshTokenAdmin,
+      accessToken: accessTokenAdmin,
+    });
+    const group = await Group.create({
+      name: "testgroup",
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });
+    const response = await request(app)
+      .delete("/api/users")
+      .set("Cookie", `refreshToken=${refreshTokenAdmin};accessToken=${accessTokenAdmin}`)
+      .send({ email: user.email });
+    expect(response.status).toBe(200);
+    expect(response.body.data.deletedFromGroup).toBe(true);
+    const deletedGroup = await Group.findOne({ name: group.name });
+    expect(deletedGroup).toBeNull();
+  });
+  test("Return 200 and do not delete the group if there are other members in the group", async () => {
+    const refreshTokenuser = jwt.sign(
+      {
+        email: 'testuser@example.com',
+        username: 'testuser',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+  
+    const accessTokenuser = jwt.sign(
+      {
+        email: 'testuser@example.com',
+        username: 'testuser',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'testuser',
+      email: 'testuser@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenuser,
+      accessToken: accessTokenuser,
+    });
+    const refreshTokenAdmin = jwt.sign(
+      {
+        email: 'testadmin@example.com',
+        username: 'testadmin',
+        role: "Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+  
+    const accessTokenAdmin = jwt.sign(
+      {
+        email: 'testadmin@example.com',
+        username: 'testadmin',
+        role: "Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const admin = await User.create({
+      username: 'testadmin',
+      email: 'testadmin@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Admin",
+      refreshToken: refreshTokenAdmin,
+      accessToken: accessTokenAdmin,
+    });
+  
+    const group = await Group.create({
+      name: "testgroup",
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });
+  
+    const refreshTokenAnotherUser = jwt.sign(
+      {
+        email: 'anotheruser@example.com',
+        username: 'anotheruser',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+  
+    const accessTokenAnotherUser = jwt.sign(
+      {
+        email: 'anotheruser@example.com',
+        username: 'anotheruser',
+        role: "Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const anotherUser = await User.create({
+      username: 'anotheruser',
+      email: 'anotheruser@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenAnotherUser,
+      accessToken: accessTokenAnotherUser,
+    });
+    const anotherUser1 = await User.create({
+      username: 'anotheruser1',
+      email: 'anotheruse1r@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role: "Regular",
+      refreshToken: refreshTokenAnotherUser,
+      accessToken: accessTokenAnotherUser,
+    });
+  
+    group.members.push({
+      email: anotherUser.email,
+      user: anotherUser._id,
+    });
+    await group.save();
+
+    group.members.push({
+      email: anotherUser1.email,
+      user: anotherUser1._id,
+    });
+    await group.save();
+
+  
+    const response = await request(app)
+      .delete("/api/users")
+      .set("Cookie", `refreshToken=${refreshTokenAdmin};accessToken=${accessTokenAdmin}`)
+      .send({ email: user.email });
+    expect(response.status).toBe(200);
+    expect(response.body.data.deletedFromGroup).toBe(false);
+    const updatedGroup = await Group.findById(group._id);
+    expect(updatedGroup.members.length).toBe(2);
+    expect(updatedGroup.members.some(member => member.email === user.email)).toBe(false);
+  });
   test("Return 401 verifyAuth", async()=>{
     const refreshTokenuser = jwt.sign(
       {
