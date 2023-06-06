@@ -29,6 +29,7 @@ const resetDb = async () => {
         refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXIxQGdtYWlsLmNvbSIsImlkIjoiNjQ2NGJiZWNhZGYyYzM4NzBjNGIwNjgyIiwidXNlcm5hbWUiOiJ1c2VyMSIsInJvbGUiOiJSZWd1bGFyIiwiaWF0IjoxNjg1ODk0ODg2LCJleHAiOjE3MTc0NTI0ODZ9.sDleB1--yGiMR3CFk26YxNgQ_gG36UJVjPEoYyDlKa8',
     })
 
+
     const user2 = new User({
         username: 'user2',
         email: 'user2@gmail.com',
@@ -536,7 +537,7 @@ describe("deleteCategory", () => {
 
         const response = await request(app)
             .delete('/api/categories')
-            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${"userRefreshToken"}`)
             .send(body)
 
         expect(response.status).toBe(401);

@@ -24,6 +24,7 @@ export const getUsers = async (req, res) => {
       })
 
     const users = await User.find();
+    let filter = users.map(v => Object.assign({}, { username: v.username, email: v.email,role: v.role }))
     const emptyArray = [];
     if (users.length <= 1 || !users) 
       return res.status(400).json({
@@ -33,7 +34,7 @@ export const getUsers = async (req, res) => {
   
     
     res.status(200).json({
-      data: users,
+      data: filter,
       refreshedTokenMessage: res.locals.message
     })
   } catch (error) {
@@ -64,12 +65,12 @@ export const getUser = async (req, res) => {
         refreshedTokenMessage: res.locals.message
       })
 
-    const usersearch = await User.findOne({ username: username })
+    let usersearch = await User.findOne({ username: username })
     if (!usersearch) return res.status(400).json({ error: "User not found" ,refreshedTokenMessage: res.locals.message})
-
+    let final_user = { username: usersearch.username,email: usersearch.email, role: usersearch.role }
 
     res.status(200).json({
-      data: usersearch,
+      data: final_user,
       refreshedTokenMessage: res.locals.message
     })
 
@@ -120,13 +121,14 @@ export const createGroup = async (req, res) => {
       })
 
     let { name, memberEmails } = req.body;
-    name = handleString(name, "name");
     if (!name || !memberEmails) {
       return res.status(400).json({
         error: 'Missing attributes in the request body',
         refreshedTokenMessage: res.locals.message
       });
     }
+    name = handleString(name, "name");
+  
 
     const groupExists = await Group.findOne({name: name });
     if (groupExists) {
@@ -136,7 +138,7 @@ export const createGroup = async (req, res) => {
       });
     }
 
-    const userGroup = await Group.findOne({ "members.user": user._id });
+    const userGroup = await Group.findOne({email: user.email });
     if (userGroup) {
       return res.status(400).json({
         error: 'You are already a member of a group',
@@ -169,7 +171,7 @@ export const createGroup = async (req, res) => {
           if (existingGroup) {
             alreadyInGroup.push(email);
           } else {
-            members.push({ email, user: user._id });
+            members.push({ email});
           }
         }
       }
@@ -186,7 +188,7 @@ export const createGroup = async (req, res) => {
     }
 
     if (memberEmails.length === alreadyInGroup.length + membersNotFound.length)
-      return res.status(401).json({
+      return res.status(400).json({
         error: "all the `memberEmails` either do not exist or are already in a group",
         refreshedTokenMessage: res.locals.message
       });
