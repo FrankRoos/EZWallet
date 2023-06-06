@@ -17,8 +17,12 @@ const userRefreshToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZ
 const adminAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbUBnbWFpbC5jb20iLCJpZCI6IjY0NjI3OGEwYjAzMTA1ZGRhYTcwZWIzYiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE2ODU3ODc3MDMsImV4cCI6MTY4NTc5MTMwM30.S48LU8cLrF1kiELJ2aL5qGvvWFmEom4rq0D6UHuSob0'
 const userAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8'
 
+const resetDb = async () => {
+    await User.deleteMany({})
+    await categories.deleteMany({})
+    await Group.deleteMany({})
+    await transactions.deleteMany({})
 
-/*
     const user1 = new User({
         username: 'user1',
         email: 'user1@gmail.com',
@@ -106,34 +110,25 @@ const userAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2
         members: [{ email: user3.email }]
     })
 
-    await Promise..all([user1.save(), user2.save(), user3.save(), admin.save(), transaction1.save(), transaction2.save(), transaction3.save(),
-    transaction4.save(), transaction5.save(), group1.save(), group2.save(), category1.save(), category2.save(), category3.save()])*/
-const resetDb = async () => {
-    await User.deleteMany({})
-    await categories.deleteMany({})
-    await Group.deleteMany({})
-    await transactions.deleteMany({})
+    await Promise.all([user1.save(), user2.save(), user3.save(), admin.save(), transaction1.save(), transaction2.save(), transaction3.save(),
+    transaction4.save(), transaction5.save(), group1.save(), group2.save(), category1.save(), category2.save(), category3.save()])
+
 }
 
-
 beforeAll(async () => {
-  const dbName = "testingDatabaseUsers";
-  const url = `${process.env.MONGO_URI}/${dbName}`;
+    const dbName = "testingDatabaseController";
+    const url = `${process.env.MONGO_URI}/${dbName}`;
 
-  await mongoose.connect(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+    await mongoose.connect(url, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
 
 });
 
-/**
- * After all test cases have been executed the database is deleted.
- * This is done so that subsequent executions of the test suite start with an empty database.
- */
 afterAll(async () => {
-  await mongoose.connection.db.dropDatabase();
-  await mongoose.connection.close();
+    await mongoose.connection.db.dropDatabase();
+    await mongoose.connection.close();
 });
 
 describe("getUsers", () => {
@@ -217,7 +212,211 @@ describe("getUsers", () => {
 
 })
 
-describe("getUser", () => { test("should retrieve list of all users", (done) =>{done()} ) }) 
+describe("getUser", () => {
+  beforeEach(async () => { await resetDb() })
+
+
+  
+
+  test("Should return the user's data given by the parameter", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    
+
+    const retrievedUser = new User({  email: 'test1@example.com', password: 'hashedPassword1', username: 'michelangelo' ,role: 'regular'})
+    await retrievedUser.save()
+
+    
+
+
+    const response = await request(app)
+    .get('/api/users/michelnagelo')
+    .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+   
+
+ 
+    
+
+    
+    expect(response.status).toHaveBeenCalledWith(200)
+    expect(response.json).toHaveBeenCalledWith({data: retrievedUser, refreshedTokenMessage: ""})
+
+  })
+
+   test("Catch Block Test", async () => {
+   
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
+    params:{username: 'michelangelo'}
+      }
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    }
+
+    const retrievedUser = {  email: 'test1@example.com', password: 'hashedPassword1', username: 'michelangelo' ,role: 'regular'}
+    const verify = jest.fn(()=> {throw new Error("Catch Block Try")});
+    utils.verifyAuth = verify;
+
+
+    const username = jest.fn((username)=> {return username});
+    utils.handleString = username;
+
+    jest.spyOn(User, "findOne")
+    .mockReturnValue(1)   //default
+    .mockReturnValueOnce(true)  //first call
+    .mockReturnValueOnce(retrievedUser)  //second call
+ 
+    await users.getUser(mockReq, mockRes)
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({"error": "Catch Block Try", refreshedTokenMessage: ""})
+
+  })
+
+ 
+
+test("should return error 401 if  called by an authenticated user who is neither admin or the user to be found", async () => {
+
+
+  //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+  const mockReq = {
+   cookies: {
+     accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+     refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+   
+ },
+ params:{username: 'michelangelo'}
+   }
+ const mockRes = {
+   cookie: jest.fn(),
+   status: jest.fn().mockReturnThis(),
+   json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+   locals: {
+     message: ""
+   }
+ }
+
+ const retrievedUser = []
+ const verify = jest.fn(()=> {return {flag:false}});
+ utils.verifyAuth = verify;
+
+
+ const username = jest.fn((username)=> {return username});
+ utils.handleString = username;
+
+ jest.spyOn(User, "findOne")
+ .mockReturnValue(1)   //default
+ .mockReturnValueOnce(true)  //first call
+ .mockReturnValueOnce(false)  //second call
+
+ await users.getUser(mockReq, mockRes)
+
+ 
+ expect(mockRes.status).toHaveBeenCalledWith(401)
+ 
+ 
+
+})
+
+test("Should return 400 error if the user not found", async () => {
+
+
+  //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+  const mockReq = {
+   cookies: {
+     accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+     refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+   
+ },
+ params:{username: 'michelangelo'}
+   }
+ const mockRes = {
+   cookie: jest.fn(),
+   status: jest.fn().mockReturnThis(),
+   json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+   locals: {
+     message: ""
+   }
+ }
+
+ const retrievedUser = []
+ const verify = jest.fn(()=> {return {flag:true}});
+ utils.verifyAuth = verify;
+
+
+ const username = jest.fn((username)=> {return username});
+ utils.handleString = username;
+
+ jest.spyOn(User, "findOne")
+ .mockReturnValue(1)   //default
+ .mockReturnValueOnce(true)  //first call
+ .mockReturnValueOnce(false)  //second call
+
+ await users.getUser(mockReq, mockRes)
+
+ 
+ expect(mockRes.status).toHaveBeenCalledWith(400)
+ expect(mockRes.json).toHaveBeenCalledWith({error: "User not found" , refreshedTokenMessage: ""})
+
+})
+
+test("Return error 404 if the username param is empty", async () => {
+
+
+  //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+  const mockReq = {
+   cookies: {
+     accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+     refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+   
+ },
+ params:{username: 'michelangelo'}
+   }
+ const mockRes = {
+   cookie: jest.fn(),
+   status: jest.fn().mockReturnThis(),
+   json: jest.fn().mockResolvedValue({array: 'emptyArray'}),
+   locals: {
+     message: ""
+   }
+ }
+
+ const retrievedUser = []
+ const verify = jest.fn(()=> {return {flag:false}});
+ utils.verifyAuth = verify;
+
+
+ const username = jest.fn().mockImplementation(()=> {throw new Error("Empty string: username")});
+ utils.handleString = username;
+
+ jest.spyOn(User, "findOne")
+ .mockReturnValue(1)   //default
+ .mockReturnValueOnce(true)  //first call
+ .mockReturnValueOnce(false)  //second call
+
+ await users.getUser(mockReq, mockRes)
+
+
+ expect(mockRes.status).toHaveBeenCalledWith(404)
+ expect(mockRes.json).toHaveBeenCalledWith({error: "Service Not Found. Reason: Empty string: username", refreshedTokenMessage: ""})
+ 
+
+})
+
+
+})
+
 
 describe("createGroup", () => { })
 
