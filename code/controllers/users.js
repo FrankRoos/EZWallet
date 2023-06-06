@@ -137,7 +137,7 @@ export const createGroup = async (req, res) => {
       });
     }
 
-    const userGroup = await Group.findOne({ "members.user": user._id });
+    const userGroup = await Group.findOne({email: user.email });
     if (userGroup) {
       return res.status(400).json({
         error: 'You are already a member of a group',
@@ -187,7 +187,7 @@ export const createGroup = async (req, res) => {
     }
 
     if (memberEmails.length === alreadyInGroup.length + membersNotFound.length)
-      return res.status(401).json({
+      return res.status(400).json({
         error: "all the `memberEmails` either do not exist or are already in a group",
         refreshedTokenMessage: res.locals.message
       });
