@@ -21,13 +21,7 @@ const resetDb = async () => {
     await Group.deleteMany({})
     await transactions.deleteMany({})
 
-    const user1 = new User({
-        username: 'user1',
-        email: 'user1@gmail.com',
-        password: '$2a$12$PLj4wPqaqF2vjmnmOzN3C.tBSJqfXTZH22aiI96g914HkbTIhfRLe',
-        role: 'Regular',
-        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXIxQGdtYWlsLmNvbSIsImlkIjoiNjQ2NGJiZWNhZGYyYzM4NzBjNGIwNjgyIiwidXNlcm5hbWUiOiJ1c2VyMSIsInJvbGUiOiJSZWd1bGFyIiwiaWF0IjoxNjg1ODk0ODg2LCJleHAiOjE3MTc0NTI0ODZ9.sDleB1--yGiMR3CFk26YxNgQ_gG36UJVjPEoYyDlKa8',
-    })
+ 
 
     const user2 = new User({
         username: 'user2',
@@ -536,7 +530,7 @@ describe("deleteCategory", () => {
 
         const response = await request(app)
             .delete('/api/categories')
-            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${"userRefreshToken"}`)
             .send(body)
 
         expect(response.status).toBe(401);

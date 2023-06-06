@@ -64,12 +64,12 @@ export const getUser = async (req, res) => {
         refreshedTokenMessage: res.locals.message
       })
 
-    const usersearch = await User.findOne({ username: username })
+    let usersearch = await User.findOne({ username: username })
     if (!usersearch) return res.status(400).json({ error: "User not found" ,refreshedTokenMessage: res.locals.message})
-
+    let final_user = { username: usersearch.username,email: usersearch.email, role: usersearch.role }
 
     res.status(200).json({
-      data: usersearch,
+      data: final_user,
       refreshedTokenMessage: res.locals.message
     })
 
@@ -120,13 +120,14 @@ export const createGroup = async (req, res) => {
       })
 
     let { name, memberEmails } = req.body;
-    name = handleString(name, "name");
     if (!name || !memberEmails) {
       return res.status(400).json({
         error: 'Missing attributes in the request body',
         refreshedTokenMessage: res.locals.message
       });
     }
+    name = handleString(name, "name");
+  
 
     const groupExists = await Group.findOne({name: name });
     if (groupExists) {
@@ -169,7 +170,7 @@ export const createGroup = async (req, res) => {
           if (existingGroup) {
             alreadyInGroup.push(email);
           } else {
-            members.push({ email, user: user._id });
+            members.push({ email});
           }
         }
       }
