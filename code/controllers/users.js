@@ -24,6 +24,7 @@ export const getUsers = async (req, res) => {
       })
 
     const users = await User.find();
+    let filter = users.map(v => Object.assign({}, { username: v.username, email: v.email,role: v.role }))
     const emptyArray = [];
     if (users.length <= 1 || !users) 
       return res.status(400).json({
@@ -33,7 +34,7 @@ export const getUsers = async (req, res) => {
   
     
     res.status(200).json({
-      data: users,
+      data: filter,
       refreshedTokenMessage: res.locals.message
     })
   } catch (error) {
