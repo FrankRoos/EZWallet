@@ -1258,7 +1258,7 @@ describe("createTransaction", () => {
     await controller.createTransaction(mockReq, mockRes)
     expect(User.findOne).toHaveBeenCalledWith({ refreshToken: mockReq.cookies.refreshToken })
     expect(handle_string).toHaveBeenCalledWith(mockReq.params.username, "param-username")
-    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.status).toHaveBeenCalledWith(404)
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Service Not Found. Reason: Empty string: param-username", refreshedTokenMessage: mockRes.locals.message })
 
   })
@@ -2259,7 +2259,9 @@ describe("getTransactionsByUser", () => {
       _id: '1', username: 'user', amount: 100, type: "example", color: "yellow", date: '2023-05-27T15:29:01.845+00:00'
     }]
 
-    jest.spyOn(User, 'findOne').mockImplementationOnce(() => { return Promise.resolve(admin) })
+    jest.spyOn(User, 'findOne')
+      .mockImplementationOnce(() => { return Promise.resolve(admin) })
+      .mockImplementationOnce(() => { return Promise.resolve(true) })
     jest.spyOn(transactions, 'aggregate').mockImplementation(() => { return Promise.resolve(false) })
     utils.verifyAuth = jest.fn().mockReturnValue({flag: false, cause: "You are not an Admin"})
     utils.handleString = jest.fn().mockImplementation((string) => { return string })
