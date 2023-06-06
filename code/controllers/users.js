@@ -780,12 +780,17 @@ export const removeFromGroup = async (req, res) => {
 
 /**
  * Delete a user
-  - Request Parameters: None
-  - Request Body Content: A string equal to the `email` of the user to be deleted
-  - Response `data` Content: An object having an attribute that lists the number of `deletedTransactions` and a boolean attribute that
-    specifies whether the user was also `deletedFromGroup` or not.
-  - Optional behavior:
-    - error 401 is returned if the user does not exist 
+- Request Parameters: None
+- Request Body Content: A string equal to the `email` of the user to be deleted
+  - Example: `{email: "luigi.red@email.com"}`
+- Response `data` Content: An object having an attribute that lists the number of `deletedTransactions` and an attribute that specifies whether the user was also `deletedFromGroup` or not
+  - Example: `res.status(200).json({data: {deletedTransaction: 1, deletedFromGroup: true}, refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- If the user is the last user of a group then the group is deleted as well
+- Returns a 400 error if the request body does not contain all the necessary attributes
+- Returns a 400 error if the email passed in the request body is an empty string
+- Returns a 400 error if the email passed in the request body is not in correct email format
+- Returns a 400 error if the email passed in the request body does not represent a user in the database
+- Returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)
  */
 export const deleteUser = async (req, res) => {
   try {
@@ -798,10 +803,29 @@ export const deleteUser = async (req, res) => {
         error: verify.cause,
         refreshedTokenMessage: res.locals.message
       })
-
+    let { email } = req.body;
+    if (!email && email !== '') {
+      return res.status(400).json({
+        error: 'Missing attribute in the request body',
+        refreshedTokenMessage: res.locals.message
+      });
+    }
+    if (email === '') {
+      return res.status(400).json({
+        error: 'The attribute in the request body is empty',
+        refreshedTokenMessage: res.locals.message
+      });
+    }
+    const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
+    if (!myRegEx.test(email)){
+      return res.status(401).json({
+        error: "email format is not correct",
+        refreshedTokenMessage: res.locals.message
+      });
+    }
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
     if (!existingUser) return res.status(401).json({
-      error: "User doesn't exists",
+      error: "User not found",
       refreshedTokenMessage: res.locals.message
     });
 
@@ -816,6 +840,7 @@ export const deleteUser = async (req, res) => {
       group.members = group.members.filter((member) => member.email !== existingUser.email);
       await group.save();
       data.deletedFromGroup = true;
+
     }
 
     //delete users .....fffff
@@ -856,9 +881,15 @@ export const deleteGroup = async (req, res) => {
       })
 
     let { name } = req.body;
-    if (!name || name === '') {
+    if (!name && name !== '') {
       return res.status(400).json({
-        error: 'Missing attribute in the request body or the string is empty',
+        error: 'Missing attribute in the request body',
+        refreshedTokenMessage: res.locals.message
+      });
+    }
+    if (name === '') {
+      return res.status(400).json({
+        error: 'The attribute in the request body is empty',
         refreshedTokenMessage: res.locals.message
       });
     }
@@ -877,7 +908,7 @@ export const deleteGroup = async (req, res) => {
       data: `Group ${name} has been deleted`,
       refreshedTokenMessage: res.locals.message
     });
-    
+
 
   } catch (err) {
     res.status(400).json({

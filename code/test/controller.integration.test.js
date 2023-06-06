@@ -530,14 +530,14 @@ describe("deleteCategory", () => {
 
     });
 
-    test('One type not exists', async () => {
+    test('You are not an adimn', async () => {
         const body = {
             types: ['bills', 'entertainment']
         }
 
         const response = await request(app)
             .delete('/api/categories')
-            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${"userRefreshToken"}`)
+            .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
             .send(body)
 
         expect(response.status).toBe(401);

@@ -118,7 +118,7 @@ describe('register', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "Password doesn't match constraints,requires at least 8 characters" });
   });
-  test.todo("returns 400 on the catch");
+ 
 
 })
 
@@ -216,7 +216,7 @@ describe("registerAdmin", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "Password doesn't match constraints,requires at least 8 characters" });
   });
-  test.todo("returns 400 on the catch");
+ 
 })
 
 describe('login', () => {
@@ -312,7 +312,7 @@ describe('login', () => {
     expect(response.body).toEqual({ error: 'wrong password' });
   });
   
-  test.todo('cover the catch block');
+
   
 
 });

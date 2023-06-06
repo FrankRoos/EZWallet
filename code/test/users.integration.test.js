@@ -119,7 +119,7 @@ const resetDb = async () => {
 
 
 beforeAll(async () => {
-  const dbName = "testingDatabaseController";
+  const dbName = "testingDatabaseUsers";
   const url = `${process.env.MONGO_URI}/${dbName}`;
 
   await mongoose.connect(url, {
@@ -202,7 +202,7 @@ describe("getUsers", () => {
   
     
     expect(response.status).toBe(200)
-    expect(response.body.data).toEqual({username: "user1",email: "user1@gmail.com",role: "Regular"})
+    
 
   })
 
@@ -215,6 +215,74 @@ describe("getUsers", () => {
 
 })
 
+describe("getUser", () => {
+  beforeEach(async () => { await resetDb() })
+
+
+  
+
+
+
+  test("Should return the user's data given by the parameter", async () => {
+
+    
+    
+  
+    const response = await request(app)
+    .get('/api/users/user1')
+    .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+   
+
+ 
+    
+  
+    
+    expect(response.status).toBe(200)
+    expect(response.body.data).toEqual({username: "user1",email: "user1@gmail.com",role: "Regular"})
+
+  })
+
+
+
+ 
+
+test("should return error 401 if  called by an authenticated user who is neither admin or the user to be found", async () => {
+
+
+  const response = await request(app)
+  .get('/api/users/user2')
+  .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
+ 
+  expect(response.status).toBe(401)
+
+
+})
+
+test("Should return 400 error if the user not found", async () => {
+
+
+
+  const response = await request(app)
+  .get('/api/users/user100')
+  .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
+ 
+
+
+  
+
+  
+  expect(response.status).toBe(400)
+  expect(response.body.error).toEqual("User not found")
+  
+
+
+})
+
+
+
+
+
+})
 
 describe("createGroup", () => {
   
@@ -680,6 +748,510 @@ describe("addToGroup", () => { })
 
 describe("removeFromGroup", () => { })
 
-describe("deleteUser", () => { })
 
-describe("deleteGroup", () => { })
+describe("deleteUser", () => {
+  beforeEach(async () => {
+    await User.deleteMany();
+    await Group.deleteMany();
+    await transactions.deleteMany();
+    await categories.deleteMany();
+  })
+  afterAll(async () => {
+    
+    await User.deleteMany();
+    await Group.deleteMany();
+    await transactions.deleteMany();
+    await categories.deleteMany();
+  });
+  test("Return 200 OK", async()=>{
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+
+    const group = await Group.create({
+      name: 'testgroup',
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });  
+    await transactions.create({
+      username: user.username,
+      type: 'investment',
+      amount: 100,
+    });  
+    const response = await request(app)
+    .delete('/api/users')
+    .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+    .send({ email: user.email });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.deleteTransactions).toBe(1);
+    expect(response.body.data.deletedFromGroup).toBe(true);
+  })
+  test("Return 401 verifyAuth", async()=>{
+    const refreshTokenuser = jwt.sign(
+      {
+        email: 'testuser@example.com',
+        username: 'testuser',
+        role:"Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessTokenuser = jwt.sign(
+      {
+        email: 'testuser@example.com',
+        username: 'testuser',
+        role:"Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'testuser',
+      email: 'testuser@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Regular",
+      refreshToken: refreshTokenuser,
+      accessToken: accessTokenuser,
+    });
+    const response = await request(app)
+    .delete('/api/users')
+    .set('Cookie', `refreshToken=${refreshTokenuser};accessToken=${accessTokenuser}`)
+    .send({ email: user.email });
+
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe('You are not an Admin');
+  })
+  test("Return 400 Missing attribute in the request body", async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    
+    const response = await request(app)
+      .delete('/api/users')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send();
+  
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Missing attribute in the request body');
+  });
+  test("Return 400 if the parameter is empty in the request body", async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    
+    const response = await request(app)
+      .delete('/api/users')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({email:""});
+  
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('The attribute in the request body is empty');
+  });
+  test("Return 401 email format is not correct", async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    
+    const response = await request(app)
+      .delete('/api/users')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({ email: 'invalidemail' });
+  
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe('email format is not correct');
+  });
+  test("Return 401 User not found", async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    
+    const response = await request(app)
+      .delete('/api/users')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({ email: 'nonexistent@gmail.com' });
+  
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe('User not found');
+  });
+  
+  
+  
+
+
+ })
+
+describe("deleteGroup", () => { 
+  beforeEach(async () => {
+    await User.deleteMany();
+    await Group.deleteMany();
+  })
+  afterAll(async () => {
+    
+    await User.deleteMany();
+    await Group.deleteMany();
+  });
+  test('returns a 200 OK response when a valid group name is provided with a valid refresh token', async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+
+    const group = await Group.create({
+      name: 'testgroup',
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });    
+  
+
+    const response = await request(app)
+      .delete('/api/groups')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({ name: group.name });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toBe(`Group ${group.name} has been deleted`);
+  });
+  test('returns a 400 error response when the group name is empty', async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    const group = await Group.create({
+      name: 'testgroup',
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });  
+
+  
+    const response = await request(app)
+      .delete('/api/groups')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({ name: "" });
+  
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('The attribute in the request body is empty');
+  });
+  test('returns a 400 error response when the group name is missing in the parameters', async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    const group = await Group.create({
+      name: 'testgroup',
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });  
+
+  
+    const response = await request(app)
+      .delete('/api/groups')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({ });
+  
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Missing attribute in the request body');
+  });
+  test('returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)', async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Regular"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Regular",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    const group = await Group.create({
+      name: 'testgroup',
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });  
+
+  
+    const response = await request(app)
+      .delete('/api/groups')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({name:group.name });
+  
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe('You are not an Admin');
+  });
+  
+  test('returns a 401 Group doesnt exist', async () => {
+    const refreshToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '7d' }
+    );
+
+    const accessToken = jwt.sign(
+      {
+        email: 'test@example.com',
+        username: 'test',
+        role:"Admin"
+      },
+      process.env.ACCESS_KEY,
+      { expiresIn: '1h' }
+    );
+    const user = await User.create({
+      username: 'test',
+      email: 'test@example.com',
+      password: await bcrypt.hash('password123', 12),
+      role:"Admin",
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    });
+    const group = await Group.create({
+      name: 'testgroup',
+      members: [
+        {
+          email: user.email,
+          user: user._id,
+        },
+      ],
+    });  
+    const not_a_group = "btsbtsbtsbtsbts";
+
+  
+    const response = await request(app)
+      .delete('/api/groups')
+      .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
+      .send({name:not_a_group });
+  
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe(`Group ${not_a_group} does not exist`);
+  });
+})
