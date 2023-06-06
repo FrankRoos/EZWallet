@@ -354,8 +354,7 @@ describe('logout', () => {
       .get('/api/logout')
       .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`);
 
-    console.log('Response Status:', response.status);
-    console.log('Response Body:', response.body);
+
 
     expect(response.status).toBe(200);
     expect(response.body.data.message).toBe('User logged out');
