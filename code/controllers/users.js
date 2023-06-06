@@ -24,13 +24,15 @@ export const getUsers = async (req, res) => {
       })
 
     const users = await User.find();
-    let filter = users.map(v => Object.assign({}, { username: v.username, email: v.email,role: v.role }))
+   
     const emptyArray = [];
     if (users.length <= 1 || !users) 
       return res.status(400).json({
         data: emptyArray,
         refreshedTokenMessage: res.locals.message
       })
+
+      let filter = users.map(v => Object.assign({}, { username: v.username, email: v.email,role: v.role }))
   
     
     res.status(200).json({
@@ -239,7 +241,7 @@ export const getGroups = async (req, res) => {
     const responseData = {
       data: groups.map(group => ({
         name: group.name,
-        members: group.members
+        members: group.members.map((member) => {return {email: member.email}})
       })),
       refreshedTokenMessage: res.locals.message
     };
@@ -398,14 +400,14 @@ export const addToGroup = async (req, res) => {
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
-        return res.status(401).json({
+        return res.status(400).json({
           error: "Group does not exist",
           refreshedTokenMessage: res.locals.message
         });
       }
 
       if (memberEmails.length === 0) {
-        return res.status(401).json({
+        return res.status(400).json({
           error: "No member emails provided",
           refreshedTokenMessage: res.locals.message
         });
@@ -488,7 +490,7 @@ export const addToGroup = async (req, res) => {
       groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
-        return res.status(401).json({ error: "Group does not exist" ,refreshedTokenMessage: res.locals.message});
+        return res.status(400).json({ error: "Group does not exist" ,refreshedTokenMessage: res.locals.message});
       }
       const verify = verifyAuth(req, res, { authType: "Group", emailList: group.members.map(member => member.email), token: user ? user.refreshToken : 0 })
       if (verify.flag === false)
@@ -499,7 +501,7 @@ export const addToGroup = async (req, res) => {
 
 
       if (memberEmails.length === 0) {
-        return res.status(401).json({
+        return res.status(400).json({
           error: "No member emails provided",
           refreshedTokenMessage: res.locals.message
         });
@@ -676,7 +678,7 @@ export const removeFromGroup = async (req, res) => {
         
           group: {
             name: existingGroup.name,
-            members: existingGroup.members
+            members: existingGroup.members.map(member => {return {email:member.email}})
           },
           membersNotFound,
           notInGroup
@@ -757,7 +759,7 @@ export const removeFromGroup = async (req, res) => {
         
           group: {
             name: existingGroup.name,
-            members: existingGroup.members
+            members: existingGroup.members.map((member) =>{return {email: member.email}})
           },
           membersNotFound,
           notInGroup
@@ -818,13 +820,13 @@ export const deleteUser = async (req, res) => {
     }
     const myRegEx = /^\w+([\.-]?\w+)*@[a-z]([\.-]?[a-z])*(\.[a-z]{2,3})+$/;
     if (!myRegEx.test(email)){
-      return res.status(401).json({
+      return res.status(400).json({
         error: "email format is not correct",
         refreshedTokenMessage: res.locals.message
       });
     }
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
-    if (!existingUser) return res.status(401).json({
+    if (!existingUser) return res.status(400).json({
       error: "User not found",
       refreshedTokenMessage: res.locals.message
     });
@@ -897,7 +899,7 @@ export const deleteGroup = async (req, res) => {
 
     const existingGroup = await Group.findOne({ name });
     if (!existingGroup)
-      return res.status(401).json({
+      return res.status(400).json({
         error: `Group ${name} does not exist`,
         refreshedTokenMessage: res.locals.message
       });

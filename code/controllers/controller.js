@@ -148,7 +148,7 @@ export const updateCategory = async (req, res) => {
 
     } catch (error) {
         if (error.message === "Empty string: type")
-            res.status(400).json({
+            res.status(404).json({
                 error: "Service Not Found. Reason: " + error.message,
                 refreshedTokenMessage: res.locals.message
             })
@@ -366,7 +366,7 @@ export const getAllTransactions = async (req, res) => {
             },
             { $unwind: "$categories_info" }
         ]).then((result) => {
-            let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
+            let data = result.map(v => Object.assign({}, {username: v.username, amount: v.amount, type: v.type, date: v.date , color: v.categories_info.color}))
             res.status(200).json({
                 data: data,
                 refreshedTokenMessage: res.locals.message
@@ -449,7 +449,7 @@ export const getTransactionsByUser = async (req, res) => {
 
         ]);
 
-        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, {username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
         return res.status(200).json({
             data: selectedTransactions,
@@ -531,7 +531,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
             { $unwind: "$categories_info" }
         ]);
 
-        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, {username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
         return res.status(200).json({
             data: selectedTransactions,
@@ -614,7 +614,7 @@ export const getTransactionsByGroup = async (req, res) => {
             { $unwind: "$user_info" }
         ]);
 
-        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, {username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
         return res.status(200).json({
             data: selectedTransactions,
@@ -707,7 +707,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
             { $unwind: "$user_info" }
         ]);
 
-        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, { _id: transaction._id, username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
+        selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, {username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
         return res.status(200).json({
             data: selectedTransactions,

@@ -596,77 +596,20 @@ await usery.save()
 
 })
 
-describe("getGroup", () => {
+describe("getGroups", () => {
   beforeEach(async () => { await resetDb() })
-  test('Should returns the group if called by admin', async () => {
+  
+
+  test('Should returns the list of all the groups', async () => {
 
     const response = await request(app)
-      .get('/api/groups/group1')
+      .get('/api/groups')
       .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
 
     expect(response.status).toBe(200);
-    expect(response.body.data).toEqual({ members: ["user1@gmail.com", "user2@gmail.com"], name: "group1" })
+    expect(response.body.data).toEqual([{"members": [{"email": "user1@gmail.com"}, {"email": "user2@gmail.com"}], "name": "group1"}, {"members": [{"email": "user3@gmail.com"}], "name": "group2"}])
   });
 
-  test('Should returns error 400 if the groupName is not associatied with a group, called by Admin', async () => {
-
-    const response = await request(app)
-      .get('/api/groups/group3')
-      .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toEqual("The group group3 does not exist")
-  });
-
-  test('Should returns error 400 if the groupName is not associatied with a group, called by Regular', async () => {
-
-    const response = await request(app)
-      .get('/api/groups/group3')
-      .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toEqual("The group group3 does not exist")
-  });
-
-  test('Should returns error 401 if the user is not associated with that groupName passed by params, called by Regular', async () => {
-
-    const response = await request(app)
-      .get('/api/groups/group2')
-      .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
-
-    expect(response.status).toBe(401);
-    expect(response.body.error).toEqual("Your email is not in the group")
-  });
-
-  test('Should returns the group if caller is a normal user', async () => {
-
-    const response = await request(app)
-      .get('/api/groups/group1')
-      .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
-
-    expect(response.status).toBe(200);
-    expect(response.body.data).toEqual({ "members": ["user1@gmail.com", "user2@gmail.com"], "name": "group1" })
-  });
-
-  test('Missing access token', async () => {
-
-    const response = await request(app)
-      .get('/api/groups/group1')
-      .set("Cookie", `accessToken=; refreshToken=${userRefreshToken}`)
-
-    expect(response.status).toBe(401);
-    expect(response.body.error).toEqual("Unauthorized")
-  });
-
-  test('Missing refresh token', async () => {
-
-    const response = await request(app)
-      .get('/api/groups/group1')
-      .set("Cookie", `accessToken=${userAccessToken}; refreshToken=`)
-
-    expect(response.status).toBe(401);
-    expect(response.body.error).toEqual("Unauthorized")
-  });
 
 })
 

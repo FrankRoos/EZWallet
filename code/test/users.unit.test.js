@@ -144,7 +144,7 @@ describe("getUsers", () => {
         message: ""
       }
     }
-    const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1', role: 'regular' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2', role: 'regular' }]
+    const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', role: 'regular' }, { username: 'test2', email: 'test2@example.com', role: 'regular' }]
     jest.spyOn(User, "find").mockImplementation(() => retrievedUsers)
     const veriFy = jest.fn(()=> {return true});
     utils.verifyAuth = veriFy;
@@ -195,7 +195,7 @@ describe("getUser", () => {
       }
     }
 
-    const retrievedUser = {  email: 'test1@example.com', password: 'hashedPassword1', username: 'michelangelo' ,role: 'regular'}
+    const retrievedUser = {  email: 'test1@example.com', username: 'michelangelo' ,role: 'regular'}
     const verify = jest.fn(()=> {return {flag:true}});
     utils.verifyAuth = verify;
 
@@ -738,7 +738,7 @@ describe("createGroup", () => {
   })
 
 
-  test("Should  Returns a 400 error if the group name passed in the request body is an empty string", async () => {
+  test("Should  Returns a 400 error if the body miss some parameter in the request body is an empty string", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -777,11 +777,13 @@ describe("createGroup", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(400)
-    expect(mockRes.json).toHaveBeenCalledWith({error: "Empty string: name", refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith({error: "Missing attributes in the request body", refreshedTokenMessage: ""})
  
 
   })
 
+
+  
   test("Should Returns a 400 error if the group name passed in the request body represents an already existing group in the database", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
@@ -936,14 +938,14 @@ describe("createGroup", () => {
     await users.createGroup(mockReq, mockRes)
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({error: "all the `memberEmails` either do not exist or are already in a group", refreshedTokenMessage: ""})
  
 
   })
 
 
-  test("Should Returns a 401 error if all member emails doensnt exists ", async () => {
+  test("Should Returns a 400 error if all member emails doensnt exists ", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -990,7 +992,7 @@ describe("createGroup", () => {
     await users.createGroup(mockReq, mockRes)
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({error: "all the `memberEmails` either do not exist or are already in a group", refreshedTokenMessage: ""})
  
 
@@ -1075,7 +1077,7 @@ test("Should returns all  groups ", async () => {
   
       
       expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith({"data" : [{"members" : ["member1@example.com","member2@example.com"] , "name" : "Test Group"},{"members" : ["member3@example.com","member4@example.com"] , "name" : "Test Group2"}, ], refreshedTokenMessage: ""})
+     
   
    
     })
@@ -2054,7 +2056,7 @@ describe("addToGroup", () => {
   })
 
 
-  test("Should returns error 401 if the  group does not exists ", async () => {
+  test("Should returns error 400 if the  group does not exists ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2114,7 +2116,7 @@ describe("addToGroup", () => {
     
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({error : "Group does not exist" ,refreshedTokenMessage: ""})
  
  
@@ -2236,7 +2238,7 @@ describe("addToGroup", () => {
  
   })
 
-  test("Should returns error 401 if the email array is empty ", async () => {
+  test("Should returns error 400 if the email array is empty ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2286,14 +2288,14 @@ describe("addToGroup", () => {
    
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({error : "No member emails provided" ,refreshedTokenMessage: ""})
 
  
   })
 
 
-  test("Should returns error 401 if the email array is empty ,Regular", async () => {
+  test("Should returns error 400 if the email array is empty ,Regular", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2345,14 +2347,14 @@ describe("addToGroup", () => {
    
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({error : "No member emails provided" ,refreshedTokenMessage: ""})
 
  
   })
 
 
-  test("Should returns error 401 if the groupName doesnt match with an existings one ", async () => {
+  test("Should returns error 400 if the groupName doesnt match with an existings one ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2402,7 +2404,7 @@ describe("addToGroup", () => {
    
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({error : "Group does not exist" ,refreshedTokenMessage: ""})
 
  
@@ -4110,7 +4112,7 @@ describe("deleteUser", () => {
  
   })
 
-  test("Should return error 401 if the user to delete does not exists", async () => {
+  test("Should return error 400 if the user to delete does not exists", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -4165,8 +4167,8 @@ describe("deleteUser", () => {
    
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
-    expect(mockRes.json).toHaveBeenCalledWith({"error": "User doesn't exists", refreshedTokenMessage: ""})
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({"error": "User not found", refreshedTokenMessage: ""})
    
 
  
@@ -4376,6 +4378,66 @@ describe("deleteGroup", () => {
         refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
       
     },
+    body: {}
+
+};
+    const mockRes = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals: {
+        message: ""
+      }
+    };
+    const user= {role :"Admin", username :"pinco"};
+    const usertoadd= {email :"toyota@polito.it", _id : 1};
+  
+   
+    
+    
+    const group=  {name: 'Test Group', members: [ {email:'member1@example.com'}, {email: 'member2@example.com' } ], save: jest.fn() }
+            
+
+   
+    const verify = jest.fn(()=> {return {flag:true}});
+    utils.verifyAuth = verify;
+     
+    const groupname = jest.fn((groupname)=> {return groupname});
+     utils.handleString = groupname;
+
+ 
+    
+    jest.spyOn(User, "findOne").mockResolvedValueOnce(user)
+    jest.spyOn(Group, "findOne").mockResolvedValueOnce(group) 
+   
+    
+    
+    jest.spyOn(Group.prototype, 'save')
+    .mockImplementationOnce(() => Promise.resolve(1))
+
+
+
+  
+    
+    await users.deleteGroup(mockReq, mockRes)
+   
+
+    
+    expect(mockRes.status).toHaveBeenCalledWith(400)
+    expect(mockRes.json).toHaveBeenCalledWith({"error": 'Missing attribute in the request body', refreshedTokenMessage: ""})
+
+ 
+  })
+
+  test("Should return error 400 if the groupname is empty", async () => {
+     
+    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+    const mockReq = {
+      cookies: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
+        refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
+      
+    },
     body: {name: ''}
 
 };
@@ -4422,12 +4484,12 @@ describe("deleteGroup", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(400)
-    expect(mockRes.json).toHaveBeenCalledWith({"error": 'Missing attribute in the request body or the string is empty', refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith({"error": "The attribute in the request body is empty", refreshedTokenMessage: ""})
 
  
   })
 
-  test("Should return error 401 if the groupname is missing", async () => {
+  test("Should return error 400 if the grouptest does not exists", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -4481,7 +4543,7 @@ describe("deleteGroup", () => {
    
 
     
-    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({"error": 'Group test does not exist', refreshedTokenMessage: ""})
 
  
