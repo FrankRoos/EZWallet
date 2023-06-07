@@ -47,7 +47,7 @@ describe('register', () => {
       data: { message: "User added succesfully" },
     });
   });
-  test("Should return 400 if missing parameters in the body", async () => {
+  test("Should return 400 if missing first parameters in the body ", async () => {
     const mockReq = {
       body: {
         email: 'ciao@gmail.com'
@@ -64,7 +64,7 @@ describe('register', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
-  test("Should return 400 if missing parameters in the body", async () => {
+  test("Should return 400 if missing second parameters in the body", async () => {
     const mockReq = {
       body: {
         email: 'ciao@gmail.com',
@@ -82,7 +82,7 @@ describe('register', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
-  test("Should return 400 if missing parameters in the body", async () => {
+  test("Should return 400 if missing third parameters in the body", async () => {
     const mockReq = {
       body: {
         
