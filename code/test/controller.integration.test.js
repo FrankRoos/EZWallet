@@ -1436,7 +1436,7 @@ describe("deleteTransaction", () => {
         expect(response.body.error).toEqual("Missing id")
     });
 
-    test('Missing id in req body', async () => {
+    test('User not found', async () => {
         const body = {
             _id: '000ddc0d00a0a00b0c00a000'
         }
