@@ -161,7 +161,7 @@ describe("registerAdmin", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
-  test('returns error 400 when any parameter is empty', async () => {
+  test('returns error 400 when any  1 parameter is empty', async () => {
     const response = await request(app)
       .post('/api/admin')
       .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: '' });
@@ -169,7 +169,7 @@ describe("registerAdmin", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'A parameter is empty' });
   });
-  test('returns error 400 when any parameter is empty', async () => {
+  test('returns error 400 when any 2 parameter is empty', async () => {
     const response = await request(app)
       .post('/api/admin')
       .send({ email: 'ciao@gmail.com', username: '', password: '3454421ddd' });
@@ -177,7 +177,7 @@ describe("registerAdmin", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'A parameter is empty' });
   });
-  test('returns error 400 when any parameter is empty', async () => {
+  test('returns error 400 when any 3 parameter is empty', async () => {
     const response = await request(app)
       .post('/api/admin')
       .send({ email: '', username: 'ciaociao', password: 'rfgtyhyy' });
@@ -263,7 +263,7 @@ describe('login', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing Parameters' });
   });
-  test('returns error 400 when any parameter is empty', async () => {
+  test('returns error 400 when any 1 parameter is empty', async () => {
     const response = await request(app)
       .post('/api/login')
       .send({ email: 'ciao@gmail.com', password: '' });
@@ -271,7 +271,7 @@ describe('login', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'A parameter is empty' });
   });
-  test('returns error 400 when any parameter is empty', async () => {
+  test('returns error 400 when any 2 parameter is empty', async () => {
     const response = await request(app)
       .post('/api/login')
       .send({ email: 'ciao@gmail.com', password: '' });
@@ -287,7 +287,7 @@ describe('login', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Email format is not correct' });
   });
-  test('returns error 400 the email format is not correct', async () => {
+  test('returns error 400 the email does not exists', async () => {
     const response = await request(app)
       .post('/api/login')
       .send({ email: 'ciao@gmail.com', username: 'ciaociao', password: 'testtesttest' });

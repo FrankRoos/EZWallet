@@ -293,7 +293,7 @@ describe("registerAdmin", () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
-  test("Should return 400 if missing parameters in the body", async () => {
+  test("Should return 400 if 1 missing parameters in the body", async () => {
     const mockReq = {
       body: {
         email: 'ciao@gmail.com',
@@ -311,7 +311,7 @@ describe("registerAdmin", () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
-  test("Should return 400 if missing parameters in the body", async () => {
+  test("Should return 400 if 2missing parameters in the body", async () => {
     const mockReq = {
       body: {
         
@@ -330,7 +330,7 @@ describe("registerAdmin", () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing Parameters' });
 
   })
-  test("Should return 400 if missing a parameter is empty", async () => {
+  test("Should return 400 if 3missing a parameter is empty", async () => {
     const mockReq = {
       body: {
         username: "",

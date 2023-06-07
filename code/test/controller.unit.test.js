@@ -1182,7 +1182,7 @@ describe("getCategories", () => {
   beforeEach(() => {
     jest.restoreAllMocks()
   });
-  test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+  test("Should return a 401 error if called by an authenticated user who is not an admin 1(authType = Admin)", async () => {
 
     const mockReq = {
       cookies: {
@@ -1212,7 +1212,7 @@ describe("getCategories", () => {
 
   })
 
-  test("Should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+  test("Should return a 401 error if called by an authenticated user who is not an admin 2(authType = Admin)", async () => {
     const categor = []
     const mockReq = {
       cookies: {
