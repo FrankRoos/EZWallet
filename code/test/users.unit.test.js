@@ -93,7 +93,7 @@ describe("getUsers", () => {
 
   })
 
-  test("should return empty list if there are no users", async () => {
+  test("Should return empty list if there are no users", async () => {
 
 
     const mockReq = {
@@ -259,7 +259,7 @@ describe("getUser", () => {
 
  
 
-test("should return error 401 if  called by an authenticated user who is neither admin or the user to be found", async () => {
+test("Should return error 401 if  called by an authenticated user who is neither admin or the user to be found", async () => {
 
 
   //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
@@ -344,7 +344,7 @@ test("Should return 400 error if the user not found", async () => {
 
 })
 
-test("Return error 404 if the username param is empty", async () => {
+test("Should return error 404 if the username param is empty", async () => {
 
 
   //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
@@ -409,7 +409,7 @@ describe("createGroup", () => {
     
   });
 
-  test("Should Returns a 400 error, and separately the list of all invalid emails ", async () => {
+  test("Should Return a 400 error, and separately the list of all invalid emails ", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -561,7 +561,7 @@ describe("createGroup", () => {
   })
 
 
-  test("Should Returns an group Object, and separately the emails that where already in a group or doesn't exists  ", async () => {
+  test("Should Return an group Object, and separately the emails that where already in a group or doesn't exists  ", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -646,7 +646,7 @@ describe("createGroup", () => {
 
 
 
-  test("Should Returns a 400 error if the request body does not contain all the necessary attributes", async () => {
+  test("Should Return a 400 error if the request body does not contain all the necessary attributes", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -692,7 +692,7 @@ describe("createGroup", () => {
   })
 
 
-  test("Should Returns a 401 error if called by a user who is not authenticated", async () => {
+  test("Should Return a 401 error if called by a user who is not authenticated", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -738,7 +738,7 @@ describe("createGroup", () => {
   })
 
 
-  test("Should  Returns a 400 error if the body miss some parameter in the request body is an empty string", async () => {
+  test("Should  Return a 400 error if the body miss some parameter in the request body is an empty string", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -784,7 +784,7 @@ describe("createGroup", () => {
 
 
   
-  test("Should Returns a 400 error if the group name passed in the request body represents an already existing group in the database", async () => {
+  test("Should Return a 400 error if the group name passed in the request body represents an already existing group in the database", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -836,7 +836,7 @@ describe("createGroup", () => {
      
 
 
-  test("Should Returns a 400 error if the user who calls the API is already in a group", async () => {
+  test("Should Return a 400 error if the user who calls the API is already in a group", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -889,8 +889,7 @@ describe("createGroup", () => {
   })
 
 
-
-  test("Should Returns a 400 error if all emails are already in group", async () => {
+  test("Should Return a 400 error if all emails are already in group", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -945,7 +944,7 @@ describe("createGroup", () => {
   })
 
 
-  test("Should Returns a 400 error if all member emails doensnt exists ", async () => {
+  test("Should Return a 400 error if all member emails doensnt exists ", async () => {
    
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -999,17 +998,6 @@ describe("createGroup", () => {
   })
 
 
-
-
-  
- 
-
-
-
-
-
-      
-        
         
         afterEach(()=>{jest.restoreAllMocks();})
   })
@@ -1027,10 +1015,7 @@ describe("getGroups", () => {
   });
 
 
-
-
-
-test("Should returns all  groups ", async () => {
+test("Should return all  groups ", async () => {
    
       //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
       const mockReq = {
@@ -1135,7 +1120,7 @@ test("Should returns all  groups ", async () => {
    
     })
 
-test("Should returns error 401 if is not called by an admin ", async () => {
+test("Should return error 401 if is not called by an admin ", async () => {
    
       //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
       const mockReq = {
@@ -1193,9 +1178,6 @@ test("Should returns error 401 if is not called by an admin ", async () => {
 
 
 
-
-
-
  describe("getGroup", () => {
   beforeEach(() => {
     User.find.mockClear()
@@ -1210,11 +1192,7 @@ test("Should returns error 401 if is not called by an admin ", async () => {
 
 
   
-  
-  
-  
-  
-  test("Should returns the group if called by admin ", async () => {
+  test("Should return the group if called by admin ", async () => {
      
         //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
         const mockReq = {
@@ -1270,7 +1248,7 @@ test("Should returns error 401 if is not called by an admin ", async () => {
       })
 
 
-   test("Should returns error 400 if  the groupName is not associatied with a  group,called by Admin", async () => {
+   test("Should return error 400 if  the groupName is not associatied with a  group,called by Admin", async () => {
      
         //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
         const mockReq = {
@@ -1327,7 +1305,7 @@ test("Should returns error 401 if is not called by an admin ", async () => {
 
 
 
-      test("Should returns error 400 if  the groupName is not associatied with a  group,called by Regular", async () => {
+      test("Should return error 400 if  the groupName is not associatied with a  group,called by Regular", async () => {
      
         //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
         const mockReq = {
@@ -1607,7 +1585,7 @@ test("Should returns error 401 if is not called by an admin ", async () => {
       })
   
 
-  test("Should returns error 404 if the param is empty", async () => {
+  test("Should return error 404 if the param is empty", async () => {
      
         //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
         const mockReq = {
@@ -1663,7 +1641,7 @@ test("Should returns error 401 if is not called by an admin ", async () => {
   
 })
 
-test("Should returns error 401 if the body misses some cookies", async () => {
+test("Should return error 401 if the body misses some cookies", async () => {
      
   //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
   const mockReq = {
@@ -1719,7 +1697,7 @@ test("Should returns error 401 if the body misses some cookies", async () => {
 
 })
 
-test("Should returns error 401 if the refresh token is not associated with an User", async () => {
+test("Should return error 401 if the refresh token is not associated with an User", async () => {
      
   //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
   const mockReq = {
@@ -1990,7 +1968,7 @@ describe("addToGroup", () => {
  
   })
 
-  test("Should returns error 401 if the  user is not authorized for that Group ", async () => {
+  test("Should return error 401 if the  user is not authorized for that Group ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2056,7 +2034,7 @@ describe("addToGroup", () => {
   })
 
 
-  test("Should returns error 400 if the  group does not exists ", async () => {
+  test("Should return error 400 if the  group does not exists ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2123,7 +2101,7 @@ describe("addToGroup", () => {
   })
 
 
-  test("Should returns error 401 if the admin is not authorized ", async () => {
+  test("Should return error 401 if the admin is not authorized ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2182,7 +2160,7 @@ describe("addToGroup", () => {
 
 
 
-  test("Should returns error 400 if the email array is missing ", async () => {
+  test("Should return error 400 if the email array is missing ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2238,7 +2216,7 @@ describe("addToGroup", () => {
  
   })
 
-  test("Should returns error 400 if the email array is empty ", async () => {
+  test("Should return error 400 if the email array is empty ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2295,7 +2273,7 @@ describe("addToGroup", () => {
   })
 
 
-  test("Should returns error 400 if the email array is empty ,Regular", async () => {
+  test("Should return error 400 if the email array is empty Regular", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2354,7 +2332,7 @@ describe("addToGroup", () => {
   })
 
 
-  test("Should returns error 400 if the groupName doesnt match with an existings one ", async () => {
+  test("Should return error 400 if the groupName doesnt match with an existings one ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2411,7 +2389,7 @@ describe("addToGroup", () => {
   })
 
 
-  test("Should returns error 400 if some email are invalid ", async () => {
+  test("Should return error 400 if some email are invalid ", async () => {
      
     //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
     const mockReq = {
@@ -2829,22 +2807,6 @@ describe("addToGroup", () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   afterEach(() => {
     User.find.mockClear()
     User.findOne.mockClear()
@@ -2852,7 +2814,11 @@ describe("addToGroup", () => {
     Group.findOne.mockClear()
 
 
-})   })
+  })   
+})
+
+
+
 describe("removeFromGroup", () => { 
   beforeEach(() => {
     User.find.mockClear()
@@ -3901,7 +3867,8 @@ describe("removeFromGroup", () => {
     Group.findOne.mockClear()
 
 
-})   })
+  })  
+})
 
 describe("deleteUser", () => { 
 
