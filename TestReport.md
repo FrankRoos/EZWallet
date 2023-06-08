@@ -17,7 +17,7 @@
 
 
 # Dependency graph 
-![Screenshot](../ezwallet/images/Graphic_dependency.png)
+![Screenshot](images/Graphic_dependency.png)
      
 # Integration approach
 
