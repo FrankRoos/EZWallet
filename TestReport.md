@@ -20,19 +20,12 @@
 ![Screenshot](images/Graphic_dependency.png)
      
 # Integration approach
-
-    <Write here the integration sequence you adopted, in general terms (top down, bottom up, mixed) and as sequence
-    (ex: step1: unit A, step 2: unit A+B, step 3: unit A+B+C, etc)> 
-    <Some steps may  correspond to unit testing (ex step1 in ex above)>
-    <One step will  correspond to API testing, or testing unit route.js>
+The approach used was Bottom-up, from unit testing to integration testing.
+We started unit tests by mocking all the functions inherent to the libraries used (jwt, bcrypt and mongoose and external functions from utils file) and then moved on to integration tests to verify them (this approach was performed for all functions except those in utils) with API testing or testing with route.js.
     
 
 
 # Tests
-
-   <in the table below list the test cases defined For each test report the object tested, the test level (API, integration, unit) and the technique used to define the test case  (BB/ eq partitioning, BB/ boundary, WB/ statement coverage, etc)>   <split the table if needed>
-
-
 | Test case name | Object(s) tested | Test level | Technique used |
 |--|--|--|--|
 |Simple register|register|unit|Statement coverage
@@ -71,7 +64,19 @@
 |User not found=> Error 400|-|-|-
 |Error 401 on verifyAuth|-|-|-
 |Return 400 of the catch|-|-|-
-|Should return status 200 OK on successful registration|registerAdmin|integration|Statement coverage
+|Should return status 200 OK on successful
+|-|-|-|-
+|Should return status 200 OK on successful registration|register|integration|Statement coverage
+|returns error 400 when any parameter is missing|-|-|-
+|returns error 400 when any parameter is missing2|-|-|-
+|returns error 400 when any parameter is empty|-|-|-
+|returns error 400 when any parameter is empty1|-|-|-
+|returns error 400 when any parameter is empty2|-|-|-
+|returns error 400 the email format is not correct|-|-|-
+|returns error 400 when the username is already taken|-|-|-
+|'returns error 400 when the password lenght is < 8|-|-|-
+|-|-|-|-
+registration|registerAdmin|integration|Statement coverage
 |returns 400 error when any 1 parameter is missing|-|-|-
 |returns error 400 when any 2parameter is missing2|-|-|-
 |returns error 400 when any  3parameter is empty|-|-|-
@@ -197,168 +202,183 @@
 |Ids have a wrong format|-|-|-
 |-|-|-|-
 |Create a new category successfully|createCategory|integration|statement coverage
-|The request does not contain all attributes||integration|statement coverage
-|At least one param is an empty string (type)||integration|statement coverage
-|At least one param is an empty string (color)||integration|statement coverage
-|Category already exists||integration|statement coverage
-|Color already used||integration|statement coverage
-|Not an admin||integration|statement coverage
+|The request does not contain all attribute|-|-|-
+|At least one param is an empty string (type)||-|-|-
+|At least one param is an empty string (color)|-|-|-
+|Category already exists|-|-|-
+|Color already used|-|-|-
+|Not an admin|-|-|-
+|-|-|-|-
 |Category updated successfully (change type)|updateCategory|integration|statement coverage
-|Category updated successfully (change color)||integration|statement coverage
-|Category updated successfully (change color and type)||integration|statement coverage
-|Body does not contain all attributes||integration|statement coverage
-|At least one param is empty (type)||integration|statement coverage
-|At least one param is empty (color)||integration|statement coverage
-|Type parameter in route not exists||integration|statement coverage
-|Category in body already exists||integration|statement coverage
-|Not an admin||integration|statement coverage
-|Missing category parameter||integration|statement coverage
+|Category updated successfully (change color)|-|-|-
+|Category updated successfully (change color and type)|-|-|-
+|Body does not contain all attributes|-|-|-
+|At least one param is empty (type)|-|-|-
+|At least one param is empty (color)|-|-|-
+|Type parameter in route not exists|-|-|-
+|Category in body already exists|-|-|-
+|Not an admin|-|-|-
+|Missing category parameter|-|-|-
+|-|-|-|-
 |Category is deleted successfully|deleteCategory|integration|statement coverage
-|List of Categories is deleted successfully||integration|statement coverage
-|All categories deleted (the oldest not, transactions are updated with it)||integration|statement coverage
-|Body does not contain all attributes||integration|statement coverage
-|Try to delete the last category||integration|statement coverage
-|At least one type empty||integration|statement coverage
-|One type not exists||integration|statement coverage
-|You are not an admin||integration|statement coverage
+|List of Categories is deleted successfully|-|-|-
+|All categories deleted (the oldest not, transactions are updated with it)|-|-|-
+|Body does not contain all attributes|-|-|-
+|Try to delete the last category|-|-|-
+|At least one type empty|-|-|-
+|One type not exists|-|-|-
+|You are not an admin|-|-|-
+|-|-|-|-
 |A list of all categories returns|getCategories|integration|statement coverage
-|User not authenticated||integration|statement coverage
+|User not authenticated|-|-|-
+|-|-|-|-
 |Transaction created successfully|createTransaction|integration|statement coverage
-|Body does not contain all attributes||integration|statement coverage
-|A param is an empty string (username)||integration|statement coverage
-|A param is an empty string (amount)||integration|statement coverage
-|A param is an empty string (type)||integration|statement coverage
-|Category is not found||integration|statement coverage
-|Username in body and username in route are different||integration|statement coverage
-|Username in body does not exist||integration|statement coverage
-|Username in route does not exist||integration|statement coverage
-|Amount is not a number||integration|statement coverage
-|Different user||integration|statement coverage
-|Added by admin on a user||integration|statement coverage
-|Username parameter is empty string||integration|statement coverage
+|Body does not contain all attributes|-|-|-
+|A param is an empty string (username)|-|-|-
+|A param is an empty string (amount)|-|-|-
+|A param is an empty string (type)|-|-|-
+|Category is not found|-|-|-
+|Username in body and username in route are different|-|-|-
+|Username in body does not exist|-|-|-
+|Username in route does not exist|-|-|-
+|Amount is not a number|-|-|-
+|Different user|-|-|-
+|Added by admin on a user|-|-|-
+|Username parameter is empty string|-|-|-
+|-|-|-|-
 |Return the list of transactions of all users|getAllTransactions|integration|statement coverage
 |User try to get all transactions||integration|statement coverage
+|-|-|-|-
 |User tries to get all their transactions|getTransactionsByUser|integration|statement coverage
-|User tries to get all their transactions filtered by date||integration|statement coverage
-|User tries to get all their transactions filtered by date (from)||integration|statement coverage
-|User tries to get all their transactions filtered by date (upTo)||integration|statement coverage
-|User tries to get all their transactions filtered by date (from & upTo)||integration|statement coverage
-|Filters (on date) do not match any transaction||integration|statement coverage
-|User tries to get all their transactions filtered by amount||integration|statement coverage
-|User tries to get all their transactions filtered by amount (min)||integration|statement coverage
-|User tries to get all their transactions filtered by amount (max)||integration|statement coverage
-|User tries to get all their transactions filtered by amount (min & max)||integration|statement coverage
-|User tries to get all their transactions filtered by amount (min & max) and by date (from & upTo)||integration|statement coverage
-|User tries to get all their transactions filtered by amount and by date||integration|statement coverage
-|User passed as parameter is not memorized in DB||integration|statement coverage
-|User authenticated and the request one are different||integration|statement coverage
-|User tries to use admin api||integration|statement coverage
-|Admin gets transactions of a User||integration|statement coverage
-|Username parameter is missing||integration|statement coverage
+|User tries to get all their transactions filtered by date|-|-|-
+|User tries to get all their transactions filtered by date (from)|-|-|-
+|User tries to get all their transactions filtered by date (upTo)|-|-|-
+|User tries to get all their transactions filtered by date (from & upTo)|-|-|-
+|Filters (on date) do not match any transaction|-|-|-
+|User tries to get all their transactions filtered by amount|-|-|-
+|User tries to get all their transactions filtered by amount (min)|-|-|-
+|User tries to get all their transactions filtered by amount (max)|-|-|-
+|User tries to get all their transactions filtered by amount (min & max)|-|-|-
+|User tries to get all their transactions filtered by amount (min & max) and by date (from & upTo)|-|-|-
+|User tries to get all their transactions filtered by amount and by date|-|-|-
+|User passed as parameter is not memorized in DB|-|-|-
+|User authenticated and the request one are different|-|-|-
+|User tries to use admin api|-|-|-
+|Admin gets transactions of a User|-|-|-
+|Username parameter is missing|-|-|-
+|-|-|-|-
 |User gets all their transactions filtered by category|getTransactionsByUserByCategory|integration|statement coverage
-|Category not exists||integration|statement coverage
-|User passed as parameter not exists||integration|statement coverage
-|User authenticated and the requested one are different||integration|statement coverage
-|User tries to use admin api||integration|statement coverage
-|Admin gets transactions of user filtered by category||integration|statement coverage
+|Category not exists|-|-|-
+|User passed as parameter not exists|-|-|-
+|User authenticated and the requested one are different|-|-|-
+|User tries to use admin api|-|-|-
+|Admin gets transactions of user filtered by category|-|-|-
+|-|-|-|-
 |User gets transactions of their own group|getTransactionsByGroup|integration|statement coverage
-|Group does not exist||integration|statement coverage
-|User not in this group||integration|statement coverage
-|User tries to use admin api||integration|statement coverage
-|Admin gets transactions of a group||integration|statement coverage
+|Group does not exist|-|-|-
+|User not in this group|-|-|-
+|User tries to use admin api|-|-|-
+|Admin gets transactions of a group|-|-|-
+|-|-|-|-
 |User gets transactions of their own group filtered by category|getTransactionsByGroupByCategory|integration|statement coverage
-|Category not exists||integration|statement coverage
-|Group not exists||integration|statement coverage
-|User is not in the group||integration|statement coverage
-|User tries to use admin api||integration|statement coverage
-|Admin gets group transactions filtered by category||integration|statement coverage
-|Group parameter is missing||integration|statement coverage
-|Group parameter is missing||integration|statement coverage
+|Category not exists|-|-|-
+|Group not exists|-|-|-
+|User is not in the group|-|-|-
+|User tries to use admin api|-|-|-
+|Admin gets group transactions filtered by category|-|-|-
+|Group parameter is missing|-|-|-
+|Group parameter is missing|-|-|-
+|-|-|-|-
 |User delete one of their transactions|deleteTransaction|integration|statement coverage
-|Missing id in req body||integration|statement coverage
-|User not found||integration|statement coverage
-|Transaction not exists||integration|statement coverage
-|Transaction of another user||integration|statement coverage
-|User authenticated and requested are different||integration|statement coverage
-|Id format invalid||integration|statement coverage
-|Username parameter is missing||integration|statement coverage
+|Missing id in req body|-|-|-
+|User not found|-|-|-
+|Transaction not exists|-|-|-
+|Transaction of another user|-|-|-
+|User authenticated and requested are different|-|-|-
+|Id format invalid|-|-|-
+|Username parameter is missing|-|-|-
+|-|-|-|-
 |Admin deletes transactions|deleteTransactions|integration|statement coverage
-|At least one id is empty||integration|statement coverage
-|Missing ids in body||integration|statement coverage
-|At least one transaction does not exist||integration|statement coverage
-|Not admin||integration|statement coverage
-|Id not valid||integration|statement coverage
+|At least one id is empty|-|-|-
+|Missing ids in body|-|-|-
+|At least one transaction does not exist|-|-|-
+|Id not valid|-|-|-
 |-|-|-|-
 |Should return a 401 error if user not authenticated|removeFromGroup|integration|statement coverage
-|Should return a 400 error if the group name is not passed as a route parameter||integration|statement coverage
-|Should return a 401 error if the user is not an admin||integration|statement coverage
-|Regular user Should return error 401 if trying the admin Route||integration|statement coverage
-|Should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is||integration|statement coverage
-|Regular user Should a 400 error if all the provided emails represent users that do not belong to the group or do not exist in the database||integration|statement coverage
-|Admin user Should a 400 error if all the provided emails represent users that do not belong to the group or do not exist in the database||integration|statement coverage
-|Regular user Should a 400 error if the group contains only one member before deleting any user||integration|statement coverage
-|Admin user Should a 400 error if the group contains only one member before deleting any user||integration|statement coverage
-|Regular User Should return a 400 error if at least one of the emails is not in a valid email format or is an empty string||integration|statement coverage
-|Admin User Should return a a 400 error if at least one of the emails is not in a valid email format or is an empty string||integration|statement coverage
-|Regular User Should return a 400 error if the group name passed as a route parameter does not represent a group in the database||integration|statement coverage
-|Admin User Should return a 400 error if the group name passed as a route parameter does not represent a group in the database||integration|statement coverage
-|Regular User Should return a 200 success code if the body user is removed||integration|statement coverage
-|Admin User Should return a 200 success code if the body user is removed||integration|statement coverage
+|Should return a 400 error if the group name is not passed as a route parameter|-|-|-
+|Should return a 401 error if the user is not an admin|-|-|-
+|Regular user Should return error 401 if trying the admin Route|-|-|-
+|Should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is|-|-|-
+|Regular user Should a 400 error if all the provided emails represent users that do not belong to the group or do not exist in the database|-|-|-
+|Admin user Should a 400 error if all the provided emails represent users that do not belong to the group or do not exist in the database|-|-|-
+|Regular user Should a 400 error if the group contains only one member before deleting any user|-|-|-
+|Admin user Should a 400 error if the group contains only one member before deleting any user|-|-|-
+|Regular User Should return a 400 error if at least one of the emails is not in a valid email format or is an empty string|-|-|-
+|Admin User Should return a a 400 error if at least one of the emails is not in a valid email format or is an empty string|-|-|-
+|Regular User Should return a 400 error if the group name passed as a route parameter does not represent a group in the database|-|-|-
+|Admin User Should return a 400 error if the group name passed as a route parameter does not represent a group in the database|-|-|-
+|Regular User Should return a 200 success code if the body user is removed|-|-|-
+|Admin User Should return a 200 success code if the body user is removed|-|-|-
+|-|-|-|-
 |Return 200 OK|deleteUser|integration|statement coverage
-|Return 200 and delete the group if the user is the last in the group||integration|statement coverage
-|Return 200 and do not delete the group if there are other members in the group||integration|statement coverage
-|Return 401 verifyAuth||integration|statement coverage
-|Return 400 Missing attribute in the request body||integration|statement coverage
-|Return 400 if the parameter is empty in the request body||integration|statement coverage
-|Return 400 email format is not correct||integration|statement coverage
-|Return 400 User not found||integration|statement coverage
+|Return 200 and delete the group if the user is the last in the group|-|-|-
+|Return 200 and do not delete the group if there are other members in the group|-|-|-
+|Return 401 verifyAuth|-|-|-
+|Return 400 Missing attribute in the request body|-|-|-
+|Return 400 if the parameter is empty in the request body|-|-|-
+|Return 400 email format is not correct|-|-|-
+|Return 400 User not found|-|-|-
+|-|-|-|-
 |returns a 200 OK response when a valid group name is provided with a valid refresh token|deleteGroup|integration|statement coverage
-|returns a 400 error response when the group name is empty||integration|statement coverage
-|returns a 400 error response when the group name is missing in the parameters||integration|statement coverage
-|returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)||integration|statement coverage
-|returns a 400 Group doesnt exist||integration|statement coverage
+|returns a 400 error response when the group name is empty|-|-|-
+|returns a 400 error response when the group name is missing in the parameters|-|-|-
+|returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)|-|-|-
+|returns a 400 Group doesnt exist|-|-|-
+|-|-|-|-
 |should return error 401 if  called by an authenticated user who is not an admin|getUsers|integration|statement coverage
-|should return empty list if there are no users|getUsers|integration|statement coverage
-|should retrieve list of all users|getUsers|integration|statement coverage
+|should return empty list if there are no users|-|-|-
+|should retrieve list of all users|-|-|-
 |-|-|-|-
 |Should return the user's data given by the parameter|getUser|integration|statement coverage
-|should return error 401 if  called by an authenticated user who is neither admin or the user to be found|getUser|integration|statement coverage
-|Should return 400 error if the user not found|getUser|integration|statement coverage
-|Should Returns a 400 error, and separately the list of all invalid emails|createGroup|integration|statement coverage
-|Should Returns an group Object, and separately the emails that where already in a group or doesn't exists|createGroup|integration|statement coverage
-|Should Returns a 400 error if the request body does not contain all the necessary attributes|createGroup|integration|statement coverage
-|Should Returns a 401 error if called by a user who is not authenticated|createGroup|integration|statement coverage
-|Should  Returns a 400 error if the group name passed in the request body is an empty string|createGroup|integration|statement coverage
-|Should Returns a 400 error if the group name passed in the request body represents an already existing group in the database|createGroup|integration|statement coverage
-|Should Returns a 400 error if the user who calls the API is already in a group|createGroup|integration|statement coverage
-|Should Returns a 400 error if all emails are already in group or does not exists|createGroup|integration|statement coverage
+|should return error 401 if  called by an authenticated user who is neither admin or the user to be found|-|-|-
+|Should return 400 error if the user not found|-|-|-
+|Should Returns a 400 error, and separately the list of all invalid emails|
+|-|-|-|-
+createGroup|integration|statement coverage
+|Should Returns an group Object, and separately the emails that where already in a group or doesn't exists|-|-|-
+|Should Returns a 400 error if the request body does not contain all the necessary attributes|-|-|-
+|Should Returns a 401 error if called by a user who is not authenticated|-|-|-
+|Should  Returns a 400 error if the group name passed in the request body is an empty string|-|-|-
+|Should Returns a 400 error if the group name passed in the request body represents an already existing group in the database|-|-|-
+|Should Returns a 400 error if the user who calls the API is already in a group|-|-|-
+|Should Returns a 400 error if all emails are already in group or does not exists|-|-|-
 |-|-|-|-
 |Should return 200 & the list of all the groups|getGroups|integration|statement coverage
-|Should return 401 for the verifyAuth|getGroups|integration|statement coverage
+|Should return 401 for the verifyAuth|-|-|-
 |-|-|-|-
 |Should returns the group if called by admin|getGroup|integration|statement coverage
-|Should returns error 400 if the groupName is not associatied with a group, called by Admin|getGroup|integration|statement coverage
-|Should returns error 400 if the groupName is not associatied with a group, called by Regular|getGroup|integration|statement coverage
-|Should returns error 401 if the user is not associated with that groupName passed by params, called by Regular|getGroup|integration|statement coverage
-|Should returns the group if caller is a normal user|getGroup|integration|statement coverage
-|Missing access token|getGroup|integration|statement coverage
-|Missing refresh token|getGroup|integration|statement coverage
+|Should returns error 400 if the groupName is not associatied with a group, called by Admin|-|-|-
+|Should returns error 400 if the groupName is not associatied with a group, called by Regular|-|-|-
+|Should returns error 401 if the user is not associated with that groupName passed by params, called by Regular|-|-|-
+|Should returns the group if caller is a normal user|-|-|-
+|Missing access token|-|-|-
+|Missing refresh token|-|-|-
 |-|-|-|-
 |Should add members to the group and display if called by admin|addToGroup|integration|statement coverage
-|Should return error 401 if a Regular user try the admin Route|addToGroup|integration|statement coverage
-|Should add members to the group and display if called by Regular|addToGroup|integration|statement coverage
-|Should returns error 401 if the  user is not authorized for that Group|addToGroup|integration|statement coverage
-|User...Should returns error 400 if the  group does not exists|addToGroup|integration|statement coverage
-|Admin...Should returns error 400 if the  group does not exists|addToGroup|integration|statement coverage
-|Should returns error 400 if the email array is missing|addToGroup|integration|statement coverage
-|Regular User Should returns error 400 if the email array is empty|addToGroup|integration|statement coverage
-|Admin -- Should returns error 400 if the email array is empty|addToGroup|integration|statement coverage
-|Admin-Should returns error 400 if some email are invalid|addToGroup|integration|statement coverage
-|Regular-Should returns error 400 if some email are invalid ,Regular|addToGroup|integration|statement coverage
-|Should returns error 404 if the param  is empty,Regular User|addToGroup|integration|statement coverage
-|AdminRouteShould returns error 404 if the param  is empty|addToGroup|integration|statement coverage
-|Regular user Should returns error 400 if all email does not exists or are already in a group|addToGroup|integration|statement coverage
-|Admin Route Should returns error 400 if all email does not exists or are already in a group|addToGroup|integration|statement coverage
+|Should return error 401 if a Regular user try the admin Route|-|-|-
+|Should add members to the group and display if called by Regular|-|-|-
+|Should returns error 401 if the  user is not authorized for that Group|-|-|-
+|User...Should returns error 400 if the  group does not exists|-|-|-
+|Admin...Should returns error 400 if the  group does not exists|-|-|-
+|Should returns error 400 if the email array is missing|-|-|-
+|Regular User Should returns error 400 if the email array is empty|-|-|-
+|Admin -- Should returns error 400 if the email array is empty|-|-|-
+|Admin-Should returns error 400 if some email are invalid|-|-|-
+|Regular-Should returns error 400 if some email are invalid ,Regular|-|-|-
+|Should returns error 404 if the param  is empty,Regular User|-|-|-
+|AdminRouteShould returns error 404 if the param  is empty|-|-|-
+|Regular user Should returns error 400 if all email does not exists or are already in a group|-|-|-
+|Admin Route Should returns error 400 if all email does not exists or are already in a group|-|-|-
 |--|--|--|--|
 |should return error 401 if  called by an authenticated user who is not an admin|getUsers|unit|Statement coverage
 |Catch Block Test|-|-|-
@@ -448,57 +468,57 @@
 |Catch Block Try|-|-|-
 |-|-|-|-
 | Date Invalid Format |handleDateFilterParams|unit|statement coverage
-|from Invalid Format |handleDateFilterParams|unit|statement coverage
-|upto Invalid Format|handleDateFilterParams|unit|statement coverage
-|Return object error if the query contains date from and upto all together|handleDateFilterParams|unit|statement coverage|
-|Return query with date information|handleDateFilterParams|unit|statement coverage|
-|Return query with from and upTo information|unit|statement coverage
-|Return query with from  information|unit|statement coverage
-|Return query with upTo information|handleDateFilterParams|unit|statement coverage
-|Return nothing is query is missing|handleDateFilterParams|unit|statement coverage
+|from Invalid Format |-|-|-
+|upto Invalid Format|-|-|-
+|Return object error if the query contains date from and upto all together|-|-|-
+|Return query with date information||-|-|-
+|Return query with from and upTo information|-|-|-
+|Return query with from  information|-|-|-
+|Return query with upTo information|-|-|-
+|Return nothing is query is missing|-|-|-
 |-|-|-|-
 |should return the number if valid|handleNumber|unit|statement coverage
-|should parse and return the number from a valid string|handleNumber|unit|statement coverage
-|should handle comma as decimal separator in string input|handleNumber|unit|statement coverage
-|should throw an error if the number is missing|handleNumber|unit|statement coverage
-|should throw an error if the input is not a number or string|handleNumber|unit|statement coverage
-|should throw an error if the string input is in an invalid format|handleNumber|unit|statement coverage
+|should parse and return the number from a valid string|-|-|-
+|should handle comma as decimal separator in string input|-|-|-
+|should throw an error if the number is missing|-|-|-
+|should throw an error if the input is not a number or string||-|-|-
+|should throw an error if the string input is in an invalid format|-|-|-
 |-|-|-|-
 |Catch Block try|verifyAuth|unit|statement coverage
-|Return flag to false and the message error if we mess the token in the headers|verifyAuth|unit|statement coverage
-|Test verify with admin|verifyAuth|unit|statement coverage
-|Return object error if the acces token are not associated with a user|verifyAuth|unit|statement coverage
-|Return object error if the refresh token are not associated with a user|verifyAuth|unit|statement coverage
-|Test verify with Regular User|verifyAuth|unit|statement coverage
-|Return object error if the refresh token give us different user information  against the acces token|verifyAuth|unit|statement coverage
-|Return object error if the Tokens have a different username from the requested one,User control|verifyAuth|unit|statement coverage
-|Return object error if you are trying admin authorization without having the permissions|verifyAuth|unit|statement coverage
-|Return object error if Tokens have a different username from the requested one, test User/admin|verifyAuth|unit|statement coverage
-|Return object error if the email is not in the group|verifyAuth|unit|statement coverage
-|Return true if the access is granted for group authorization|verifyAuth|unit|statement coverage
-|access token expired Test verify with admin|verifyAuth|unit|statement coverage
-|access token expired Test verify with Regular User|verifyAuth|unit|statement coverage
-|access token expired,Return object error if the Tokens have a different username from the requested one,User control|verifyAuth|unit|statement coverage
-|access token expired,Return object error if you are trying admin authorization without having the permissions|verifyAuth|unit|statement coverage
-|access token expired,Return object error if Tokens have a different username from the requested one, test User/admin|verifyAuth|unit|statement coverage
-|access token expired,Return object error if the email is not in the group|verifyAuth|unit|statement coverage
-|access token expired,Return true if the access is granted for group authorization|verifyAuth|unit|statement coverage
-|Return object error if the refresh token expired(need to perform login again)|verifyAuth|unit|statement coverage
-|access token expired,Catch Block try|verifyAuth|unit|statement coverage
+|Return flag to false and the message error if we mess the token in the headers|-|-|-
+|Test verify with admin|-|-|-
+|Return object error if the acces token are not associated with a user|-|-|-
+|Return object error if the refresh token are not associated with a user|-|-|-
+|Test verify with Regular User|-|-|-
+|Return object error if the refresh token give us different user information  against the acces token|-|-|-
+|Return object error if the Tokens have a different username from the requested one,User control|-|-|-
+|Return object error if you are trying admin authorization without having the permissions|-|-|-
+|Return object error if Tokens have a different username from the requested one, test User/admin|-|-|-
+|Return object error if the email is not in the group|-|-|-
+|Return true if the access is granted for group authorization|-|-|-
+|access token expired Test verify with admin|-|-|-
+|access token expired Test verify with Regular User|-|-|-
+|access token expired,Return object error if the Tokens have a different username from the requested one,User control|-|-|-
+|access token expired,Return object error if you are trying admin authorization without having the permissions|-|-|-
+|access token expired,Return object error if Tokens have a different username from the requested one, test User/admin|-|-|-
+|access token expired,Return object error if the email is not in the group|-|-|-
+|access token expired,Return true if the access is granted for group authorization|-|-|-
+|Return object error if the refresh token expired(need to perform login again)|-|-|-
+|access token expired,Catch Block try|-|-|-
 |-|-|-|-
 |should return true for valid JSON string|isJsonString|unit|statement coverage
-|should return false for invalid JSON string|isJsonString|unit|statement coverage
+|should return false for invalid JSON string|-|-|-
 |-|-|-|-
 |Return object error if the query contains date from and upto all together|handleAmountFilterParams|unit|statement coverage
-|Return query with amount information|handleAmountFilterParams|unit|statement coverage
-|Return query with min information|handleAmountFilterParams|unit|statement coverage
-|Return query with max information|handleAmountFilterParams|unit|statement coverage
-|Return query with max and min information|handleAmountFilterParams|unit|statement coverage
-|Return nothing is query is missing|handleAmountFilterParams|unit|statement coverage
+|Return query with amount information|-|-|-
+|Return query with min information|-|-|-
+|Return query with max information|-|-|-
+|Return query with max and min information|-|-|-
+|Return nothing is query is missing|-|-|-
 |-|-|-|-
 |should return the trimmed lowercase string if valid|handleString|unit|statement coverage
-|should throw an error if the input is not a string|handleString|unit|statement coverage
-|should throw an error if the string is empty|handleString|unit|statement coverage
+|should throw an error if the input is not a string|-|-|-
+|should throw an error if the string is empty||-|-|-
 
 
 
@@ -514,19 +534,39 @@
 
 ## Coverage of FR
 
-<Report in the following table the coverage of  functional requirements (from official requirements) >
-
 | Functional Requirements covered |   Test(s) | 
 | ------------------------------- | ----------- | 
-| FRx                             |             |             
-| FRy                             |             | 
-| ... ||
+|FR11 | Register :   Test Suite (Integration +Unit)
+|FR13| logout:   Test Suite (Integration +Unit)| 
+|FR14| registerAdmin:   Test Suite (Integration +Unit) | 
+|FR15| getUsers:   Test Suite (Integration +Unit) |
+|FR16 | getUser:   Test Suite (Integration +Unit) | 
+|FR17 | deleteUser:   Test Suite (Integration +Unit)|
+|FR21 | createGroup :   Test Suite (Integration +Unit)| 
+|FR22| getGroups :   Test Suite (Integration +Unit)| 
+|FR23| getGroup :   Test Suite (Integration +Unit)| 
+|FR24| addToGroup :   Test Suite (Integration +Unit)| 
+|FR26| removeFromGroup:   Test Suite (Integration +Unit) | 
+|FR28| deleteGroup:   Test Suite (Integration +Unit) | 
+|FR31| createTransaction:   Test Suite (Integration +Unit)| 
+|FR32| getAllTransactions:   Test Suite (Integration +Unit) | 
+| FR33| getTransactionsByUser:   Test Suite (Integration +Unit) | 
+| FR34| getTransactionsByUserByCategory:   Test Suite (Integration +Unit)| 
+| FR35| getTransactionsByGroup :   Test Suite (Integration +Unit)| 
+| FR36| getTransactionsByGroupByCategory :   Test Suite (Integration +Unit)|
+| FR37| deleteTransaction :   Test Suite (Integration +Unit)|
+| FR38| deleteTransactions :   Test Suite (Integration +Unit)|
+| FR41| createCategory :   Test Suite (Integration +Unit)| 
+| FR42| updateCategory :   Test Suite (Integration +Unit)| 
+| FR43| deleteCategory :   Test Suite (Integration +Unit)|
+| FR44 | getCategories :   Test Suite (Integration +Unit)| 
+
 
 
 
 ## Coverage white box
 
-Report here the screenshot of coverage values obtained with jest-- coverage 
+![Screenshoot](/ezwallet/images/Coverage_screen.png)
 
 
 
