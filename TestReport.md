@@ -566,7 +566,7 @@ createGroup|integration|statement coverage
 
 ## Coverage white box
 
-![Screenshoot](/ezwallet/images/Coverage_screen.png)
+![Screenshoot](/images/Coverage_screen.png)
 
 
 
