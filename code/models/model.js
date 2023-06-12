@@ -11,6 +11,10 @@ const categories_model = new Schema({
         type: String,
         required: true,
         default: "#fcbe44"
+    },
+    date: {
+        type: Date,
+        default: Date.now
     }
 
 });
