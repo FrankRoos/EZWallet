@@ -270,7 +270,7 @@ export const createTransaction = async (req, res) => {
     try {
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        let info = { authType: "User/Admin", username: req.params.username, token: user ? user.refreshToken : 0 }
+        let info = { authType: "User", username: req.params.username, token: user ? user.refreshToken : 0 }
         info.username = handleString(info.username, "param-username")
 
         let param_user = await User.findOne({ username: info.username })
