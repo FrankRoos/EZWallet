@@ -899,7 +899,7 @@ export const deleteGroup = async (req, res) => {
         refreshedTokenMessage: res.locals.message
       });
     }
-    name = handleString(name, "name");
+    //name = handleString(name, "name");
 
     const existingGroup = await Group.findOne({ name });
     if (!existingGroup)
@@ -911,7 +911,7 @@ export const deleteGroup = async (req, res) => {
     const data = await Group.findOneAndDelete({ name });
 
     return res.status(200).json({
-      data: `Group ${name} has been deleted`,
+      data: { message: `Group ${name} has been deleted` },
       refreshedTokenMessage: res.locals.message
     });
 
