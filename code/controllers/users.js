@@ -397,7 +397,7 @@ export const addToGroup = async (req, res) => {
 
       //Admin things
 
-      groupName = handleString(groupName, "groupName");
+      //groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(400).json({
@@ -465,7 +465,7 @@ export const addToGroup = async (req, res) => {
        
           group: {
             name: group.name,
-            members: group.members.map(member => member.email),
+            members: group.members.map(member => ({email:member.email})),
           },
           alreadyInGroup,
           membersNotFound,
@@ -487,7 +487,7 @@ export const addToGroup = async (req, res) => {
         });
       //User things   
 
-      groupName = handleString(groupName, "groupName");
+      //groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(400).json({ error: "Group does not exist" ,refreshedTokenMessage: res.locals.message});
@@ -555,7 +555,7 @@ export const addToGroup = async (req, res) => {
        
           group: {
             name: group.name,
-            members: group.members.map(member => member.email),
+            members: group.members.map(member => ({email:member.email})),
           },
           alreadyInGroup,
           membersNotFound,
@@ -624,7 +624,7 @@ export const removeFromGroup = async (req, res) => {
           error: verify.cause,
           refreshedTokenMessage: res.locals.message
         })
-      groupName = handleString(groupName, "groupName");
+      //groupName = handleString(groupName, "groupName");
       const existingGroup = await Group.findOne({ name: groupName });
       if (!existingGroup) {
         return res.status(400).json({
@@ -699,7 +699,7 @@ export const removeFromGroup = async (req, res) => {
           error: "You are trying to use an Admin route while still a Regular",
           refreshedTokenMessage: res.locals.message
         });
-      groupName = handleString(groupName, "groupName");
+      //groupName = handleString(groupName, "groupName");
       const existingGroup = await Group.findOne({ name: groupName });
       if (!existingGroup) {
         return res.status(400).json({
