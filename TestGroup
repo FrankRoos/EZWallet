@@ -3,9 +3,9 @@ FR17	deleteUser	cancel a user   4    FRANK
 FR21	createGroup	create a new group- 1         FRANK
 
 FR23	getGroup	return info about a specific group -2         FILIPPO (OK)
-FR24	addToGroup	add many users to a given group - 2          FILIPPO
+FR24	addToGroup	add many users to a given group - 2          FILIPPO (OK)
 FR26	removeFromGroup	remove many users from a given group - 3   FILIPPO
-FR28	deleteGroup	cancel a group, users members of the group remain unchanged - 1  FILIPPO
+FR28	deleteGroup	cancel a group, users members of the group remain unchanged - 1  FILIPPO (OK)
 
 FR31	createTransaction	create a new transaction 1    ANGELO (OK)
 FR35	getTransactionsByGroup	3        ANGELO
