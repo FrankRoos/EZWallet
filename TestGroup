@@ -15,5 +15,4 @@ FR37	deleteTransaction	1    ANGELO
 FR43	deleteCategory	delete a given category  1      FRANK 
                                                         
     HANdle  date 6          MIKI
-    handle amount 4       MIKI
     verify 8                 ANGELO 
