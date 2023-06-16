@@ -1,6 +1,4 @@
 ---Second deadline 9 Giugno 23:59---
-FR11	register	create a new user     1   MIKI
-FR14	registerAdmin	create a new Admin 1   MIKI
 FR17	deleteUser	cancel a user   4    FRANK 
 FR21	createGroup	create a new group- 1         FRANK
 
