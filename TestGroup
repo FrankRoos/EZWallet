@@ -1,43 +1,26 @@
 ---Second deadline 9 Giugno 23:59---
 
 ------FR1....	Manage users	------------- Frank+ Mikie
-FR11	register	create a new user      TEST?
-FR12	login	authorize access for a given user  TEST?
-FR13	logout	stop authorization for a given user TEST?
-FR14	registerAdmin	create a new Admin TEST?
-FR15	getUsers	return all users      TEST?
-FR16	getUser	return info about a specific user TEST?
-FR17	deleteUser	cancel a user   !!!!MISSING !!!!->   //Delete all transaction of existingUser and retrieve the number.
-                                                          //delete the user from all existing group  
+FR11	register	create a new user     1
 
+FR14	registerAdmin	create a new Admin 1
 
-   
+FR17	deleteUser	cancel a user   4
+FR21	createGroup	create a new group- 1
 
--------FR2	Manage groups	------------- Filippo+Angelo
-FR21	createGroup	create a new group- Pronto per test
-FR22	getGroups	return all groups- Pronto per test
-FR23	getGroup	return info about a specific group - Pronto per test
-FR24	addToGroup	add many users to a given group - Pronto per test
-FR26	removeFromGroup	remove many users from a given group - !!!!MISSING !!!!
-FR28	deleteGroup	cancel a group, users members of the group remain unchanged - Pronto per test
+FR23	getGroup	return info about a specific group -2
+FR24	addToGroup	add many users to a given group - 2
+FR26	removeFromGroup	remove many users from a given group - 3
+FR28	deleteGroup	cancel a group, users members of the group remain unchanged - 1
+o
+FR31	createTransaction	create a new transaction 1
 
+FR35	getTransactionsByGroup	3 
+FR36	getTransactionsByGroupByCategory	3
+FR37	deleteTransaction	1
 
-
------------FR3	Manage transactions	------------- Filippo+Angelo
-FR31	createTransaction	create a new transaction
-FR32	getAllTransactions	return all transactions (by all users)
-FR33	getTransactionsByUser	return transactions of a given user. transactions may be filtered by date, by period, by max / min amount
-FR34	getTransactionsByUserByCategory	return transactions of a given user and a given category
-FR35	getTransactionsByGroup	return all transactions of all users of a given group
-FR36	getTransactionsByGroupByCategory	return all transactions of all users of a given group, filtered by a given category
-FR37	deleteTransaction	delete a given transaction
-FR38	deleteTransactions	delete many transactions
-
-
-
----------FR4	Manage categories	-------------  Frank+Mikie   
-FR41	createCategory	create a new category  TEST?
-FR42	updateCategory	modify existing category !!!MISSING !!!! -> //Count that is equal to the count of transactions whose category was changed with the new type
-FR43	deleteCategory	delete a given category !!!MISSING!!! -> //count that is equal to the count of affected transactions 
-                                                          (deleting a category sets all transactions with that category to have investment as their new category)
-FR44	getCategories	list all categories TEST?
+FR43	deleteCategory	delete a given category  1
+                                                        
+    HANdle  date 6
+    handle amount 4
+    verify 8
