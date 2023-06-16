@@ -27,24 +27,24 @@ export const handleDateFilterParams = (req, res) => {
         // Date constructor works with indexes, so months start from 0 
         if (date){
             date=date.split("-");
-             return {queryObj : { 'date': { $gte: new Date(date[0], date[1]-1, date[2], 0, 0, 0), $lte: new Date(date[0], date[1]-1, date[2], 23, 59, 59) }} ,'flag': true} }
+             return { 'date': { $gte: new Date(Date.UTC(date[0], date[1]-1, date[2], 0, 0, 0)), $lte: new Date(Date.UTC(date[0], date[1]-1, date[2], 23, 59, 59)) } ,'flag': true} }
         if (from && upTo) {
             from=from.split("-");
             upTo=upTo.split("-");
-            return {queryObj : { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0), $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) }} ,'flag': true}}
+            return { 'date': { $gte: new Date(Date.UTC(from[0], from[1]-1, from[2], 0, 0, 0)), $lte: new Date(Date.UTC(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59)) } ,'flag': true}}
         if (from) {
             from=from.split("-");
-            return {queryObj : { 'date': { $gte: new Date(from[0], from[1]-1, from[2], 0, 0, 0) }} ,'flag': true}}
+            return { 'date': { $gte: new Date(Date.UTC(from[0], from[1]-1, from[2], 0, 0, 0)) } ,'flag': true}}
         if (upTo){
              upTo=upTo.split("-");
-            return { queryObj : {'date': { $lte: new Date(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59) }},'flag': true} }
+            return {'date': { $lte: new Date(Date.UTC(upTo[0], upTo[1]-1, upTo[2], 23, 59, 59)) },'flag': true} }
     
         return  { queryObj : {},'flag': true};
 
 
     } catch (error) {
        
-        return  { error: error.message,'flag': false};
+        throw new Error({ 'flag': false, error: error.message})
 
     }
 }
