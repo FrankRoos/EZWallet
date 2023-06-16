@@ -11,8 +11,8 @@ export const createCategory = async (req, res) => {
     try {
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
-        if (verify.flag === false)
+        const verify = verifyAuth(req, res, { authType: "Admin" })
+        if (verify.flag === false || !user)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
@@ -80,8 +80,8 @@ export const updateCategory = async (req, res) => {
     try {
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
-        if (verify.flag === false)
+        const verify = verifyAuth(req, res, { authType: "Admin" })
+        if (verify.flag === false || !user)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
@@ -172,8 +172,8 @@ export const deleteCategory = async (req, res) => {
     try {
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
-        if (verify.flag === false)
+        const verify = verifyAuth(req, res, { authType: "Admin" })
+        if (verify.flag === false || !user)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
@@ -234,8 +234,8 @@ export const getCategories = async (req, res) => {
     try {
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        const verify = verifyAuth(req, res, { authType: "User/Admin", username: user ? user.username : 0, token: user ? user.refreshToken : 0 })
-        if (verify.flag === false)
+        const verify = verifyAuth(req, res, { authType: "User/Admin", username: user ? user.username : 0 })
+        if (verify.flag === false || !user)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
@@ -270,7 +270,7 @@ export const createTransaction = async (req, res) => {
     try {
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        let info = { authType: "User", username: req.params.username, token: user ? user.refreshToken : 0 }
+        let info = { authType: "User", username: req.params.username }
         info.username = handleString(info.username, "param-username")
 
         let param_user = await User.findOne({ username: info.username })
@@ -278,7 +278,7 @@ export const createTransaction = async (req, res) => {
             throw new Error("User given as route request parameter not found")
 
         const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
+        if (verify.flag === false || !user)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
@@ -344,8 +344,8 @@ export const getAllTransactions = async (req, res) => {
 
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
 
-        const verify = verifyAuth(req, res, { authType: "Admin", token: user ? user.refreshToken : 0 })
-        if (verify.flag === false)
+        const verify = verifyAuth(req, res, { authType: "Admin" })
+        if (verify.flag === false || !user)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
@@ -396,10 +396,10 @@ export const getTransactionsByUser = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
-            info = { authType: "Admin", username: handleString(req.params.username, "username"), token: user ? user.refreshToken : 0 };
+            info = { authType: "Admin", username: handleString(req.params.username, "username") };
 
         } else {
-            info = { authType: "User", username: handleString(req.params.username, "username"), token: user ? user.refreshToken : 0 };
+            info = { authType: "User", username: handleString(req.params.username, "username") };
         }
 
         // Verify if the user exists
@@ -409,7 +409,7 @@ export const getTransactionsByUser = async (req, res) => {
 
         // Verify the authentication
         const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
+        if (verify.flag === false || !user)
             return res.status(401).json({
                 error: verify.cause,
                 refreshedTokenMessage: res.locals.message
@@ -487,11 +487,11 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/users/") >= 0) {
             // /transactions/users/:username/category/:category
-            info = { authType: "Admin", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
+            info = { authType: "Admin", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category") };
 
         } else {
             // /users/:username/transactions/category/:category
-            info = { authType: "User", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
+            info = { authType: "User", username: handleString(req.params.username, "username"), category: handleString(req.params.category, "category") };
         }
 
         // Verify if the user exists
@@ -501,7 +501,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 
         // Verify the authentication
         const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
+        if (verify.flag === false || !user)
             return res.status(401).json({ error: verify.cause })
 
         // Verify if the category exists
@@ -569,11 +569,11 @@ export const getTransactionsByGroup = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name
-            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), token: user ? user.refreshToken : 0 };
+            info = { authType: "Admin", groupName: handleString(req.params.name, "name") };
 
         } else {
             // /groups/:name/transactions
-            info = { authType: "Group", groupName: handleString(req.params.name, "name"), token: user ? user.refreshToken : 0 };
+            info = { authType: "Group", groupName: handleString(req.params.name, "name") };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -585,7 +585,7 @@ export const getTransactionsByGroup = async (req, res) => {
 
         // Verify the authentication
         const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
+        if (verify.flag === false || !user)
             return res.status(401).json({ error: verify.cause })
 
 
@@ -653,11 +653,11 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name/category/:category
-            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
+            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") };
 
         } else {
             // /groups/:name/transactions/category/:category
-            info = { authType: "Group", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category"), token: user ? user.refreshToken : 0 };
+            info = { authType: "Group", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") };
         }
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
@@ -672,7 +672,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
             throw new Error("Category not found");
         // Verify the authentication
         const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
+        if (verify.flag === false || !user)
             return res.status(401).json({ error: verify.cause })
 
 
@@ -792,11 +792,11 @@ export const deleteTransactions = async (req, res) => {
     try {
         // /transactions
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
-        const info = { authType: "Admin", token: user ? user.refreshToken : 0 };
+        const info = { authType: "Admin"};
         if (!req.body._ids || !req.body._ids.length)
             throw new Error("Missing ids")
         const verify = verifyAuth(req, res, info)
-        if (verify.flag === false)
+        if (verify.flag === false || !user)
             return res.status(401).json({ error: verify.cause })
 
         let ids = req.body._ids.map(element => {

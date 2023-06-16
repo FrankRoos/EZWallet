@@ -76,7 +76,7 @@ export const handleDateFilterParams = (req, res) => {
  */
 export const verifyAuth  =(req, res, info) => {
     const cookie = req.cookies
-    if (!cookie.accessToken || !cookie.refreshToken || !info.token) {
+    if (!cookie.accessToken || !cookie.refreshToken) {
         //res.status(401).json({ message: "Unauthorized" });
         return {flag: false, cause: "Unauthorized: please add your token in the headers"};
     }
@@ -107,15 +107,15 @@ export const verifyAuth  =(req, res, info) => {
             //res.status(401).json({ message: "Tokens have a different username from the requested one" });
             return {flag: false, cause: "Tokens have a different username from the requested one"};
         }  
-        if (info.authType === "Group" && info.emailList) {
-            
+        if (info.authType === "Group" && (info.emailList || info.members)) {
+            if(info.members) info.emailList = [...info.members]
             const userHasAccess = info.emailList.some(x => x === decodedAccessToken.email);
             if (!userHasAccess) {
                 //res.status(401).json({ message: "Your email is not in the group" });
                 return {flag: false, cause: "Your email is not in the group"};
             }
         }
-        return true
+        return {flag: true}
     } catch (err) {
         let tokenrefresh=false
         if (err.name === "TokenExpiredError" || !cookie.accessToken) {
@@ -145,8 +145,8 @@ export const verifyAuth  =(req, res, info) => {
                         // res.status(401).json({ message: "Tokens have a different username from the requested one" });
                         return {flag: false, cause: "Tokens have a different username from the requested one"};
                     }               
-                if (info.authType === "Group" && info.emailList) {
-            
+                if (info.authType === "Group" && (info.emailList || info.members)) {
+                    if(info.members) info.emailList = [...info.members]
                     const userHasAccess = info.emailList.some(x => x === decodedRefreshToken.email);
                     if (!userHasAccess) {
                         // res.status(401).json({ message: "Your email is not in the group" });
@@ -154,7 +154,7 @@ export const verifyAuth  =(req, res, info) => {
                     }
                 }
 
-                return true
+                return {flag: true}
 
                 
            
