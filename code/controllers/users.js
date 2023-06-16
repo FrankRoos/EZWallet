@@ -293,7 +293,7 @@ export const getGroup = async (req, res) => {
         });
       }
       let groupName = req.params.name;
-      groupName = handleString(groupName, "groupName");
+      //groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(400).json({
@@ -303,7 +303,7 @@ export const getGroup = async (req, res) => {
       }
       const groupInfo = {
         name: group.name,
-        members: group.members.map(member => member.email)
+        members: group.members.map(member => ({email:member.email}))
       };
       return res.status(200).json({
         data: groupInfo,
@@ -314,7 +314,7 @@ export const getGroup = async (req, res) => {
     if (user.role === "Regular") {
       //console.log("1");
       let groupName = req.params.name;
-      groupName = handleString(groupName, "groupName");
+      //groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(400).json({
@@ -332,12 +332,12 @@ export const getGroup = async (req, res) => {
 
       const groupInfo = {
         name: group.name,
-        members: group.members.map(member => member.email)
+        members: group.members.map(member => ({email:member.email}))
       };
+      console.log(groupInfo.members);
       return res.status(200).json({
-        data: 
-          groupInfo
-        , refreshedTokenMessage: res.locals.message
+        data: groupInfo, 
+        refreshedTokenMessage: res.locals.message
       });
 
     }
