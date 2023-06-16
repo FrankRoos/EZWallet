@@ -194,30 +194,30 @@ export const handleAmountFilterParams = (req, res) => {
 
         if (amount) {
             amount = handleNumber(amount);
-            return { queryObj: {'amount': { $eq: parseFloat(amount) } }, 'flag': true }
+            return {'amount': { $eq: parseFloat(amount) },  'flag': true }
         }
            
         if (min && max) {
             min = handleNumber(min);
             max = handleNumber(max);
-            return { queryObj: {'amount': { $gte: parseFloat(min), $lte: parseFloat(max) } }, 'flag': true }
+            return {'amount': { $gte: parseFloat(min), $lte: parseFloat(max) } ,  'flag': true }
         }
             
         if (min) {
             min = handleNumber(min);
-            return { queryObj: {'amount': { $gte: parseFloat(min) } }, 'flag': true }
+            return {'amount': { $gte: parseFloat(min) } , 'flag': true }
         }
             
         if (max) {
             max = handleNumber(max);
-            return { queryObj: {'amount': { $lte: parseFloat(max) } }, 'flag': true }
+            return {'amount': { $lte: parseFloat(max) } , 'flag': true }
         }
            
     
         return { 'flag': true, queryObj: {} };
 
     } catch (error) {
-            return { 'flag': false, error: error.message}
+            throw new Error({ 'flag': false, error: error.message})
 
     }
 }
