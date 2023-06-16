@@ -1,26 +1,21 @@
 ---Second deadline 9 Giugno 23:59---
+FR11	register	create a new user     1   MIKI
+FR14	registerAdmin	create a new Admin 1   MIKI
+FR17	deleteUser	cancel a user   4    FRANK 
+FR21	createGroup	create a new group- 1         FRANK
 
-------FR1....	Manage users	------------- Frank+ Mikie
-FR11	register	create a new user     1
+FR23	getGroup	return info about a specific group -2         FILIPPO
+FR24	addToGroup	add many users to a given group - 2          FILIPPO
+FR26	removeFromGroup	remove many users from a given group - 3   FILIPPO
+FR28	deleteGroup	cancel a group, users members of the group remain unchanged - 1  FILIPPO
 
-FR14	registerAdmin	create a new Admin 1
+FR31	createTransaction	create a new transaction 1    ANGELO
+FR35	getTransactionsByGroup	3        ANGELO
+FR36	getTransactionsByGroupByCategory	3   ANGELO
+FR37	deleteTransaction	1    ANGELO
 
-FR17	deleteUser	cancel a user   4
-FR21	createGroup	create a new group- 1
-
-FR23	getGroup	return info about a specific group -2
-FR24	addToGroup	add many users to a given group - 2
-FR26	removeFromGroup	remove many users from a given group - 3
-FR28	deleteGroup	cancel a group, users members of the group remain unchanged - 1
-o
-FR31	createTransaction	create a new transaction 1
-
-FR35	getTransactionsByGroup	3 
-FR36	getTransactionsByGroupByCategory	3
-FR37	deleteTransaction	1
-
-FR43	deleteCategory	delete a given category  1
+FR43	deleteCategory	delete a given category  1      FRANK 
                                                         
-    HANdle  date 6
-    handle amount 4
-    verify 8
+    HANdle  date 6          MIKI
+    handle amount 4       MIKI
+    verify 8                 ANGELO 
