@@ -181,7 +181,7 @@ export const deleteCategory = async (req, res) => {
 
         const array_category = req.body.types
         //console.log(array_category)
-        if (!array_category) return res.status(400).json({ error: "Missing attributes in the body", refreshedTokenMessage: res.locals.message })
+        if (array_category.length == 0) return res.status(400).json({ error: "Missing attributes in the body", refreshedTokenMessage: res.locals.message })
         //check categories
         for (let category of array_category) {
             if (category === "")

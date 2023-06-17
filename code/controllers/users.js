@@ -194,7 +194,8 @@ export const createGroup = async (req, res) => {
         error: "all the `memberEmails` either do not exist or are already in a group",
         refreshedTokenMessage: res.locals.message
       });
-
+   
+    members.push({email: user.email})
     const group = new Group({ name, members });
     await group.save();
     return res.status(200).json({
