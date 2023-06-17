@@ -334,7 +334,7 @@ export const getGroup = async (req, res) => {
         name: group.name,
         members: group.members.map(member => ({email:member.email}))
       };
-      console.log(groupInfo.members);
+
       return res.status(200).json({
         data: groupInfo, 
         refreshedTokenMessage: res.locals.message
@@ -825,6 +825,15 @@ export const deleteUser = async (req, res) => {
         refreshedTokenMessage: res.locals.message
       });
     }
+
+    const user_is_admin = await User.findOne({ email: req.body.email });
+    if(user_is_admin.role === 'Admin'){
+      return res.status(400).json({
+        error: "The user to delete is an Admin",
+        refreshedTokenMessage: res.locals.message
+      });
+    }
+
     const existingUser = await User.findOneAndDelete({ email: req.body.email });
     if (!existingUser) return res.status(400).json({
       error: "User not found",
@@ -834,10 +843,10 @@ export const deleteUser = async (req, res) => {
     //Delete all transaction of existingUser and retrieve the number.
     const transaction = await transactions.deleteMany({ username: existingUser.username });
     //delete the user from all existing group.... che partecapita
-    let data = { deleteTransactions: transaction.deletedCount, deletedFromGroup: false }
+    let data = { deletedTransactions: transaction.deletedCount, deletedFromGroup: false }
 
     const group = await Group.findOne({ "members.email": existingUser.email });
-
+   
     if (group) {
       group.members = group.members.filter((member) => member.email !== existingUser.email);
       if (group.members.length <=1) {
@@ -848,7 +857,7 @@ export const deleteUser = async (req, res) => {
       }
     
     }
-
+  
     //delete users .....fffff
     res.status(200).json({
       data: data,
