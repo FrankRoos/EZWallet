@@ -661,7 +661,7 @@ export const removeFromGroup = async (req, res) => {
           refreshedTokenMessage: res.locals.message
         });
       }
-      if (existingGroup.members.length === 1) {
+      if (existingGroup.members.length === 1 && !removedMembers.length) {
         return res.status(400).json({
           error: "This group contains only 1 member, so you can't delete it",
           refreshedTokenMessage: res.locals.message
@@ -736,7 +736,7 @@ export const removeFromGroup = async (req, res) => {
           refreshedTokenMessage: res.locals.message
         });
       }
-      if (existingGroup.members.length === 1) {
+      if (existingGroup.members.length === 1 && !removedMembers.length) {
         return res.status(400).json({
           error: "This group contains only 1 member, so you can't delete it",
           refreshedTokenMessage: res.locals.message
