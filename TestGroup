@@ -8,7 +8,7 @@ FR26	removeFromGroup	remove many users from a given group - 3   FILIPPO
 FR28	deleteGroup	cancel a group, users members of the group remain unchanged - 1  FILIPPO (OK)
 
 FR31	createTransaction	create a new transaction 1    ANGELO (OK)
-FR35	getTransactionsByGroup	3        ANGELO
+FR35	getTransactionsByGroup	3        FRANK (OK)
 FR36	getTransactionsByGroupByCategory	3   FRANK (OK)
 FR37	deleteTransaction	1    FRANK (OK)
         getTransactionsByUser 4 ANGELO
