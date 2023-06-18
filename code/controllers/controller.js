@@ -772,7 +772,7 @@ export const deleteTransaction = async (req, res) => {
                 refreshedTokenMessage: res.locals.message
             })
         else if (error.message === "Not your transaction")
-            res.status(401).json({
+            res.status(400).json({
                 error: "Not authorized: transaction of another user",
                 refreshedTokenMessage: res.locals.message
             })
