@@ -1,5 +1,5 @@
 ---Second deadline 9 Giugno 23:59---
-FR17	deleteUser	cancel a user   4    FRANK (only one is missing)
+FR17	deleteUser	cancel a user   4    FRANK (OK)
 FR21	createGroup	create a new group- 1         FRANK (OK)
 
 FR23	getGroup	return info about a specific group -2         FILIPPO (OK)

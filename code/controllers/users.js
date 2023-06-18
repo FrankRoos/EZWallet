@@ -848,18 +848,24 @@ export const deleteUser = async (req, res) => {
 
     const group = await Group.findOne({ "members.email": existingUser.email });
    
-    if (group) {
+    if(!group)
+      return res.status(200).json({
+        data: data,
+        refreshedTokenMessage: res.locals.message
+      })
+
+    if (group.members.length) {
       group.members = group.members.filter((member) => member.email !== existingUser.email);
-      if (group.members.length <=1) {
+      data.deletedFromGroup = true;
+      const l2 = group.members.length
+      if (group.members.length < 1) {
         await Group.findByIdAndDelete(group._id);
-        data.deletedFromGroup = true;
       } else {
         await group.save();
       }
     
     }
-  
-    //delete users .....fffff
+
     res.status(200).json({
       data: data,
       refreshedTokenMessage: res.locals.message
