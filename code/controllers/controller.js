@@ -425,29 +425,96 @@ export const getTransactionsByUser = async (req, res) => {
         if (!objAmount.flag)
             throw new Error(objAmount.error)
 
-        let selectedTransactions = await transactions.aggregate([
-            {
-                $lookup: {
-                    from: "categories",
-                    localField: "type",
-                    foreignField: "type",
-                    as: "categories_info"
-                }
-            },
-            {
-                $match: {
-                    $and: [
-                        { 'username': info.username },
-                        // { 'date': obj.date },
-                        objDate.queryObj,
-                        objAmount.queryObj
-                    ]
-
-                }
-            },
-            { $unwind: "$categories_info" },
-
-        ]);
+        let selectedTransactions 
+        if(objAmount.amount && objDate.date){
+            selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                {
+                    $match: {
+                        $and: [
+                            { username: info.username },
+                            { date: objDate.date },
+                            { amount: objAmount.amount},
+                        ]
+    
+                    }
+                },
+                { $unwind: "$categories_info" },
+    
+            ]);
+        }else if(objAmount.amount){
+            selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                {
+                    $match: {
+                        $and: [
+                            { username: info.username },
+                            { amount: objAmount.amount},
+                        ]
+    
+                    }
+                },
+                { $unwind: "$categories_info" },
+    
+            ]);
+        }else if(objDate.date){
+            selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                {
+                    $match: {
+                        $and: [
+                            { username: info.username },
+                            { date: objDate.date},
+                        ]
+    
+                    }
+                },
+                { $unwind: "$categories_info" },
+    
+            ]);
+        }else{
+            selectedTransactions = await transactions.aggregate([
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                {
+                    $match: {
+                        $and: [
+                            { username: info.username },
+                        ]
+    
+                    }
+                },
+                { $unwind: "$categories_info" },
+    
+            ]);
+        }
 
         selectedTransactions = selectedTransactions.map(transaction => Object.assign({}, {username: transaction.username, amount: transaction.amount, type: transaction.type, color: transaction.categories_info.color, date: transaction.date }));
 
