@@ -649,16 +649,19 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
         let info = {};
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
+        handleString(req.params.name, "name")
+        handleString(req.params.name, "name")
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
             // /transactions/groups/:name/category/:category
-            info = { authType: "Admin", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") };
+            info = { authType: "Admin", groupName: req.params.name, category: handleString(req.params.category, "category") };
 
         } else {
             // /groups/:name/transactions/category/:category
-            info = { authType: "Group", groupName: handleString(req.params.name, "name"), category: handleString(req.params.category, "category") };
+            info = { authType: "Group", groupName: req.params.name, category: handleString(req.params.category, "category") };
         }
+
         // Verify if the group exists
         const group = await Group.findOne({ name: info.groupName });
         if (!group)
