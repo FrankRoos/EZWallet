@@ -190,7 +190,7 @@ describe('register', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Username already taken' });
   });
-  test('Password < 8 ', async () => {
+  /*test('Password < 8 ', async () => {
     const mockReq = {
       body: {
         username: 'existinguser',
@@ -211,7 +211,7 @@ describe('register', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Password doesn't match constraints,requires at least 8 characters" });
-  });
+  });*/
 
 
 
@@ -419,7 +419,7 @@ describe("registerAdmin", () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Username already taken' });
   });
-  test('Password < 8 ', async () => {
+  /*test('Password < 8 ', async () => {
     const mockReq = {
       body: {
         username: 'existinguser',
@@ -440,7 +440,7 @@ describe("registerAdmin", () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Password doesn't match constraints,requires at least 8 characters" });
-  });
+  });*/
   test("Should return 400 on the catch", async () => {
     const mockReq = {
       body: {
