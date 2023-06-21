@@ -4013,7 +4013,7 @@ describe("deleteUser", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(200)
-    expect(mockRes.json).toHaveBeenCalledWith({data: { deleteTransactions: 3, deletedFromGroup: false }, refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith({data: { deletedTransactions: 3, deletedFromGroup: false }, refreshedTokenMessage: ""})
 
  
   })
@@ -4270,7 +4270,7 @@ describe("deleteGroup", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(200)
-    expect(mockRes.json).toHaveBeenCalledWith({data: "Group TestGroup has been deleted", refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith({data: {message: "Group TestGroup has been deleted"}, refreshedTokenMessage: ""})
 
  
   })
