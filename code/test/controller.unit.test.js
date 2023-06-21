@@ -3828,7 +3828,7 @@ describe("deleteTransaction", () => {
 
     await controller.deleteTransaction(mockReq, mockRes)
 
-    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({error: "Not authorized: transaction of another user",
       refreshedTokenMessage: undefined
     })

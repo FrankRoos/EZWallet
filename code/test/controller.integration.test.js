@@ -1477,7 +1477,7 @@ describe("deleteTransaction", () => {
             .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
             .send(body)
 
-        expect(response.status).toBe(401);
+        expect(response.status).toBe(400);
         expect(response.body.error).toEqual("Not authorized: transaction of another user")
     });
 
