@@ -720,7 +720,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         let info = {};
         const user = req.cookies.refreshToken ? await User.findOne({ refreshToken: req.cookies.refreshToken }) : null
         handleString(req.params.name, "name")
-        handleString(req.params.name, "name")
+        handleString(req.params.category, "category")
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         if (req.url.indexOf("/transactions/groups/") >= 0) {
