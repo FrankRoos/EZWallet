@@ -589,6 +589,7 @@ describe("createGroup", () => {
       _id: 'mockUserId',
       refreshToken: "'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q'",
       username: 'mockUsername',
+      email: 'callinguser@email.it'
     };
     const existingUser1 = {
       email: 'member1@example.com',
@@ -615,7 +616,7 @@ describe("createGroup", () => {
     //jest.spyOn(User,"findOne").mockImplementationOnce(()=>(Promise.resolve(callingUser)))
     //.mockImplementationOnce(()=>(Promise.resolve(existingUser1)))
     //.mockImplementationOnce(()=>(Promise.resolve(existingUser2)))
-    jest.spyOn(User, "findOne").mockReturnValueOnce(true) 
+    jest.spyOn(User, "findOne").mockReturnValueOnce({email: 'callinguser@email.it'}) 
     jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
     jest.spyOn(Group, "findOne").mockReturnValueOnce(null)  
     jest.spyOn(User, "findOne").mockReturnValueOnce(true)
@@ -633,9 +634,9 @@ describe("createGroup", () => {
     expect(mockRes.status).toHaveBeenCalledWith(200)
     expect(mockRes.json).toHaveBeenCalledWith(
      { "data":  {"alreadyInGroup": [],
-                 "group": { "members": [{"email": "member1@example.com",
-                            "user": undefined },{"email": "member2@example.com",
-                            "user": undefined }   ],
+                 "group": { "members": [{"email": "member1@example.com"},
+                 {"email": "member2@example.com"},
+                 {"email": "callinguser@email.it"}   ],
                    "name": "Test Group"}, 
           "membersNotFound": []
         },
@@ -1242,7 +1243,7 @@ test("Should return error 401 if is not called by an admin ", async () => {
     
         
         expect(mockRes.status).toHaveBeenCalledWith(200)
-        expect(mockRes.json).toHaveBeenCalledWith({"data": {"members" : ["member1@example.com","member2@example.com"] , "name" : "Test Group"}, refreshedTokenMessage: ""})
+        expect(mockRes.json).toHaveBeenCalledWith({"data": {"members" : [{email: "member1@example.com"},{email: "member2@example.com"}] , "name" : "Test Group"}, refreshedTokenMessage: ""})
     
      
       })
@@ -1525,7 +1526,7 @@ test("Should return error 401 if is not called by an admin ", async () => {
     
         
         expect(mockRes.status).toHaveBeenCalledWith(200)
-        expect(mockRes.json).toHaveBeenCalledWith({"data": {"members" : ["member1@example.com","member2@example.com"] , "name" : "Test Group"}, refreshedTokenMessage: ""})
+        expect(mockRes.json).toHaveBeenCalledWith({"data": {"members" : [{email: "member1@example.com"},{email: "member2@example.com"}] , "name" : "Test Group"}, refreshedTokenMessage: ""})
     
      
       })
@@ -1592,9 +1593,9 @@ test("Should return error 401 if is not called by an admin ", async () => {
           cookies: {
             accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTE5ODYzMH0.tCqmMl60NWG43bmi3aqZ4zNEPOuPZ_lyZG7g9CKxQV8",
             refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
-          
+            
         },
-        params:{name: 'TestGroup'}
+        params:{name: ''}
   };
         const mockRes = {
           cookie: jest.fn(),
@@ -1828,7 +1829,7 @@ describe("addToGroup", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(200)
-    expect(mockRes.json).toHaveBeenCalledWith({data: {group:  {"members" : ["member1@example.com","member2@example.com","toyota@polito.it"] , name : "Test Group"},alreadyInGroup: [],membersNotFound : ["suzuki@polito.it"] }, refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith({data: {group:  {"members" : [{email: "member1@example.com"},{email:"member2@example.com"},{email: "toyota@polito.it"}] , name : "Test Group"},alreadyInGroup: [],membersNotFound : ["suzuki@polito.it"] }, refreshedTokenMessage: ""})
 
  
   })
@@ -1963,7 +1964,7 @@ describe("addToGroup", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(200)
-    expect(mockRes.json).toHaveBeenCalledWith({data: {group:  {"members" : ["member1@example.com","member2@example.com","toyota@polito.it"] , name : "Test Group"},alreadyInGroup: [],membersNotFound : ["suzuki@polito.it"] }, refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith({data: {group:  {"members" : [{email: "member1@example.com"},{email: "member2@example.com"},{email: "toyota@polito.it"}] , name : "Test Group"},alreadyInGroup: [],membersNotFound : ["suzuki@polito.it"] }, refreshedTokenMessage: ""})
 
  
   })

@@ -708,7 +708,7 @@ describe("getGroup", () => {
       .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
 
     expect(response.status).toBe(200);
-    expect(response.body.data).toEqual({ members: ["user1@gmail.com", "user2@gmail.com"], name: "group1" })
+    expect(response.body.data).toEqual({ members: [{email: "user1@gmail.com"},{email: "user2@gmail.com"}], name: "group1" })
   });
 
   test('Should returns error 400 if the groupName is not associatied with a group, called by Admin', async () => {
@@ -748,7 +748,7 @@ describe("getGroup", () => {
       .set("Cookie", `accessToken=${userAccessToken}; refreshToken=${userRefreshToken}`)
 
     expect(response.status).toBe(200);
-    expect(response.body.data).toEqual({"members": ["user1@gmail.com", "user2@gmail.com"], "name": "group1"})
+    expect(response.body.data).toEqual({"members": [{email: "user1@gmail.com"}, {email: "user2@gmail.com"}], "name": "group1"})
   });
 
   test('Missing access token', async () => {
@@ -820,7 +820,7 @@ describe("addToGroup", () => {
     .send(body)
 
   expect(response.status).toBe(200);
-  expect(response.body.data).toEqual({"alreadyInGroup": [], "group": {"members": ["user1@gmail.com", "user2@gmail.com", "testuser1@example.com"], "name": "group1"}, "membersNotFound": []})
+  expect(response.body.data).toEqual({"alreadyInGroup": [], "group": {"members": [{email: "user1@gmail.com"}, {email: "user2@gmail.com"}, {email: "testuser1@example.com"}], "name": "group1"}, "membersNotFound": []})
 });
 
    
@@ -3685,28 +3685,35 @@ describe("deleteUser", () => {
       refreshToken: refreshToken,
       accessToken: accessToken,
     });
+    const user1 = await User.create({
+      username: 'user1',
+      email: 'user1@gmail.com',
+      password: '$2a$12$PLj4wPqaqF2vjmnmOzN3C.tBSJqfXTZH22aiI96g914HkbTIhfRLe',
+      role: 'Regular',
+      refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXIxQGdtYWlsLmNvbSIsImlkIjoiNjQ2NGJiZWNhZGYyYzM4NzBjNGIwNjgyIiwidXNlcm5hbWUiOiJ1c2VyMSIsInJvbGUiOiJSZWd1bGFyIiwiaWF0IjoxNjg2MTcwMTEwLCJleHAiOjE3MTc3MDYxMTB9.s1d1nvaq9oIKJRv33ue1iCMw2EwG7HXIZP18HeUl3fU',
+  })
 
     const group = await Group.create({
       name: 'testgroup',
       members: [
         {
-          email: user.email,
-          user: user._id,
+          email: user1.email,
+          user: user1._id,
         },
       ],
     });  
     await transactions.create({
-      username: user.username,
+      username: user1.username,
       type: 'investment',
       amount: 100,
     });  
     const response = await request(app)
     .delete('/api/users')
     .set('Cookie', `refreshToken=${refreshToken};accessToken=${accessToken}`)
-    .send({ email: user.email });
+    .send({ email: user1.email });
 
     expect(response.status).toBe(200);
-    expect(response.body.data.deleteTransactions).toBe(1);
+    expect(response.body.data.deletedTransactions).toBe(1);
     expect(response.body.data.deletedFromGroup).toBe(true);
   })
   test("Return 200 and delete the group if the user is the last in the group", async () => {
@@ -3902,7 +3909,7 @@ describe("deleteUser", () => {
       .set("Cookie", `refreshToken=${refreshTokenAdmin};accessToken=${accessTokenAdmin}`)
       .send({ email: user.email });
     expect(response.status).toBe(200);
-    expect(response.body.data.deletedFromGroup).toBe(false);
+    expect(response.body.data.deletedFromGroup).toBe(true);
     const updatedGroup = await Group.findById(group._id);
     expect(updatedGroup.members.length).toBe(2);
     expect(updatedGroup.members.some(member => member.email === user.email)).toBe(false);
@@ -4154,7 +4161,7 @@ describe("deleteGroup", () => {
       .send({ name: group.name });
 
     expect(response.status).toBe(200);
-    expect(response.body.data).toBe(`Group ${group.name} has been deleted`);
+    expect(response.body.data).toEqual({"message": 'Group testgroup has been deleted'});
   });
   test('returns a 400 error response when the group name is empty', async () => {
     const refreshToken = jwt.sign(

@@ -315,6 +315,7 @@ export const getGroup = async (req, res) => {
     if (user.role === "Regular") {
       //console.log("1");
       let groupName = req.params.name;
+      if(!groupName) throw new Error('Empty string: groupName')
       //groupName = handleString(groupName, "groupName");
       const group = await Group.findOne({ name: groupName });
       if (!group) {
@@ -398,7 +399,7 @@ export const addToGroup = async (req, res) => {
 
       //Admin things
 
-      //groupName = handleString(groupName, "groupName");
+      if(!groupName) throw new Error('Empty string: groupName')
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(400).json({
@@ -488,7 +489,7 @@ export const addToGroup = async (req, res) => {
         });
       //User things   
 
-      //groupName = handleString(groupName, "groupName");
+      if(!groupName) throw new Error('Empty string: groupName')
       const group = await Group.findOne({ name: groupName });
       if (!group) {
         return res.status(400).json({ error: "Group does not exist" ,refreshedTokenMessage: res.locals.message});
@@ -625,7 +626,7 @@ export const removeFromGroup = async (req, res) => {
           error: verify.cause,
           refreshedTokenMessage: res.locals.message
         })
-      //groupName = handleString(groupName, "groupName");
+      if(!groupName) throw new Error('Empty string: groupName')
       const existingGroup = await Group.findOne({ name: groupName });
       if (!existingGroup) {
         return res.status(400).json({
@@ -700,7 +701,7 @@ export const removeFromGroup = async (req, res) => {
           error: "You are trying to use an Admin route while still a Regular",
           refreshedTokenMessage: res.locals.message
         });
-      //groupName = handleString(groupName, "groupName");
+        if(!groupName) throw new Error('Empty string: groupName')
       const existingGroup = await Group.findOne({ name: groupName });
       if (!existingGroup) {
         return res.status(400).json({
@@ -828,7 +829,7 @@ export const deleteUser = async (req, res) => {
     }
 
     const user_is_admin = await User.findOne({ email: req.body.email });
-    if(user_is_admin.role === 'Admin'){
+    if(user_is_admin && user_is_admin.role === 'Admin'){
       return res.status(400).json({
         error: "The user to delete is an Admin",
         refreshedTokenMessage: res.locals.message
