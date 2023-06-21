@@ -763,8 +763,8 @@ describe("createTransaction", () => {
             .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminRefreshToken}`)
             .send(body)
 
-        expect(response.status).toBe(200);
-        expect(response.body.data).toEqual(expect.objectContaining(body))
+        expect(response.status).toBe(401);
+        expect(response.body.error).toEqual('Tokens have a different username from the requested one')
     });
 
     test('Username parameter is empty string', async () => {
@@ -835,7 +835,7 @@ describe("getTransactionsByUser", () => {
 
     test('User tries to get all their transactions filtered by date', async () => {
 
-        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2023, 5, 1, 0, 0, 0) })
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date('2023-06-01T00:00:00.000Z') })
         await newTransaction.save()
 
         const response = await request(app)
@@ -908,7 +908,7 @@ describe("getTransactionsByUser", () => {
 
     test('User tries to get all their transactions filtered by date (from & upTo)', async () => {
 
-        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date(2023, 5, 1, 0, 0, 0) })
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 500, date: new Date('2023-06-03T00:00:00.000Z') })
         await newTransaction.save()
 
         const response = await request(app)
@@ -1043,7 +1043,7 @@ describe("getTransactionsByUser", () => {
 
     test('User tries to get all their transactions filtered by amount (min & max) and by date (from & upTo)', async () => {
 
-        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 700, date: new Date(2023, 5, 1, 0, 0, 0) })
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 700, date: new Date('2023-06-02T00:00:00.000Z') })
         await newTransaction.save()
 
         const response = await request(app)
@@ -1068,7 +1068,7 @@ describe("getTransactionsByUser", () => {
 
     test('User tries to get all their transactions filtered by amount and by date', async () => {
 
-        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 700, date: new Date(2023, 5, 1, 0, 0, 0) })
+        const newTransaction = new transactions({ username: 'user1', type: 'bills', amount: 700, date: new Date('2023-06-01T00:00:00.000Z') })
         await newTransaction.save()
 
         const response = await request(app)
