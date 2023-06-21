@@ -267,7 +267,7 @@ describe("verifyAuth", () => {
          
 
         
-        expect(utils.verifyAuth(mockReq,mockRes,info)).toEqual(true);
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toEqual({flag: true});
         
     });
      
@@ -333,7 +333,7 @@ describe("verifyAuth", () => {
           
 
 
-        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual(true);
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: true});
     });
 
 
@@ -469,7 +469,7 @@ describe("verifyAuth", () => {
           //utils.verifyAuth(mockReq,mockRes,info)
 
 
-        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual(true);
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: true});
     });
 
 
@@ -496,7 +496,7 @@ describe("verifyAuth", () => {
          
 
 
-        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual(true);
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: true});
     });
      
 
@@ -523,7 +523,7 @@ describe("verifyAuth", () => {
           
 
 
-        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual(true);
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: true});
     });
 
 
@@ -651,7 +651,7 @@ describe("verifyAuth", () => {
           
 
 
-        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual(true);
+        expect(utils.verifyAuth(mockReq,mockRes,info)).toStrictEqual({flag: true});
     });
 
     test('Return object error if the refresh token expired(need to perform login again)', () => {
