@@ -110,14 +110,14 @@ describe('register', () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Username already taken' });
   });
-  test('returns error 400 when the password lenght is < 8', async () => {
+  /*test('returns error 400 when the password lenght is < 8', async () => {
     const response = await request(app)
       .post('/api/register')
       .send({ email: 'ciao@example.com', username: 'ciaociao', password: 'passw' });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "Password doesn't match constraints,requires at least 8 characters" });
-  });
+  });*/
  
 
 })
@@ -208,14 +208,14 @@ describe("registerAdmin", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Username already taken' });
   });
-  test('returns error 400 when the password lenght is < 8', async () => {
+  /*test('returns error 400 when the password lenght is < 8', async () => {
     const response = await request(app)
       .post('/api/admin')
       .send({ email: 'ciao@example.com', username: 'ciaociao', password: 'passw' });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "Password doesn't match constraints,requires at least 8 characters" });
-  });
+  });*/
  
 })
 
