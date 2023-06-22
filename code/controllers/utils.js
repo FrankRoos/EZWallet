@@ -42,8 +42,7 @@ export const handleDateFilterParams = (req, res) => {
         return  { queryObj : {},'flag': true};
 
 
-    } catch (error) {
-       
+    } catch (error) {  
         throw new Error({ 'flag': false, error: error.message})
 
     }
@@ -217,7 +216,7 @@ export const handleAmountFilterParams = (req, res) => {
         return { 'flag': true, queryObj: {} };
 
     } catch (error) {
-            throw new Error({ 'flag': false, error: error.message})
+        throw new Error({'flag': false, error: error.message})
 
     }
 }

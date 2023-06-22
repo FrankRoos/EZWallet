@@ -2902,7 +2902,7 @@ describe("removeFromGroup", () => {
 
       const group_new = new Group({
         name: 'groupx',
-        members: [{ email: "testuser1@example.com" },{ email: "testuser3@example.com" }]
+        members: [{ email: "testuser1@example.com" }]
       })
       await group_new.save()
 
@@ -2984,7 +2984,7 @@ describe("removeFromGroup", () => {
 
       const group_new = new Group({
         name: 'groupx',
-        members: [{ email: "testuser1@example.com" },{ email: "testuser3@example.com" }]
+        members: [{ email: "testuser1@example.com" }]
       })
       await group_new.save()
 

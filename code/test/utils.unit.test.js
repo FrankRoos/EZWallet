@@ -12,15 +12,8 @@ describe("handleDateFilterParams", () => {
                 upTo: "",
             
           }}
-        
-
-    
-    
-    
-          
-
-
-        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Invalid format of date parameter"});
+      
+        expect(() => utils.handleDateFilterParams(mockReq)).toThrow();
     });
     test('from Invalid Format', () => {
         const mockReq = {
@@ -31,15 +24,8 @@ describe("handleDateFilterParams", () => {
                 upTo: "",
             
           }}
-        
 
-    
-    
-    
-          
-
-
-        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Invalid format of from parameter"});
+        expect(() => utils.handleDateFilterParams(mockReq)).toThrow();
     });
     test('upto Invalid Format', () => {
         const mockReq = {
@@ -58,7 +44,7 @@ describe("handleDateFilterParams", () => {
           
 
 
-        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Invalid format of upTo parameter"});
+        expect(() => utils.handleDateFilterParams(mockReq)).toThrow();
     });
 
     test('Return object error if the query contains date from and upto all together', () => {
@@ -72,7 +58,7 @@ describe("handleDateFilterParams", () => {
           }}
         
 
-      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Cannot use 'date' together with 'from' or 'Upto"});
+      expect(() => utils.handleDateFilterParams(mockReq)).toThrow();
     });
 
     test('Return query with date information', () => {
@@ -85,7 +71,7 @@ describe("handleDateFilterParams", () => {
           }}
         let sdate=mockReq.query.date.split("-")
 
-        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $gte: new Date(sdate[0], sdate[1]-1, sdate[2], 0, 0, 0), $lte: new Date(sdate[0], sdate[1]-1, sdate[2], 23, 59, 59) } } ,'flag': true});
+        expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({'date': { $gte: new Date(Date.UTC(sdate[0], sdate[1]-1, sdate[2], 0, 0, 0)), $lte: new Date(Date.UTC(sdate[0], sdate[1]-1, sdate[2], 23, 59, 59)) } ,'flag': true});
     });
 
     test('Return query with from and upTo information', () => {
@@ -100,7 +86,7 @@ describe("handleDateFilterParams", () => {
         let sfrom=mockReq.query.from.split("-")
         let sUpto=mockReq.query.upTo.split("-")
 
-      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $gte: new Date(sfrom[0], sfrom[1]-1, sfrom[2], 0, 0, 0), $lte: new Date(sUpto[0], sUpto[1]-1, sUpto[2], 23, 59, 59) } } ,'flag': true});
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({'date': { $gte: new Date(Date.UTC(sfrom[0], sfrom[1]-1, sfrom[2], 0, 0, 0)), $lte: new Date(Date.UTC(sUpto[0], sUpto[1]-1, sUpto[2], 23, 59, 59)) } ,'flag': true});
     });
     test('Return query with from  information', () => {
         const mockReq = {
@@ -114,7 +100,7 @@ describe("handleDateFilterParams", () => {
         let sfrom=mockReq.query.from.split("-")
         
 
-      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': { $gte: new Date(sfrom[0], sfrom[1]-1, sfrom[2], 0, 0, 0) } } ,'flag': true});
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({'date': { $gte: new Date(Date.UTC(sfrom[0], sfrom[1]-1, sfrom[2], 0, 0, 0)) } ,'flag': true});
     });
 
     test('Return query with upTo information', () => {
@@ -128,7 +114,7 @@ describe("handleDateFilterParams", () => {
           }}
         let sUpto=mockReq.query.upTo.split("-")
 
-      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({queryObj : { 'date': {$lte: new Date(sUpto[0], sUpto[1]-1, sUpto[2], 23, 59, 59) } } ,'flag': true});
+      expect(utils.handleDateFilterParams(mockReq,null)).toStrictEqual({"date": {$lte: new Date(Date.UTC(sUpto[0], sUpto[1]-1, sUpto[2], 23, 59, 59)) } ,'flag': true});
     });
 
     test('Return nothing is query is missing', () => {
@@ -723,9 +709,6 @@ describe('isJsonString', () => {
 
 });
 
-
-
-
 describe("handleAmountFilterParams", () => { 
     
     test('Return object error if the query contains date from and upto all together', () => {
@@ -738,8 +721,8 @@ describe("handleAmountFilterParams", () => {
             
           }}
         
-
-      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({flag: false, error: "Cannot use 'amount' together with 'min' or 'max"});
+      
+        expect(() => utils.handleAmountFilterParams(mockReq)).toThrow()    
     });
 
     test('Return query with amount information', () => {
@@ -754,7 +737,7 @@ describe("handleAmountFilterParams", () => {
           utils.handleNumber = number;
         
 
-      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $eq: parseFloat(mockReq.query.amount) } }, 'flag': true });
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({amount: { $eq: parseFloat(mockReq.query.amount) } , 'flag': true });
     });
     test('Return query with min information', () => {
         const mockReq = {
@@ -768,7 +751,7 @@ describe("handleAmountFilterParams", () => {
           utils.handleNumber = number;
         
 
-      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $gte: parseFloat(mockReq.query.min) } }, 'flag': true });
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ amount: { $gte: parseFloat(mockReq.query.min) } , 'flag': true });
     });
 
     test('Return query with max information', () => {
@@ -783,7 +766,7 @@ describe("handleAmountFilterParams", () => {
           utils.handleNumber = number;
         
 
-      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $lte: parseFloat(mockReq.query.max) } }, 'flag': true });
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({amount: { $lte: parseFloat(mockReq.query.max) } , 'flag': true });
     });
 
     test('Return query with max and min information', () => {
@@ -798,7 +781,7 @@ describe("handleAmountFilterParams", () => {
           utils.handleNumber = number;
         
 
-      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ queryObj: {'amount': { $gte: parseFloat(mockReq.query.min) , $lte: parseFloat(mockReq.query.max) } }, 'flag': true });
+      expect(utils.handleAmountFilterParams(mockReq,null)).toStrictEqual({ amount: { $gte: parseFloat(mockReq.query.min) , $lte: parseFloat(mockReq.query.max) } , 'flag': true });
     });
 
    

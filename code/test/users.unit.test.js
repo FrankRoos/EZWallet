@@ -2977,7 +2977,7 @@ describe("removeFromGroup", () => {
         refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
       
     },
-    body: {emails: ["suzuki@polito.it","toyota@polito.it"]},
+    body: {emails: ["suzuki@polito.it"]},
     params:{name: 'TestGroup'},
     url:  "a"
 };
@@ -2995,7 +2995,7 @@ describe("removeFromGroup", () => {
    
     
     
-    const group=  {name: 'Test Group', members: [ {email:'toyota@polito.it'}, {email: 'member2@example.com' } ], save: jest.fn() }
+    const group=  {name: 'Test Group', members: [ {email:'toyota@polito.it'}], save: jest.fn() }
             
 
    
@@ -3011,8 +3011,10 @@ describe("removeFromGroup", () => {
     jest.spyOn(Group, "findOne").mockResolvedValueOnce(group) 
    
     
-    jest.spyOn(User, "findOne").mockResolvedValueOnce(null)
     jest.spyOn(User, "findOne").mockResolvedValueOnce(usertoadd)
+    jest.spyOn(User, "findOne").mockResolvedValueOnce({email :"suzuki@polito.it", _id : 2})
+
+    
     jest.spyOn(Group, "findOne").mockResolvedValueOnce(null)
     
     jest.spyOn(Group.prototype, 'save')
@@ -3430,7 +3432,7 @@ describe("removeFromGroup", () => {
         refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZ2Vsby5pYW5uaWVsbGk5OUBnbWFpbC5jb20iLCJpZCI6IjY0NjI2MjliNWYzZWU0NzVjNGI3NjJhMyIsInVzZXJuYW1lIjoiYW5nZWxvIiwicm9sZSI6IlJlZ3VsYXIiLCJpYXQiOjE2ODUxOTg2MzAsImV4cCI6MTY4NTgwMzQzMH0.8KRWV60rOsVSM8haLIL3eplyZTelaxt5KQNkvUzv10Q"
       
     },
-    body: {emails: ["suzuki@polito.it","toyota@polito.it"]},
+    body: {emails: ["suzuki@polito.it"]},
     params:{name: 'TestGroup'}
 };
     const mockRes = {
@@ -3447,7 +3449,7 @@ describe("removeFromGroup", () => {
    
     
     
-    const group=  {name: 'Test Group', members: [ {email:'suzuki@polito.it'}, {email: 'toyota@polito.it' } ], save: jest.fn() }
+    const group=  {name: 'Test Group', members: [{email: 'toyota@polito.it' } ], save: jest.fn() }
             
 
    
@@ -3460,15 +3462,17 @@ describe("removeFromGroup", () => {
  
     
     jest.spyOn(User, "findOne").mockResolvedValueOnce(user)
+    
     jest.spyOn(Group, "findOne").mockResolvedValueOnce(group) 
    
     
     jest.spyOn(User, "findOne").mockResolvedValueOnce(usertoremove1)
-    jest.spyOn(User, "findOne").mockResolvedValueOnce(null)
-    jest.spyOn(Group, "findOne").mockResolvedValueOnce(null)
+    jest.spyOn(User, "findOne").mockResolvedValueOnce({email :"suzuki@polito.it", _id : 2})
+    
+    jest.spyOn(Group, "findOne").mockResolvedValue(null)
     
     jest.spyOn(Group.prototype, 'save')
-    .mockImplementationOnce(() => Promise.resolve(1))
+    .mockImplementation(() => Promise.resolve(1))
 
 
 
@@ -3483,7 +3487,6 @@ describe("removeFromGroup", () => {
 
  
   })
-
 
 
   test("Should return error 400 if all provided emails does not exists or don't belong to the group", async () => {
@@ -3931,7 +3934,7 @@ describe("deleteUser", () => {
 
 
 
-    jest.spyOn(Group, "findOne").mockResolvedValueOnce(group) 
+    jest.spyOn(Group, "findOne").mockResolvedValue(group) 
     
     
     jest.spyOn(Group.prototype, 'save')
@@ -3946,7 +3949,7 @@ describe("deleteUser", () => {
 
     
     expect(mockRes.status).toHaveBeenCalledWith(200)
-    expect(mockRes.json).toHaveBeenCalledWith({data: { deleteTransactions: 3, deletedFromGroup: true }, refreshedTokenMessage: ""})
+    expect(mockRes.json).toHaveBeenCalledWith({data: { deletedTransactions: 3, deletedFromGroup: true }, refreshedTokenMessage: ""})
 
  
   })

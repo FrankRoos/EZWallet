@@ -644,8 +644,8 @@ export const removeFromGroup = async (req, res) => {
         if (!myRegEx.test(email) || email === '') {
           invalidEmails.push(email);
         } else {
-          const user = await User.findOne({ email: email });
-          if (!user) {
+          const user1 = await User.findOne({ email: email });
+          if (!user1) {
             membersNotFound.push(email);
           } else if (!existingGroup.members.some((groupMember) => groupMember.email === email)) {
             notInGroup.push(email);
@@ -656,18 +656,20 @@ export const removeFromGroup = async (req, res) => {
         }
       }
 
-      if (membersNotFound.length + notInGroup.length === emails.length) {
-        return res.status(400).json({
-          error: "All the provided emails represent users that do not belong to the group or do not exist in the database",
-          refreshedTokenMessage: res.locals.message
-        });
-      }
       if (existingGroup.members.length === 1 && !removedMembers.length) {
         return res.status(400).json({
           error: "This group contains only 1 member, so you can't delete it",
           refreshedTokenMessage: res.locals.message
         });
       }
+
+      if (membersNotFound.length + notInGroup.length === emails.length) {
+        return res.status(400).json({
+          error: "All the provided emails represent users that do not belong to the group or do not exist in the database",
+          refreshedTokenMessage: res.locals.message
+        });
+      }
+      
       if (invalidEmails.length > 0) {
         return res.status(400).json({
           error: "Invalid email format or email with empty string: " + invalidEmails.toString(),
@@ -731,18 +733,20 @@ export const removeFromGroup = async (req, res) => {
         }
       }
 
-      if (membersNotFound.length + notInGroup.length === emails.length) {
-        return res.status(400).json({
-          error: "All the provided emails represent users that do not belong to the group or do not exist in the database",
-          refreshedTokenMessage: res.locals.message
-        });
-      }
       if (existingGroup.members.length === 1 && !removedMembers.length) {
         return res.status(400).json({
           error: "This group contains only 1 member, so you can't delete it",
           refreshedTokenMessage: res.locals.message
         });
       }
+
+      if (membersNotFound.length + notInGroup.length === emails.length) {
+        return res.status(400).json({
+          error: "All the provided emails represent users that do not belong to the group or do not exist in the database",
+          refreshedTokenMessage: res.locals.message
+        });
+      }
+     
       if (invalidEmails.length > 0) {
         return res.status(400).json({
           error: "Invalid email format or email with empty string: " + invalidEmails.toString(),
